@@ -1,0 +1,54 @@
+# Arquitectura de la app (según la memoria)
+
+Resumen de lo definido en la memoria de la tesis. Si una decisión de implementación contradice este archivo,
+actualizarlo en el mismo PR. Lo que la memoria no fija está marcado como por decidir.
+
+## Componentes principales
+
+| Componente | Responsabilidad |
+|---|---|
+| Receptor de SMS y MMS | entrega cada mensaje entrante (interfaz `IReceptor`) |
+| Registro del mensaje entrante | lo guarda en el buzón del dispositivo (`IBuzón`) y dispara el análisis |
+| Análisis | verifica con `IRol` que la app sigue siendo la predeterminada y luego clasifica con el modelo local |
+| Consulta de conversaciones / Envío | pantallas de conversaciones y redacción; el envío usa el Emisor de SMS (`IEmisor`) |
+| Mitigación | bloquea al remitente o retira el mensaje según el modo elegido; consulta las preferencias antes de actuar |
+| Compartición | verifica el consentimiento (`IPreferenciasRepositorio`), anonimiza y entrega al Servicio de corpus (`ICorpus`) |
+| Anonimización | reglas de desidentificación en el teléfono, alineadas con `sms-anonymizer` |
+| Servicio de corpus | único componente que habla con el backend, por HTTPS, y solo con mensajes ya anonimizados |
+| Limitador de envíos | acota cuántos aportes se admiten en una ventana de tiempo |
+| Gestor de rol y permisos | rol de app predeterminada y permisos; emite las solicitudes al sistema |
+| Preferencias del usuario | modo de mitigación y estado del consentimiento |
+
+Flujo de lectura y análisis, de mensajería y de compartición son independientes entre sí. La compartición nunca
+participa en la clasificación.
+
+## Almacenamiento local
+
+| Información | Mecanismo |
+|---|---|
+| Mensajes analizados, resultados de análisis, señales detectadas, acciones de mitigación | Room sobre SQLite |
+| Modo de mitigación y registro de consentimiento | DataStore de Jetpack |
+| Modelo | archivo `.tflite` empaquetado en la app (inmutable; la firma de la plataforma es su integridad) |
+
+Entidades locales:
+
+- **Mensaje analizado** (1:1) **Resultado de análisis** (probabilidad, nivel de riesgo, seguro o sospechoso, versión del modelo, fecha).
+- **Resultado de análisis** (1:N) **Señal detectada** (tipo, como urgencia, suplantación, enlace externo o solicitud de datos, y el fragmento).
+- **Mensaje analizado** (1:N) **Acción de mitigación** (bloqueo o retiro, aplicada o revertida, fecha).
+- Configuración y consentimiento no se relacionan con las demás entidades.
+
+Reglas:
+
+- Borrar un mensaje analizado borra en cascada sus resultados, señales y acciones.
+- Una acción de mitigación solo se registra sobre un mensaje cuyo resultado vigente es sospechoso.
+- Revertir una acción cambia su estado a revertida y no borra el registro: así se distinguen los bloqueos de la app
+  de los que hizo la persona, y solo los de la app se revierten al marcar un mensaje como seguro.
+- El resultado guarda la versión del modelo como referencia lógica, no como clave foránea.
+- El contenido del mensaje se conserva en la base local aunque se retire del buzón, para que el historial siga
+  mostrando qué se detectó y por qué.
+- Si no hay consentimiento activo, no se envía nada. Esa comprobación es de la app.
+
+## Por decidir
+
+Estructura de módulos y paquetes, UI, inyección de dependencias, cómo se asignan los niveles de riesgo a partir del
+puntaje del modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
