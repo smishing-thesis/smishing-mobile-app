@@ -1,0 +1,21 @@
+# Gradle y Android Studio
+.gradle
+/build
+/captures
+/.idea
+*.iml
+local.properties
+.externalNativeBuild
+.cxx
+.kotlin/
+
+# Claves de firma (#24)
+*.jks
+*.keystore
+keystore.properties
+
+# Binarios generados
+*.apk
+*.aab
+
+.DS_Store
