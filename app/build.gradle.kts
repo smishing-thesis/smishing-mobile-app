@@ -30,6 +30,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    // Las pruebas de sharedTest corren igual en la JVM (test) y en el dispositivo (androidTest).
+    // En la JVM, los assets de main (preprocessing_config.json) se leen como recursos.
+    sourceSets {
+        getByName("test") {
+            java.srcDir("src/sharedTest/java")
+            resources.srcDir("src/sharedTest/assets")
+            resources.srcDir("src/main/assets")
+        }
+        getByName("androidTest") {
+            java.srcDir("src/sharedTest/java")
+            assets.srcDir("src/sharedTest/assets")
+        }
+    }
 }
 
 kotlin {
@@ -45,6 +58,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.litert)
     testImplementation(libs.junit)
+    // En la JVM, org.json de android.jar es un stub; en el dispositivo se usa el real.
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

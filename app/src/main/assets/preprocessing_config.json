@@ -1,0 +1,306 @@
+{
+  "pipeline": [
+    "cleaning",
+    "normalization",
+    "masking_rules",
+    "encoding"
+  ],
+  "alphabet": "abcdefghijklmnopqrstuvwxyz\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f10 .,;:!?\u00bf\u00a1'\"/\\|_@#$%^&*~`+-=<>()[]{}",
+  "char2idx": {
+    "a": 2,
+    "b": 3,
+    "c": 4,
+    "d": 5,
+    "e": 6,
+    "f": 7,
+    "g": 8,
+    "h": 9,
+    "i": 10,
+    "j": 11,
+    "k": 12,
+    "l": 13,
+    "m": 14,
+    "n": 15,
+    "o": 16,
+    "p": 17,
+    "q": 18,
+    "r": 19,
+    "s": 20,
+    "t": 21,
+    "u": 22,
+    "v": 23,
+    "w": 24,
+    "x": 25,
+    "y": 26,
+    "z": 27,
+    "\u00e1": 28,
+    "\u00e9": 29,
+    "\u00ed": 30,
+    "\u00f3": 31,
+    "\u00fa": 32,
+    "\u00fc": 33,
+    "\u00f1": 34,
+    "0": 35,
+    " ": 36,
+    ".": 37,
+    ",": 38,
+    ";": 39,
+    ":": 40,
+    "!": 41,
+    "?": 42,
+    "\u00bf": 43,
+    "\u00a1": 44,
+    "'": 45,
+    "\"": 46,
+    "/": 47,
+    "\\": 48,
+    "|": 49,
+    "_": 50,
+    "@": 51,
+    "#": 52,
+    "$": 53,
+    "%": 54,
+    "^": 55,
+    "&": 56,
+    "*": 57,
+    "~": 58,
+    "`": 59,
+    "+": 60,
+    "-": 61,
+    "=": 62,
+    "<": 63,
+    ">": 64,
+    "(": 65,
+    ")": 66,
+    "[": 67,
+    "]": 68,
+    "{": 69,
+    "}": 70
+  },
+  "maxlen": 160,
+  "pad_idx": 0,
+  "unk_idx": 1,
+  "masking_rules": [
+    {
+      "name": "lowercase",
+      "pattern": null,
+      "replacement": null
+    },
+    {
+      "name": "url",
+      "pattern": "http\\S+|www\\.\\S+",
+      "replacement": " link "
+    },
+    {
+      "name": "phone",
+      "pattern": "\\b\\d{7,}\\b",
+      "replacement": " call "
+    },
+    {
+      "name": "digit",
+      "pattern": "\\d",
+      "replacement": "0"
+    },
+    {
+      "name": "whitespace",
+      "pattern": "\\s+",
+      "replacement": " "
+    }
+  ],
+  "cleaning": [
+    {
+      "name": "line_breaks",
+      "type": "regex",
+      "pattern": "[\\r\\n\\t\\v\\f\\u0085\u2028\u2029]",
+      "replacement": " "
+    },
+    {
+      "name": "typographic_quotes",
+      "type": "translate",
+      "mapping": {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201a": "'",
+        "\u201b": "'",
+        "\u2032": "'",
+        "\u2039": "'",
+        "\u203a": "'",
+        "\u201c": "\"",
+        "\u201d": "\"",
+        "\u201e": "\"",
+        "\u201f": "\"",
+        "\u2033": "\"",
+        "\u00ab": "\"",
+        "\u00bb": "\""
+      }
+    },
+    {
+      "name": "unicode_spaces",
+      "type": "regex",
+      "pattern": "[\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]",
+      "replacement": " "
+    },
+    {
+      "name": "zero_width",
+      "type": "regex",
+      "pattern": "[\u200b\u2060\ufeff\u00ad]",
+      "replacement": ""
+    },
+    {
+      "name": "whitespace",
+      "type": "regex",
+      "pattern": "\\s+",
+      "replacement": " "
+    }
+  ],
+  "normalization": {
+    "name": "normalization",
+    "version": "2",
+    "description": "Input normalization v2 for the Char-CNN, applied before mask_text in training, validation, test and on device.",
+    "steps": [
+      "unicode NFKC",
+      "per-character lookup in confusables_v1.json mapping",
+      "replace with a single space every character c such that lowercase(c) is not in the model alphabet, c is not a digit and c is not whitespace (removes emoji, symbols such as the euro sign, and letters of other scripts)"
+    ],
+    "depends_on": "confusables_v1.json (version 1)",
+    "model_alphabet": "abcdefghijklmnopqrstuvwxyz\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f10 .,;:!?\u00bf\u00a1'\"/\\|_@#$%^&*~`+-=<>()[]{}",
+    "note": "Designed after the diagnosis that out-of-alphabet characters act as a ham cue in the Peruvian corpus; must be declared as such.",
+    "unicode_normalization_form": "NFKC",
+    "mapping": {
+      "\u0131": "i",
+      "\u0251": "a",
+      "\u0261": "g",
+      "\u0391": "A",
+      "\u0392": "B",
+      "\u0395": "E",
+      "\u0396": "Z",
+      "\u0397": "H",
+      "\u0399": "I",
+      "\u039a": "K",
+      "\u039c": "M",
+      "\u039d": "N",
+      "\u039f": "O",
+      "\u03a1": "P",
+      "\u03a4": "T",
+      "\u03a5": "Y",
+      "\u03a7": "X",
+      "\u03b1": "a",
+      "\u03b5": "e",
+      "\u03b9": "i",
+      "\u03ba": "k",
+      "\u03bd": "v",
+      "\u03bf": "o",
+      "\u03c1": "p",
+      "\u03c5": "u",
+      "\u03c7": "x",
+      "\u0405": "S",
+      "\u0406": "I",
+      "\u0408": "J",
+      "\u0410": "A",
+      "\u0412": "B",
+      "\u0415": "E",
+      "\u041a": "K",
+      "\u041c": "M",
+      "\u041d": "H",
+      "\u041e": "O",
+      "\u0420": "P",
+      "\u0421": "C",
+      "\u0422": "T",
+      "\u0423": "Y",
+      "\u0425": "X",
+      "\u0430": "a",
+      "\u0435": "e",
+      "\u043e": "o",
+      "\u0440": "p",
+      "\u0441": "c",
+      "\u0443": "y",
+      "\u0445": "x",
+      "\u0455": "s",
+      "\u0456": "i",
+      "\u0458": "j",
+      "\u04bb": "h",
+      "\u04cf": "l",
+      "\u0501": "d",
+      "\u051b": "q",
+      "\u051d": "w",
+      "\u0578": "n",
+      "\u057d": "u",
+      "\u0585": "o"
+    }
+  },
+  "threshold": {
+    "value": 0.9034745693206787,
+    "rule": "smishing if score > value",
+    "target_fpr": 0.01,
+    "source": "quantile 1 - target_fpr of the validation legitimate scores (Keras float32)",
+    "val_fpr_at_threshold": 0.008771929824561403
+  },
+  "input_policy": {
+    "min_cleaned_chars": 15,
+    "counted_on": "the cleaned text (after the cleaning step), in Unicode code points (Kotlin: codePointCount, not length)",
+    "below_minimum": "do not classify",
+    "reason": "the model was trained without messages shorter than this, and it is not reliable on them: an input that is empty after preprocessing scores above the threshold"
+  },
+  "preprocessing": {
+    "version": "1.1.0",
+    "spec_sha256": "55cd2f96d261fed8bb0de0f9a0322fa59462091b2969c79d7e132eae9a4bab60"
+  },
+  "model": {
+    "version": "1.0.0",
+    "trained_at": "2026-10-31T23:47:14+00:00",
+    "corpus_version": "1.0.4",
+    "dataset_sha256": "1d328d813126cc231e169948cf732411107c7167d05359366d3975917763e72c",
+    "recipe": "E3_p1.00_noimcpe + normalized_v2, no augmentation, trained on the whole Peruvian corpus",
+    "hyperparameters": {
+      "embedding_dim": 48,
+      "conv_filters": 192,
+      "kernel_size": 12,
+      "dense_units": 10,
+      "maxlen": 160,
+      "optimizer": "adam",
+      "loss": "binary_crossentropy",
+      "epochs": 20,
+      "batch_size": 64,
+      "early_stopping_patience": 3,
+      "early_stopping_monitor": "val_loss on the group validation split",
+      "class_weight": "balanced",
+      "val_fraction": 0.1,
+      "target_fpr": 0.01
+    },
+    "reference_metrics": {
+      "source": "final/RESUMEN.md, corpus 1.0.4, E3_p1.00_noimcpe with normalized_v2",
+      "cv_recall_at_fpr1": [
+        0.759,
+        0.017
+      ],
+      "cv_precision_at_fpr1": [
+        0.491,
+        0.064
+      ],
+      "cv_pr_auc": [
+        0.69,
+        0.008
+      ],
+      "external_imc25_peru_recall": [
+        0.618,
+        0.122
+      ],
+      "asr_at_30pct": {
+        "leetspeak": 0.212,
+        "spacing": 0.066,
+        "char_swap": 0.032,
+        "homoglyphs": 0.0,
+        "symbol_insertion": 0.0
+      }
+    }
+  },
+  "export": {
+    "tflite_bytes": 123544,
+    "tflite_sha256": "dfe3fa4148942c1fdbfc7df416bc1bac0521f4dc80bb9d9f356eb95b542dc380",
+    "model_sha256": "89588a91c804b0f46f8b0b9f49d5e6d17a30839c7b6ee2b65ec03f5496420d41",
+    "parity": {
+      "cases": 52,
+      "max_abs_diff": 0.005548059940338135
+    }
+  }
+}

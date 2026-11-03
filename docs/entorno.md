@@ -30,6 +30,8 @@ Las versiones están en `gradle/libs.versions.toml`.
 |---|---|---|
 | `com.google.ai.edge.litert:litert` | 2.3.2 | Runtime LiteRT. La API usada es `org.tensorflow.lite.Interpreter`, compatible con modelos TFLite exportados desde Keras. |
 
+Solo para pruebas en la JVM: `org.json:json` 20260814 (en el dispositivo se usa el `org.json` de Android).
+
 El AAR incluye `libLiteRt.so` para `arm64-v8a`, `armeabi-v7a` y `x86_64`. No incluye `x86`.
 
 ### Por qué Kotlin 2.4.21

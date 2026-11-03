@@ -50,5 +50,13 @@ Reglas:
 
 ## Por decidir
 
-Estructura de módulos y paquetes, UI, inyección de dependencias, cómo se asignan los niveles de riesgo a partir del
-puntaje del modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
+UI, inyección de dependencias, módulos de Gradle, cómo se asignan los niveles de riesgo a partir del puntaje del
+modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
+
+## Decidido al implementar
+
+- **Paquetes por capas** bajo `com.app.smishing`: `domain` (lógica en Kotlin puro, sin dependencias de Android) y
+  `data` (lectura de archivos, assets, Room, DataStore). Un solo módulo de Gradle (`app`) por ahora.
+- **JSON:** `org.json` (viene en Android); en pruebas de la JVM se añade como dependencia de prueba.
+- **Pruebas compartidas:** `app/src/sharedTest` se compila en `test` (JVM) y en `androidTest` (dispositivo), para
+  correr los mismos vectores en ambos. Detalle en [docs/preprocesamiento.md](../docs/preprocesamiento.md).
