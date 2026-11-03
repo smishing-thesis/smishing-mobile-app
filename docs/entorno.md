@@ -20,9 +20,24 @@ Registro del entorno de build del prototipo (issue #1, RNF-08). Última verifica
 | Android Gradle Plugin | 8.13.2 |
 | Gradle (wrapper) | 8.13 |
 | Kotlin | 2.4.21 |
-| JDK para compilar | 17 (el que trae Android Studio, `jbr`) |
+| JDK para Gradle | de 17 a 23 (lo que acepta Gradle 8.13); verificado con Temurin 17.0.13 |
+| Android Studio | Narwhal 3 Feature Drop (2025.1.3) o más nueva; verificado con Rabbit 2 (2026.2.2) |
 
 Las versiones están en `gradle/libs.versions.toml`.
+
+### Android Studio y JDK
+
+- **Versión mínima del IDE.** AGP 8.13 exige Android Studio Narwhal 3 (2025.1.3) o más nuevo. Con Koala
+  (2024.1.2), el sync falla: `The project is using an incompatible version (AGP 8.13.2)... Latest supported
+  version is AGP 8.6.1`. La compilación por terminal funciona igual, pero el IDE no.
+- **JDK del IDE.** El JDK que trae Android Studio cambia con la versión: Koala traía el 17, pero Rabbit 2 trae el 25,
+  que Gradle 8.13 rechaza (`Gradle 8.13 supports Java versions between 1.8 and 23`). Si el sync falla con
+  `Incompatible Gradle JVM version`, en **Settings → Build, Execution, Deployment → Build Tools → Gradle** elige
+  en **Gradle JDK** un JDK de 17 a 21 (o usa **Download JDK…**). Esa opción queda en `.idea/` y
+  `.gradle/config.properties`, que no se versionan: cada persona la configura en su equipo.
+- No aceptes el "AGP Upgrade Assistant" ni "Migrate to Gradle Daemon toolchain" que ofrece el IDE: el primero
+  cambia la versión de AGP verificada y el segundo escribe en el repo un archivo que fija el JDK, y eso es una
+  decisión de equipo.
 
 ## Dependencias de inferencia
 
@@ -42,15 +57,21 @@ la compilación pasaba mientras la app no tenía código Kotlin, pero fallaba al
 
 ## Cómo compilar y probar
 
-Con `JAVA_HOME` apuntando al JDK 17 de Android Studio:
+Con `JAVA_HOME` apuntando a un JDK de 17 a 23 (no el 25 que trae Android Studio Rabbit):
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
+$env:JAVA_HOME = '<ruta a un JDK 17>'     # por ejemplo, la carpeta de Eclipse Temurin 17
 .\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest
 .\gradlew.bat connectedDebugAndroidTest
 ```
 
-`connectedDebugAndroidTest` necesita un emulador o dispositivo conectado.
+`connectedDebugAndroidTest` necesita un emulador o dispositivo conectado. Si Gradle no cambió nada, marca las
+pruebas como `UP-TO-DATE` y reutiliza el resultado anterior sin ejecutarlas; para forzar la ejecución añade
+`--rerun` (por ejemplo, `.\gradlew.bat testDebugUnitTest --rerun`).
+
+Las pruebas del preprocesamiento y del modelo están en [preprocesamiento.md](preprocesamiento.md) y
+[modelo-litert.md](modelo-litert.md).
 
 ## Prueba funcional
 
@@ -76,7 +97,14 @@ La imagen de API 29 debe ser `x86_64`: la de `x86` no sirve, porque LiteRT 2.3.2
 
 - No se probó en un dispositivo físico.
 - No se probaron las ABI `arm64-v8a` ni `armeabi-v7a`; los emuladores usaron `x86_64`.
-- No se cargó ni ejecutó ningún modelo. Eso corresponde a #33 y #34.
+- Esta prueba no carga ningún modelo. La carga del `.tflite` y su comparación con Keras están en
+  [modelo-litert.md](modelo-litert.md) (#34).
+
+### Revalidación con el JDK 17 y Android Studio Rabbit 2 (2026-11-02)
+
+Tras actualizar Android Studio se repitieron las pruebas por terminal con Temurin 17.0.13 y `--rerun`:
+`testDebugUnitTest` con 12 pruebas y 0 fallos, y `connectedDebugAndroidTest` en el emulador Pixel 4 API 29 con 8
+pruebas y 0 fallos. El sync de Gradle en el IDE termina correctamente (con la advertencia de Gradle 8.13).
 
 ## Advertencias conocidas
 
