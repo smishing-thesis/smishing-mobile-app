@@ -1,0 +1,619 @@
+{
+  "issue": 34,
+  "generatedAt": "2026-11-03T01:54:01.491Z",
+  "device": {
+    "manufacturer": "Google",
+    "model": "Android SDK built for x86_64",
+    "androidRelease": "10",
+    "sdkInt": 29,
+    "abis": [
+      "x86_64",
+      "x86"
+    ]
+  },
+  "environment": {
+    "airplaneModeOn": true,
+    "declaresInternetPermission": false
+  },
+  "model": {
+    "version": "1.0.0",
+    "threshold": 0.9034745693206787,
+    "sizeBytes": 123544,
+    "sha256": "dfe3fa4148942c1fdbfc7df416bc1bac0521f4dc80bb9d9f356eb95b542dc380",
+    "input": {
+      "type": "FLOAT32",
+      "shape": [
+        1,
+        160
+      ]
+    },
+    "output": {
+      "type": "FLOAT32",
+      "shape": [
+        1,
+        1
+      ]
+    }
+  },
+  "summary": {
+    "cases": 52,
+    "decisionMismatchesVsKeras": 0,
+    "maxAbsDiffVsKeras": 0.0055480897426605225,
+    "meanAbsDiffVsKeras": 8.340081146273476E-4,
+    "maxAbsDiffVsTfliteDesktop": 1.1920928955078125E-7
+  },
+  "cases": [
+    {
+      "id": "ham_plain_01",
+      "category": "ham_plain",
+      "deviceScore": 0.14005854725837708,
+      "kerasScore": 0.13813874125480652,
+      "tfliteDesktopScore": 0.14005856215953827,
+      "absDiffVsKeras": 0.0019198060035705566,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "ham_plain_02",
+      "category": "ham_plain",
+      "deviceScore": 0.7174091339111328,
+      "kerasScore": 0.7146355509757996,
+      "tfliteDesktopScore": 0.7174091339111328,
+      "absDiffVsKeras": 0.002773582935333252,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "otp_01",
+      "category": "otp",
+      "deviceScore": 7.554574403911829E-4,
+      "kerasScore": 7.50237493775785E-4,
+      "tfliteDesktopScore": 7.554582552984357E-4,
+      "absDiffVsKeras": 5.21994661539793E-6,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "smishing_bank_01",
+      "category": "smishing_bank",
+      "deviceScore": 0.9999794960021973,
+      "kerasScore": 0.9999790191650391,
+      "tfliteDesktopScore": 0.9999794960021973,
+      "absDiffVsKeras": 4.76837158203125E-7,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "smishing_bank_02",
+      "category": "smishing_bank",
+      "deviceScore": 0.9936926960945129,
+      "kerasScore": 0.9935172200202942,
+      "tfliteDesktopScore": 0.9936926960945129,
+      "absDiffVsKeras": 1.7547607421875E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "url_01",
+      "category": "url",
+      "deviceScore": 0.9952136278152466,
+      "kerasScore": 0.9952192902565002,
+      "tfliteDesktopScore": 0.9952136278152466,
+      "absDiffVsKeras": 5.662441253662109E-6,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "url_02",
+      "category": "url",
+      "deviceScore": 0.4541228711605072,
+      "kerasScore": 0.45384976267814636,
+      "tfliteDesktopScore": 0.4541228115558624,
+      "absDiffVsKeras": 2.7310848236083984E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "phone_number_01",
+      "category": "phone_number",
+      "deviceScore": 0.8570153117179871,
+      "kerasScore": 0.8578082323074341,
+      "tfliteDesktopScore": 0.8570153713226318,
+      "absDiffVsKeras": 7.929205894470215E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "digits_amounts_dates_01",
+      "category": "digits_amounts_dates",
+      "deviceScore": 0.003122949507087469,
+      "kerasScore": 0.003067419631406665,
+      "tfliteDesktopScore": 0.0031229506712406874,
+      "absDiffVsKeras": 5.552987568080425E-5,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "accents_case_01",
+      "category": "accents_case",
+      "deviceScore": 0.9634630084037781,
+      "kerasScore": 0.9624654650688171,
+      "tfliteDesktopScore": 0.9634630084037781,
+      "absDiffVsKeras": 9.975433349609375E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "enie_umlaut_01",
+      "category": "enie_umlaut",
+      "deviceScore": 0.9974620938301086,
+      "kerasScore": 0.9974461793899536,
+      "tfliteDesktopScore": 0.9974620938301086,
+      "absDiffVsKeras": 1.5914440155029297E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "abbreviation_01",
+      "category": "abbreviation",
+      "deviceScore": 0.4927261173725128,
+      "kerasScore": 0.4940686821937561,
+      "tfliteDesktopScore": 0.4927261769771576,
+      "absDiffVsKeras": 0.0013425648212432861,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "abbreviation_02",
+      "category": "abbreviation",
+      "deviceScore": 0.9377821087837219,
+      "kerasScore": 0.9369635581970215,
+      "tfliteDesktopScore": 0.9377821087837219,
+      "absDiffVsKeras": 8.185505867004395E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "leetspeak_01",
+      "category": "leetspeak",
+      "deviceScore": 0.9959057569503784,
+      "kerasScore": 0.995871901512146,
+      "tfliteDesktopScore": 0.9959057569503784,
+      "absDiffVsKeras": 3.3855438232421875E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "homoglyph_01",
+      "category": "homoglyph",
+      "deviceScore": 0.999977707862854,
+      "kerasScore": 0.9999781250953674,
+      "tfliteDesktopScore": 0.999977707862854,
+      "absDiffVsKeras": 4.172325134277344E-7,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "fullwidth_01",
+      "category": "fullwidth",
+      "deviceScore": 0.9999826550483704,
+      "kerasScore": 0.9999827146530151,
+      "tfliteDesktopScore": 0.9999826550483704,
+      "absDiffVsKeras": 5.9604644775390625E-8,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "ligature_nfkc_01",
+      "category": "ligature_nfkc",
+      "deviceScore": 0.9289660453796387,
+      "kerasScore": 0.9291180372238159,
+      "tfliteDesktopScore": 0.9289660453796387,
+      "absDiffVsKeras": 1.519918441772461E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "emoji_01",
+      "category": "emoji",
+      "deviceScore": 0.9316198229789734,
+      "kerasScore": 0.931987464427948,
+      "tfliteDesktopScore": 0.9316198825836182,
+      "absDiffVsKeras": 3.676414489746094E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "emoji_02",
+      "category": "emoji",
+      "deviceScore": 0.9926078915596008,
+      "kerasScore": 0.992633044719696,
+      "tfliteDesktopScore": 0.9926078915596008,
+      "absDiffVsKeras": 2.5153160095214844E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "emoji_zwj_01",
+      "category": "emoji_zwj",
+      "deviceScore": 0.9858458638191223,
+      "kerasScore": 0.9856730699539185,
+      "tfliteDesktopScore": 0.9858458638191223,
+      "absDiffVsKeras": 1.7279386520385742E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "symbol_insert_01",
+      "category": "symbol_insert",
+      "deviceScore": 0.9997018575668335,
+      "kerasScore": 0.9997019171714783,
+      "tfliteDesktopScore": 0.9997018575668335,
+      "absDiffVsKeras": 5.9604644775390625E-8,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "currency_symbol_01",
+      "category": "currency_symbol",
+      "deviceScore": 0.9849038124084473,
+      "kerasScore": 0.9848979115486145,
+      "tfliteDesktopScore": 0.9849038124084473,
+      "absDiffVsKeras": 5.900859832763672E-6,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "zero_width_01",
+      "category": "zero_width",
+      "deviceScore": 0.9850623607635498,
+      "kerasScore": 0.9846683144569397,
+      "tfliteDesktopScore": 0.9850623607635498,
+      "absDiffVsKeras": 3.940463066101074E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "soft_hyphen_01",
+      "category": "soft_hyphen",
+      "deviceScore": 0.9559928774833679,
+      "kerasScore": 0.9557591676712036,
+      "tfliteDesktopScore": 0.9559928774833679,
+      "absDiffVsKeras": 2.3370981216430664E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "typographic_quotes_01",
+      "category": "typographic_quotes",
+      "deviceScore": 0.9979774355888367,
+      "kerasScore": 0.997999906539917,
+      "tfliteDesktopScore": 0.9979774355888367,
+      "absDiffVsKeras": 2.2470951080322266E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "line_breaks_tabs_01",
+      "category": "line_breaks_tabs",
+      "deviceScore": 0.939409077167511,
+      "kerasScore": 0.9400606155395508,
+      "tfliteDesktopScore": 0.939409077167511,
+      "absDiffVsKeras": 6.515383720397949E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "unicode_spaces_01",
+      "category": "unicode_spaces",
+      "deviceScore": 0.02229941077530384,
+      "kerasScore": 0.022377828136086464,
+      "tfliteDesktopScore": 0.022299394011497498,
+      "absDiffVsKeras": 7.841736078262329E-5,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "unicode_digits_01",
+      "category": "unicode_digits",
+      "deviceScore": 0.7163352966308594,
+      "kerasScore": 0.7170897126197815,
+      "tfliteDesktopScore": 0.7163354158401489,
+      "absDiffVsKeras": 7.544159889221191E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "unicode_lowercase_01",
+      "category": "unicode_lowercase",
+      "deviceScore": 0.9951677918434143,
+      "kerasScore": 0.9952126145362854,
+      "tfliteDesktopScore": 0.9951677918434143,
+      "absDiffVsKeras": 4.482269287109375E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "long_text_01",
+      "category": "long_text",
+      "deviceScore": 0.9999659061431885,
+      "kerasScore": 0.9999653100967407,
+      "tfliteDesktopScore": 0.9999659061431885,
+      "absDiffVsKeras": 5.960464477539062E-7,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_01",
+      "category": "length_boundary",
+      "deviceScore": 0.030825024470686913,
+      "kerasScore": 0.030487291514873505,
+      "tfliteDesktopScore": 0.030825013294816017,
+      "absDiffVsKeras": 3.377329558134079E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_02",
+      "category": "length_boundary",
+      "deviceScore": 0.03606637567281723,
+      "kerasScore": 0.03575243428349495,
+      "tfliteDesktopScore": 0.03606637194752693,
+      "absDiffVsKeras": 3.139413893222809E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_03",
+      "category": "length_boundary",
+      "deviceScore": 0.03606637567281723,
+      "kerasScore": 0.03575243428349495,
+      "tfliteDesktopScore": 0.03606637194752693,
+      "absDiffVsKeras": 3.139413893222809E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "min_length_01",
+      "category": "min_length",
+      "deviceScore": 0.28443220257759094,
+      "kerasScore": 0.2788841128349304,
+      "tfliteDesktopScore": 0.28443217277526855,
+      "absDiffVsKeras": 0.0055480897426605225,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "min_length_02",
+      "category": "min_length",
+      "deviceScore": 0.28443220257759094,
+      "kerasScore": 0.2788841128349304,
+      "tfliteDesktopScore": 0.28443217277526855,
+      "absDiffVsKeras": 0.0055480897426605225,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "min_length_03",
+      "category": "min_length",
+      "deviceScore": 0.9926078915596008,
+      "kerasScore": 0.992633044719696,
+      "tfliteDesktopScore": 0.9926078915596008,
+      "absDiffVsKeras": 2.5153160095214844E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "empty_01",
+      "category": "empty",
+      "deviceScore": 0.9926078915596008,
+      "kerasScore": 0.992633044719696,
+      "tfliteDesktopScore": 0.9926078915596008,
+      "absDiffVsKeras": 2.5153160095214844E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "empty_02",
+      "category": "empty",
+      "deviceScore": 0.9926078915596008,
+      "kerasScore": 0.992633044719696,
+      "tfliteDesktopScore": 0.9926078915596008,
+      "absDiffVsKeras": 2.5153160095214844E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_01",
+      "category": "legitimate",
+      "deviceScore": 0.5494310855865479,
+      "kerasScore": 0.5441766977310181,
+      "tfliteDesktopScore": 0.5494312047958374,
+      "absDiffVsKeras": 0.005254387855529785,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_02",
+      "category": "legitimate",
+      "deviceScore": 0.7260955572128296,
+      "kerasScore": 0.7255135178565979,
+      "tfliteDesktopScore": 0.7260954976081848,
+      "absDiffVsKeras": 5.820393562316895E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_03",
+      "category": "smishing",
+      "deviceScore": 0.2543026804924011,
+      "kerasScore": 0.2525790333747864,
+      "tfliteDesktopScore": 0.2543027400970459,
+      "absDiffVsKeras": 0.001723647117614746,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_04",
+      "category": "obfuscated",
+      "deviceScore": 0.0743347555398941,
+      "kerasScore": 0.07481660693883896,
+      "tfliteDesktopScore": 0.0743347629904747,
+      "absDiffVsKeras": 4.8185139894485474E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_05",
+      "category": "smishing",
+      "deviceScore": 0.97279292345047,
+      "kerasScore": 0.9729598164558411,
+      "tfliteDesktopScore": 0.97279292345047,
+      "absDiffVsKeras": 1.6689300537109375E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_06",
+      "category": "obfuscated",
+      "deviceScore": 0.7758349180221558,
+      "kerasScore": 0.7735795974731445,
+      "tfliteDesktopScore": 0.775834858417511,
+      "absDiffVsKeras": 0.0022553205490112305,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_07",
+      "category": "legitimate",
+      "deviceScore": 0.14005854725837708,
+      "kerasScore": 0.13813874125480652,
+      "tfliteDesktopScore": 0.14005856215953827,
+      "absDiffVsKeras": 0.0019198060035705566,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_08",
+      "category": "legitimate",
+      "deviceScore": 7.554574403911829E-4,
+      "kerasScore": 7.50237493775785E-4,
+      "tfliteDesktopScore": 7.554582552984357E-4,
+      "absDiffVsKeras": 5.21994661539793E-6,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_09",
+      "category": "legitimate",
+      "deviceScore": 0.5240660309791565,
+      "kerasScore": 0.5190658569335938,
+      "tfliteDesktopScore": 0.5240660309791565,
+      "absDiffVsKeras": 0.005000174045562744,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_10",
+      "category": "smishing",
+      "deviceScore": 0.9999794960021973,
+      "kerasScore": 0.9999790191650391,
+      "tfliteDesktopScore": 0.9999794960021973,
+      "absDiffVsKeras": 4.76837158203125E-7,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_11",
+      "category": "smishing",
+      "deviceScore": 0.9936926960945129,
+      "kerasScore": 0.9935172200202942,
+      "tfliteDesktopScore": 0.9936926960945129,
+      "absDiffVsKeras": 1.7547607421875E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_12",
+      "category": "smishing",
+      "deviceScore": 0.8640660643577576,
+      "kerasScore": 0.8634764552116394,
+      "tfliteDesktopScore": 0.8640660643577576,
+      "absDiffVsKeras": 5.896091461181641E-4,
+      "deviceSmishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_13",
+      "category": "obfuscated",
+      "deviceScore": 0.9959057569503784,
+      "kerasScore": 0.995871901512146,
+      "tfliteDesktopScore": 0.9959057569503784,
+      "absDiffVsKeras": 3.3855438232421875E-5,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_14",
+      "category": "obfuscated",
+      "deviceScore": 0.9586292505264282,
+      "kerasScore": 0.9577010869979858,
+      "tfliteDesktopScore": 0.9586292505264282,
+      "absDiffVsKeras": 9.281635284423828E-4,
+      "deviceSmishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    }
+  ]
+}
