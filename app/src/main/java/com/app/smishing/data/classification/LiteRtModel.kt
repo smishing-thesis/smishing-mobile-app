@@ -2,6 +2,7 @@ package com.app.smishing.data.classification
 
 import android.content.Context
 import com.app.smishing.domain.classification.ModelInfo
+import com.app.smishing.domain.classification.ModelScorer
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer
@@ -24,6 +25,9 @@ data class ModelDescription(
 /**
  * Carga `smishing_charcnn.tflite` con LiteRT, sin red, y devuelve el puntaje de una entrada ya preprocesada.
  * La decisión (puntaje contra umbral) es de [ModelInfo.isSmishing].
+ *
+ * El intérprete de LiteRT no admite llamadas simultáneas, así que [score] y [close] se serializan: varios SMS
+ * pueden llegar a la vez y se evalúan uno tras otro.
  */
 class LiteRtModel private constructor(
     private val interpreter: Interpreter,
@@ -31,9 +35,10 @@ class LiteRtModel private constructor(
     private val inputBytes: Int,
     private val outputBytes: Int,
     val description: ModelDescription,
-) : AutoCloseable {
+) : ModelScorer, AutoCloseable {
 
-    fun score(inputIds: List<Int>): Float {
+    @Synchronized
+    override fun score(inputIds: List<Int>): Float {
         val input = ByteBuffer.allocateDirect(inputBytes).order(ByteOrder.nativeOrder())
         when (inputType) {
             DataType.INT32 -> inputIds.forEach { input.putInt(it) }
@@ -50,6 +55,7 @@ class LiteRtModel private constructor(
         return output.asFloatBuffer().get(0)
     }
 
+    @Synchronized
     override fun close() = interpreter.close()
 
     companion object {

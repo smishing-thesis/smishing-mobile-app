@@ -58,5 +58,8 @@ modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un p
 - **Paquetes por capas** bajo `com.app.smishing`: `domain` (lógica en Kotlin puro, sin dependencias de Android) y
   `data` (lectura de archivos, assets, Room, DataStore). Un solo módulo de Gradle (`app`) por ahora.
 - **JSON:** `org.json` (viene en Android); en pruebas de la JVM se añade como dependencia de prueba.
+- **Clasificación:** el contrato `MessageClassifier` vive en `domain`; `OnDeviceClassifier` (en `data`) lo implementa con
+  LiteRT. El modelo se carga una vez y las llamadas se serializan. Cómo se comparte la instancia en la app sigue
+  por decidir con la inyección de dependencias. Detalle en [docs/clasificacion-local.md](../docs/clasificacion-local.md).
 - **Pruebas compartidas:** `app/src/sharedTest` se compila en `test` (JVM) y en `androidTest` (dispositivo), para
   correr los mismos vectores en ambos. Detalle en [docs/preprocesamiento.md](../docs/preprocesamiento.md).

@@ -1,0 +1,479 @@
+{
+  "issue": 7,
+  "generatedAt": "2026-11-07T19:47:25.161Z",
+  "device": {
+    "manufacturer": "Google",
+    "model": "Android SDK built for x86_64",
+    "androidRelease": "10",
+    "sdkInt": 29,
+    "abis": [
+      "x86_64",
+      "x86"
+    ]
+  },
+  "environment": {
+    "airplaneModeOn": true,
+    "declaresInternetPermission": false
+  },
+  "modelVersion": "1.0.0",
+  "preprocessingVersion": "1.1.0",
+  "summary": {
+    "cases": 52,
+    "classified": 46,
+    "notClassified": 6,
+    "decisionMismatchesVsKeras": 0,
+    "inputPolicyMismatches": 0
+  },
+  "cases": [
+    {
+      "id": "ham_plain_01",
+      "category": "ham_plain",
+      "outcome": "classified",
+      "score": 0.14005854725837708,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "ham_plain_02",
+      "category": "ham_plain",
+      "outcome": "classified",
+      "score": 0.7174091339111328,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "otp_01",
+      "category": "otp",
+      "outcome": "classified",
+      "score": 7.554574403911829E-4,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "smishing_bank_01",
+      "category": "smishing_bank",
+      "outcome": "classified",
+      "score": 0.9999794960021973,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "smishing_bank_02",
+      "category": "smishing_bank",
+      "outcome": "classified",
+      "score": 0.9936926960945129,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "url_01",
+      "category": "url",
+      "outcome": "classified",
+      "score": 0.9952136278152466,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "url_02",
+      "category": "url",
+      "outcome": "classified",
+      "score": 0.4541228711605072,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "phone_number_01",
+      "category": "phone_number",
+      "outcome": "classified",
+      "score": 0.8570153117179871,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "digits_amounts_dates_01",
+      "category": "digits_amounts_dates",
+      "outcome": "classified",
+      "score": 0.003122949507087469,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "accents_case_01",
+      "category": "accents_case",
+      "outcome": "classified",
+      "score": 0.9634630084037781,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "enie_umlaut_01",
+      "category": "enie_umlaut",
+      "outcome": "classified",
+      "score": 0.9974620938301086,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "abbreviation_01",
+      "category": "abbreviation",
+      "outcome": "classified",
+      "score": 0.4927261173725128,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "abbreviation_02",
+      "category": "abbreviation",
+      "outcome": "classified",
+      "score": 0.9377821087837219,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "leetspeak_01",
+      "category": "leetspeak",
+      "outcome": "classified",
+      "score": 0.9959057569503784,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "homoglyph_01",
+      "category": "homoglyph",
+      "outcome": "classified",
+      "score": 0.999977707862854,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "fullwidth_01",
+      "category": "fullwidth",
+      "outcome": "classified",
+      "score": 0.9999826550483704,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "ligature_nfkc_01",
+      "category": "ligature_nfkc",
+      "outcome": "classified",
+      "score": 0.9289660453796387,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "emoji_01",
+      "category": "emoji",
+      "outcome": "classified",
+      "score": 0.9316198229789734,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "emoji_02",
+      "category": "emoji",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "emoji_zwj_01",
+      "category": "emoji_zwj",
+      "outcome": "classified",
+      "score": 0.9858458638191223,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "symbol_insert_01",
+      "category": "symbol_insert",
+      "outcome": "classified",
+      "score": 0.9997018575668335,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "currency_symbol_01",
+      "category": "currency_symbol",
+      "outcome": "classified",
+      "score": 0.9849038124084473,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "zero_width_01",
+      "category": "zero_width",
+      "outcome": "classified",
+      "score": 0.9850623607635498,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "soft_hyphen_01",
+      "category": "soft_hyphen",
+      "outcome": "classified",
+      "score": 0.9559928774833679,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "typographic_quotes_01",
+      "category": "typographic_quotes",
+      "outcome": "classified",
+      "score": 0.9979774355888367,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "line_breaks_tabs_01",
+      "category": "line_breaks_tabs",
+      "outcome": "classified",
+      "score": 0.939409077167511,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "unicode_spaces_01",
+      "category": "unicode_spaces",
+      "outcome": "classified",
+      "score": 0.02229941077530384,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "unicode_digits_01",
+      "category": "unicode_digits",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "unicode_lowercase_01",
+      "category": "unicode_lowercase",
+      "outcome": "classified",
+      "score": 0.9951677918434143,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "long_text_01",
+      "category": "long_text",
+      "outcome": "classified",
+      "score": 0.9999659061431885,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_01",
+      "category": "length_boundary",
+      "outcome": "classified",
+      "score": 0.030825024470686913,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_02",
+      "category": "length_boundary",
+      "outcome": "classified",
+      "score": 0.03606637567281723,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "length_boundary_03",
+      "category": "length_boundary",
+      "outcome": "classified",
+      "score": 0.03606637567281723,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "min_length_01",
+      "category": "min_length",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "min_length_02",
+      "category": "min_length",
+      "outcome": "classified",
+      "score": 0.28443220257759094,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "min_length_03",
+      "category": "min_length",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "empty_01",
+      "category": "empty",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "empty_02",
+      "category": "empty",
+      "outcome": "not_classified",
+      "reason": "TOO_SHORT"
+    },
+    {
+      "id": "robustness_01",
+      "category": "legitimate",
+      "outcome": "classified",
+      "score": 0.5494310855865479,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_02",
+      "category": "legitimate",
+      "outcome": "classified",
+      "score": 0.7260955572128296,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_03",
+      "category": "smishing",
+      "outcome": "classified",
+      "score": 0.2543026804924011,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_04",
+      "category": "obfuscated",
+      "outcome": "classified",
+      "score": 0.0743347555398941,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_05",
+      "category": "smishing",
+      "outcome": "classified",
+      "score": 0.97279292345047,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_06",
+      "category": "obfuscated",
+      "outcome": "classified",
+      "score": 0.7758349180221558,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_07",
+      "category": "legitimate",
+      "outcome": "classified",
+      "score": 0.14005854725837708,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_08",
+      "category": "legitimate",
+      "outcome": "classified",
+      "score": 7.554574403911829E-4,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_09",
+      "category": "legitimate",
+      "outcome": "classified",
+      "score": 0.5240660309791565,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_10",
+      "category": "smishing",
+      "outcome": "classified",
+      "score": 0.9999794960021973,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_11",
+      "category": "smishing",
+      "outcome": "classified",
+      "score": 0.9936926960945129,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_12",
+      "category": "smishing",
+      "outcome": "classified",
+      "score": 0.8640660643577576,
+      "smishing": false,
+      "kerasSmishing": false,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_13",
+      "category": "obfuscated",
+      "outcome": "classified",
+      "score": 0.9959057569503784,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    },
+    {
+      "id": "robustness_14",
+      "category": "obfuscated",
+      "outcome": "classified",
+      "score": 0.9586292505264282,
+      "smishing": true,
+      "kerasSmishing": true,
+      "decisionMatches": true
+    }
+  ]
+}
