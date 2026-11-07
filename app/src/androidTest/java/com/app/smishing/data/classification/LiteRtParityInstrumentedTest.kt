@@ -1,11 +1,9 @@
 package com.app.smishing.data.classification
 
-import android.content.pm.PackageManager
-import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.app.smishing.DeviceReport
 import com.app.smishing.data.preprocessing.PreprocessingConfigLoader
 import com.app.smishing.domain.preprocessing.TextPreprocessor
 import org.json.JSONArray
@@ -14,7 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 import java.time.Instant
 import kotlin.math.abs
 
@@ -91,8 +88,8 @@ class LiteRtParityInstrumentedTest {
         val report = JSONObject()
             .put("issue", 34)
             .put("generatedAt", Instant.now().toString())
-            .put("device", deviceInfo())
-            .put("environment", environmentInfo())
+            .put("device", DeviceReport.deviceInfo())
+            .put("environment", DeviceReport.environmentInfo(context))
             .put(
                 "model",
                 JSONObject()
@@ -113,33 +110,9 @@ class LiteRtParityInstrumentedTest {
                     .put("maxAbsDiffVsTfliteDesktop", maxDiffVsTflite),
             )
             .put("cases", results)
-        writeReport(report)
+        DeviceReport.write(context, REPORT_NAME, report, TAG)
 
         assertEquals("Decisiones distintas a Keras en el dispositivo", 0, decisionMismatches)
-    }
-
-    private fun deviceInfo() = JSONObject()
-        .put("manufacturer", Build.MANUFACTURER)
-        .put("model", Build.MODEL)
-        .put("androidRelease", Build.VERSION.RELEASE)
-        .put("sdkInt", Build.VERSION.SDK_INT)
-        .put("abis", JSONArray(Build.SUPPORTED_ABIS.toList()))
-
-    private fun environmentInfo(): JSONObject {
-        val permissions = context.packageManager
-            .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty()
-        return JSONObject()
-            .put("airplaneModeOn", Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) == 1)
-            .put("declaresInternetPermission", "android.permission.INTERNET" in permissions)
-    }
-
-    // AGP recoge additionalTestOutputDir tras la prueba; si no existe, queda en la carpeta externa de la app.
-    private fun writeReport(report: JSONObject) {
-        val dir = InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")?.let(::File)
-            ?: checkNotNull(context.getExternalFilesDir(null))
-        dir.mkdirs()
-        File(dir, REPORT_NAME).writeText(report.toString(2))
-        Log.i(TAG, "Reporte escrito en ${File(dir, REPORT_NAME)}")
     }
 
     private companion object {
