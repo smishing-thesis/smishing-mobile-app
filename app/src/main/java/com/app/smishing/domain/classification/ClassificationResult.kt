@@ -19,6 +19,9 @@ sealed interface ClassificationResult {
         enum class Reason {
             /** Menos caracteres limpios que el mínimo de la política de entrada del modelo. */
             TOO_SHORT,
+
+            /** Falta el rol de SMS o algún permiso: el análisis está suspendido (#3). */
+            ANALYSIS_SUSPENDED,
         }
     }
 }

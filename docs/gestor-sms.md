@@ -35,15 +35,16 @@ Para ofrecer a una app como gestor de SMS, Android exige cuatro componentes: una
 `WAP_PUSH_DELIVER` (con `BROADCAST_WAP_PUSH`); y un servicio de `RESPOND_VIA_MESSAGE` (con
 `SEND_RESPOND_VIA_MESSAGE`). Los cuatro están declarados en `AndroidManifest.xml`.
 
-**Permisos.** Esta historia no agrega ninguna etiqueta `uses-permission`. Los permisos de SMS se piden después del rol y
-solo los necesarios (#3). Los permisos del manifest que aparecen en los componentes (`BROADCAST_SMS`, etc.) son los
-que solo el sistema puede tener: protegen los componentes y no los pide la app.
+**Permisos.** Esta historia (#2) no agregó ninguna etiqueta `uses-permission`. Los permisos de SMS (`READ_SMS` y
+`RECEIVE_SMS`) llegaron con #3, se piden después del rol y solo los necesarios: ver [permisos-sms.md](permisos-sms.md).
+Los permisos del manifest que aparecen en los componentes (`BROADCAST_SMS`, etc.) son los que solo el sistema puede
+tener: protegen los componentes y no los pide la app.
 
 ## Decisiones provisionales
 
 - **"Omitir por ahora"** lleva a una tarjeta "Protección apagada" con el botón "Activar protección", que vuelve al
-  paso 2. Es un destino provisional, tomado del diseño de la pantalla de inicio inactiva, hasta que exista esa
-  pantalla (#17) y el resto del onboarding (#3).
+  paso 2 o 3, según dónde se omitió. Es un destino provisional, tomado del diseño de la pantalla de inicio inactiva,
+  hasta que exista esa pantalla (#17) y el paso 1 del onboarding.
 - **Textos fuera del diseño.** El diseño no tiene el estado "ya tiene el rol" ni "el teléfono no lo ofrece". Los textos
   de esos dos estados (`default_sms_held_message` y `default_sms_unavailable`) son míos y deben revisarse con quien
   diseñó.
@@ -60,14 +61,21 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 ```
 
 - `SmsRoleStateTest` (JVM): la regla de los tres estados.
-- `SmsRoleInstrumentedTest` (dispositivo): el sistema acepta a la app como gestor de SMS, el estado cambia al quitarlo,
-  se ofrece la solicitud, y `MainActivity` vuelve a comprobar el rol al regresar a la app (se concede, se quita y se
-  vuelve a conceder con comandos de shell, como lo haría la persona en los ajustes).
+- `SmsRoleInstrumentedTest` (dispositivo): el sistema ofrece la solicitud del rol, y el flujo `roleFirstThenPermissionsThenAnalysis`
+  comprueba que sin el rol la app pide primero el rol, que el sistema acepta a la app como gestor de SMS al concederlo
+  con un comando de shell (como lo haría la persona) y que `MainActivity` lo nota al volver a la app.
 - `DefaultSmsRoleScreenTest` (dispositivo): los tres estados de la pantalla, los botones y el área táctil de 48 dp.
 
-## Resultado (2026-11-08)
+> **Cambio con #3.** Esta historia tenía pruebas que concedían y **quitaban** el rol dentro de la prueba. Al declarar los
+> permisos de SMS (#3), quitar el rol los retira y Android mata el proceso de la app, que es el mismo en que corre la
+> prueba (`Instrumentation run failed due to Process crashed`). Esas pruebas se reemplazaron por un flujo que solo
+> avanza; que la app nota que el rol se quitó se comprueba a mano, como se describe abajo. Ver
+> [permisos-sms.md](permisos-sms.md).
 
-Emulador Pixel 4, Android 10 (API 29), x86_64, emulador 37.2.13, con Temurin 17 y `--rerun`.
+## Resultado al cerrar #2 (2026-11-08)
+
+Emulador Pixel 4, Android 10 (API 29), x86_64, emulador 37.2.13, con Temurin 17 y `--rerun`. Estos son los números de
+ese momento; los actuales, con #3, están en [permisos-sms.md](permisos-sms.md).
 
 | Ejecución | Pruebas | Fallos |
 |---|---|---|
@@ -92,4 +100,5 @@ sistema devolvió la función a Google Messages por su cuenta.
 - El estado `Unavailable` solo se probó con la pantalla; no se probó en un dispositivo real sin telefonía.
 - El diálogo del sistema se vio en inglés porque el emulador está en inglés; lo traduce Android, no la app.
 - No se probó con TalkBack ni con letra grande.
-- No se guarda ni se procesa ningún SMS: eso es #4. No hay flujo de permisos: eso es #3.
+- No se guarda ni se procesa ningún SMS: eso es #4. Los permisos se piden en #3.
+- Hoy ninguna prueba automática quita el rol; que la app lo nota al quitarlo se comprobó solo a mano (ver arriba).
