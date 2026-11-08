@@ -9,7 +9,7 @@ Registro del entorno de build del prototipo (issue #1, RNF-08). Última verifica
 | Nombre / paquete | Smishing Detector / `com.app.smishing` |
 | minSdk | 29 |
 | targetSdk | 34 |
-| compileSdk | 35 (lo exige `androidx.core 1.15.0`) |
+| compileSdk | 36 (lo exigen `androidx.core` 1.18, que trae `activity-compose`, y Compose; AGP 8.13.2 admite hasta 36) |
 | Java (fuente y destino) | 11 |
 | Lenguaje | Kotlin, scripts de Gradle en Kotlin DSL |
 
@@ -46,6 +46,20 @@ Las versiones están en `gradle/libs.versions.toml`.
 | `com.google.ai.edge.litert:litert` | 2.3.2 | Runtime LiteRT. La API usada es `org.tensorflow.lite.Interpreter`, compatible con modelos TFLite exportados desde Keras. |
 
 Solo para pruebas en la JVM: `org.json:json` 20260814 (en el dispositivo se usa el `org.json` de Android).
+
+## Interfaz (Compose)
+
+| Dependencia | Versión | Motivo |
+|---|---|---|
+| `androidx.compose:compose-bom` | 2026.06.01 (Compose UI 1.11.4, Material 3 1.4.0) | fija las versiones de Compose |
+| `androidx.activity:activity-compose` | 1.13.0 | actividades con Compose |
+| `org.jetbrains.kotlin.plugin.compose` | 2.4.21 (la de Kotlin) | compilador de Compose |
+| `material-icons-core` | del BOM | iconos básicos; el set extendido se evita por peso |
+
+**Por qué no el BOM más nuevo.** Compose UI 1.12 (BOM 2026.08.00 y 2026.09.00) exige AGP 9.1 o superior, y el proyecto
+usa AGP 8.13.2 por lo que soporta Android Studio. El BOM 2026.06.01 es el último que pide solo AGP 8.6. Para pasar a
+Compose 1.12 habría que subir AGP a 9.x, con su propia verificación. Detalle de la librería en
+[design-system.md](design-system.md).
 
 El AAR incluye `libLiteRt.so` para `arm64-v8a`, `armeabi-v7a` y `x86_64`. No incluye `x86`.
 
