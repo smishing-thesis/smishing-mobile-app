@@ -22,8 +22,10 @@ data class ConversationMessage(
     val body: String,
     val atMillis: Long,
     val direction: MessageDirection,
+    /** Un mensaje enviado que el sistema no pudo entregar a la radio. */
+    val failed: Boolean = false,
 ) {
-    override fun toString() = "ConversationMessage(id=$id, atMillis=$atMillis, direction=$direction)"
+    override fun toString() = "ConversationMessage(id=$id, atMillis=$atMillis, direction=$direction, failed=$failed)"
 }
 
 /** Una fila del buzón, tal como la entrega el sistema, para armar la lista de conversaciones. */

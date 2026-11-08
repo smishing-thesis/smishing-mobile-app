@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application
         android:allowBackup="true"
@@ -56,6 +57,11 @@
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
             </intent-filter>
         </receiver>
+
+        <!-- Resultado de enviar un SMS (#6): solo la app lo recibe, a través de su PendingIntent. -->
+        <receiver
+            android:name=".data.sms.SmsSentReceiver"
+            android:exported="false" />
 
         <!-- MMS entrantes: solo el sistema puede enviarlos (BROADCAST_WAP_PUSH). -->
         <receiver

@@ -8,10 +8,12 @@ análisis si se revocan. Última verificación: 2026-11-08.
 | Permiso | Para qué | Cuándo se pide | Evidencia de que hace falta |
 |---|---|---|---|
 | `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5, ya hecha ([conversaciones.md](conversaciones.md)) |
+| `SEND_SMS` | enviar los SMS que la persona redacta (#6) | el rol lo concede; si falta, la app lo pide al enviar | **comprobado en API 29** con el rol concedido: Android lo otorga solo (`GRANTED_BY_ROLE`) y el envío funciona; ver [enviar-sms.md](enviar-sms.md). **No** forma parte de la compuerta del análisis: analizar no necesita enviar |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
-No se piden otros. `SEND_SMS` se agregará en #6, que es la historia que envía. Tampoco se pide `RECEIVE_MMS` ni
-`RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su motivo en esta tabla.
+No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
+hecha), ni `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
+motivo en esta tabla.
 
 ## Cómo los otorga Android
 

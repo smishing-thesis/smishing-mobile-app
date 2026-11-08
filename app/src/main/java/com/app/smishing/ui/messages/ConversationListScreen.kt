@@ -16,6 +16,7 @@ import com.app.smishing.R
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.messaging.formatConversationDate
 import com.app.smishing.ui.designsystem.components.ConversationRow
+import com.app.smishing.ui.designsystem.components.SmishingExtendedFab
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -31,38 +32,47 @@ private val SpanishLocale = Locale.forLanguageTag("es")
  * La lista de mensajes (#5): una fila por conversación, con el remitente, la fecha y el inicio del último mensaje.
  * [conversations] es `null` mientras se leen del buzón.
  *
- * Todavía no tiene el botón "Escribir" (#6), la búsqueda, la advertencia de estafa (#10) ni la navegación inferior.
+ * El botón "Escribir" abre una conversación nueva (#6). Todavía no tiene la búsqueda, la advertencia de estafa (#10) ni la
+ * navegación inferior.
  */
 @Composable
 fun ConversationListScreen(
     conversations: List<Conversation>?,
     nowMillis: Long,
     onOpen: (Conversation) -> Unit,
+    onCompose: () -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
-    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
-        SmishingTopBar(title = stringResource(R.string.messages_title), style = TopBarStyle.Plain)
-        when {
-            conversations == null -> Unit
-            conversations.isEmpty() -> Box(Modifier.fillMaxSize().padding(Spacing.Md), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.messages_empty),
-                    style = SmishingTypography.BodyMedium,
-                    color = SmishingPalette.TextSecondary,
-                )
-            }
-            else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(conversations, key = { it.threadId }) { conversation ->
-                    ConversationRow(
-                        sender = conversation.address,
-                        time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
-                        snippet = conversation.snippet,
-                        onClick = { onOpen(conversation) },
+    Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SmishingTopBar(title = stringResource(R.string.messages_title), style = TopBarStyle.Plain)
+            when {
+                conversations == null -> Unit
+                conversations.isEmpty() -> Box(Modifier.fillMaxSize().padding(Spacing.Md), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(R.string.messages_empty),
+                        style = SmishingTypography.BodyMedium,
+                        color = SmishingPalette.TextSecondary,
                     )
+                }
+                else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(conversations, key = { it.threadId }) { conversation ->
+                        ConversationRow(
+                            sender = conversation.address,
+                            time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
+                            snippet = conversation.snippet,
+                            onClick = { onOpen(conversation) },
+                        )
+                    }
                 }
             }
         }
+        SmishingExtendedFab(
+            text = stringResource(R.string.compose_action),
+            onClick = onCompose,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.Md),
+        )
     }
 }

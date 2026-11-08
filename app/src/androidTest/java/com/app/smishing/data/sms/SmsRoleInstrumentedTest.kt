@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -275,6 +276,89 @@ class SmsRoleInstrumentedTest {
         }
     }
 
+    /**
+     * #6: se redacta un mensaje con la interfaz (Escribir, número, texto, Enviar), el mensaje aparece en su conversación y el
+     * sistema lo marca como enviado cuando la radio lo acepta. El destino es el propio emulador (5554), que lo entrega.
+     * Datos sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenAMessageIsSentToTheChosenRecipientAndAppearsInItsConversation() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        assertEquals("Con el rol, Android debía conceder también el permiso de enviar", true, hasSendPermission())
+        deleteEmulatorMessages()
+        try {
+            val text = ECHO_TEXT
+            ActivityScenario.launch(MainActivity::class.java).use {
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.compose_action)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.compose_action)).performClick()
+
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.new_message_title)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.new_message_recipient_hint)).performTextInput(EMULATOR_NUMBER)
+                compose.onNodeWithText(context.getString(R.string.new_message_body_hint)).performTextInput(text)
+                compose.onNodeWithText(context.getString(R.string.new_message_send)).performClick()
+
+                // Aparece en su conversación, a la derecha, con el número elegido en la barra.
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.conversation_subtitle)) > 0 && count(text) > 0 }
+                compose.onNodeWithText(EMULATOR_NUMBER).assertIsDisplayed()
+                compose.onNode(
+                    hasText(text).and(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.message_sent))),
+                ).assertIsDisplayed()
+            }
+
+            // En el buzón: una sola fila con ese texto, en una conversación, y la radio la acepta (enviado, no fallido).
+            val type = { rowTypes(text).singleOrNull() }
+            val deadline = System.currentTimeMillis() + TIMEOUT_MS
+            while (type() != Telephony.Sms.MESSAGE_TYPE_SENT && System.currentTimeMillis() < deadline) Thread.sleep(100)
+            assertEquals("Debía haber una sola fila saliente", 1, rowTypes(text).size)
+            assertEquals(
+                "El sistema debía marcarlo enviado (2); salió ${type()} (4 = saliente sin respuesta, 5 = fallido)",
+                Telephony.Sms.MESSAGE_TYPE_SENT,
+                type(),
+            )
+            // Está en una conversación como mensaje enviado y no fallido.
+            val repository = TelephonyConversationRepository(context)
+            val outgoing = repository.conversations().map { it.threadId }
+                .flatMap { repository.messages(it) }
+                .single { it.body == text && it.direction == com.app.smishing.domain.messaging.MessageDirection.Outgoing }
+            assertEquals(false, outgoing.failed)
+
+            // El destinatario lo recibió: el emulador entrega a sí mismo lo que se envía a su número, y llega una sola vez.
+            waitUntil { incomingCount(text) >= 1 }
+            Thread.sleep(1_000)
+            assertEquals("La copia recibida debía llegar una sola vez", 1, incomingCount(text))
+        } finally {
+            deleteEmulatorMessages()
+        }
+    }
+
+    private fun hasSendPermission() =
+        context.checkSelfPermission(android.Manifest.permission.SEND_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+    /** Los tipos de las filas del buzón con este texto (el recibido por el eco del emulador tiene otro texto o tipo). */
+    private fun rowTypes(body: String): List<Int> =
+        context.contentResolver.query(
+            Uri.parse("content://sms"),
+            arrayOf(Telephony.Sms.TYPE),
+            "${Telephony.Sms.BODY} = ? AND ${Telephony.Sms.TYPE} != ?",
+            arrayOf(body, Telephony.Sms.MESSAGE_TYPE_INBOX.toString()),
+            null,
+        )!!.use { c -> generateSequence { if (c.moveToNext()) c.getInt(0) else null }.toList() }
+
+    private fun incomingCount(body: String): Int =
+        context.contentResolver.query(
+            Telephony.Sms.Inbox.CONTENT_URI,
+            arrayOf(Telephony.Sms._ID),
+            "${Telephony.Sms.BODY} = ?",
+            arrayOf(body),
+            null,
+        )!!.use { it.count }
+
+    private fun deleteEmulatorMessages() {
+        context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.ADDRESS} LIKE ?", arrayOf("%$EMULATOR_NUMBER%"))
+        context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.BODY} = ?", arrayOf(ECHO_TEXT))
+    }
+
     private fun insertSent(sender: String, body: String, at: Long) {
         val values = ContentValues().apply {
             put(Telephony.Sms.ADDRESS, "+$sender")
@@ -341,6 +425,9 @@ class SmsRoleInstrumentedTest {
         const val SENDER_E = "10000000005"
         // +999 no es un código de país asignado: son números imposibles, y bien distintos entre sí para que el proveedor
         // de SMS no los fusione en una sola conversación (compara los números de forma laxa).
+        // El número del propio emulador: lo que se le envía, él mismo lo entrega.
+        const val EMULATOR_NUMBER = "5554"
+        const val ECHO_TEXT = "Prueba de envío desde la app."
         const val BULK_PREFIX = "+999"
         const val TIMEOUT_MS = 10_000L
     }

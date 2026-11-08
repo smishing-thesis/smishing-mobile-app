@@ -3,8 +3,9 @@
 Registro de #5 (RF-16): la persona consulta sus conversaciones, con remitente, fecha y los mensajes recibidos y
 enviados, sin salir de la app. Última verificación: 2026-11-08.
 
-> **ATENCIÓN.** La app sigue sin ser apta para un teléfono con mensajes reales: no avisa de los mensajes nuevos, no
-> permite responder (#6) y los MMS se pierden. Úsala como gestor de SMS solo en un emulador.
+> **ATENCIÓN.** La app sigue sin ser apta para un teléfono con mensajes reales: no avisa de los mensajes nuevos y los MMS
+> se pierden. Úsala como gestor de SMS solo en un emulador. Responder y redactar llegaron con #6
+> ([enviar-sms.md](enviar-sms.md)).
 
 Las pantallas siguen el diseño "Mensajería" (Figma TP1): la lista de **Mensajes** y la **conversación**.
 
@@ -50,8 +51,8 @@ porque el color y el lado no lo transmiten. El botón de volver tiene su descrip
   guarda el sistema, sin darle el formato del diseño ("987 654 321").
 - **Texto fuera del diseño:** el de la lista vacía ("Todavía no tiene conversaciones."). Revisarlo con quien diseñó.
 - **Lo que el diseño muestra y #5 no incluye**, porque es de otras historias: el chip y el aviso de riesgo ("Cuidado:
-  Posible estafa", "Ver riesgo": #10 y #12), el botón "Escribir", la barra para redactar y "Nuevo mensaje" (#6), la
-  búsqueda y el menú de la conversación, y la navegación inferior (sus otras pestañas todavía no existen). Hoy, tras el
+  Posible estafa", "Ver riesgo": #10 y #12), el botón "Escribir", la barra para redactar y "Nuevo mensaje" (#6, ya
+  hechos), la búsqueda y el menú de la conversación, y la navegación inferior (sus otras pestañas todavía no existen). Hoy, tras el
   onboarding, la lista de mensajes es la pantalla principal.
 - **Abrir una conversación no la marca como leída**: no está en la historia. Los mensajes recibidos quedan sin leer.
 
@@ -110,7 +111,7 @@ así lo decide el sistema.
 - Solo API 29, x86_64: no se probó en API 35, ARM ni en un teléfono físico.
 - **Revisión visual a ojo, no píxel a píxel.** Se capturó la app en el emulador con SMS sintéticos enviados desde la consola:
   la lista (remitente, hora, fragmento, divisores) y la conversación (remitente con "SMS", flecha de volver, burbujas
-  recibidas en gris a la izquierda) coinciden con el diseño. **No se vio en pantalla una burbuja enviada** (azul, a la
-  derecha): desde `adb` no se pueden insertar mensajes enviados. Solo la comprueban las pruebas, por posición y descripción.
+  recibidas en gris a la izquierda) coinciden con el diseño. La burbuja enviada (azul claro, a la derecha) se vio después, con #6
+  ([enviar-sms.md](enviar-sms.md)).
 - Quedan en el buzón del emulador filas sintéticas de #4 y de esta revisión (remitentes `1000000000x`); las pruebas de #5
   borran las suyas.

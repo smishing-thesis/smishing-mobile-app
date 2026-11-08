@@ -4,7 +4,7 @@ Registro de #4 (RF-02, RF-16): un SMS entrante queda una sola vez en la conversa
 2026-11-08.
 
 > **ATENCIÓN.** Aunque la app ya guarda los SMS entrantes, **sigue sin ser apta para un teléfono con mensajes reales**:
-> aunque muestra las conversaciones (#5), no avisa de que llegó un mensaje, no permite responder (#6) y los MMS se pierden
+> aunque muestra las conversaciones (#5), no avisa de que llegó un mensaje y los MMS se pierden
 > (ver "Lo que no cubre").
 > Úsala como gestor de SMS solo en un emulador.
 

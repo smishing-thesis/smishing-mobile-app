@@ -49,6 +49,7 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
                     atMillis = cursor.getLong(2),
                     // Recibido es solo el tipo "buzón de entrada"; enviado, en cola, fallido o saliente son del usuario.
                     direction = if (cursor.getInt(3) == Telephony.Sms.MESSAGE_TYPE_INBOX) MessageDirection.Incoming else MessageDirection.Outgoing,
+                    failed = cursor.getInt(3) == Telephony.Sms.MESSAGE_TYPE_FAILED,
                 )
             }.toList()
         }.orEmpty()

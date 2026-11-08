@@ -4,9 +4,10 @@ Registro de #2 (RF-01): la app explica por qué necesita ser la aplicación de m
 comprueba si la conserva. Última verificación: 2026-11-08.
 
 > **ATENCIÓN.** Una app con el rol de SMS recibe en exclusiva los mensajes entrantes y debe guardarlos ella. Desde #4
-> guarda los SMS y desde #5 los muestra, pero **todavía pierde los MMS, no avisa de los mensajes nuevos y no permite
-> responder, así que solo debe ponerse como gestor de SMS en un emulador, nunca en un teléfono con mensajes reales.** Ver
-> [recepcion-sms.md](recepcion-sms.md) y [conversaciones.md](conversaciones.md).
+> guarda los SMS, desde #5 los muestra y desde #6 permite enviar, pero **todavía pierde los MMS y no avisa de los
+> mensajes nuevos, así que solo debe ponerse como gestor de SMS en un emulador, nunca en un teléfono con mensajes
+> reales.** Ver [recepcion-sms.md](recepcion-sms.md), [conversaciones.md](conversaciones.md) y
+> [enviar-sms.md](enviar-sms.md).
 
 ## Qué hace
 

@@ -1,5 +1,8 @@
 package com.app.smishing.ui.messages
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -8,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -17,6 +21,7 @@ import com.app.smishing.R
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.messaging.ConversationMessage
 import com.app.smishing.domain.messaging.MessageDirection
+import com.app.smishing.domain.messaging.SendOutcome
 import com.app.smishing.ui.designsystem.theme.SmishingTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -50,7 +55,7 @@ class MessagesScreensTest {
     @Test
     fun theListShowsSenderDateAndSnippetOfEachConversation() {
         compose.setContent {
-            SmishingTheme { ConversationListScreen(conversations, now, onOpen = {}, zone = zone) }
+            SmishingTheme { ConversationListScreen(conversations, now, onOpen = {}, onCompose = {}, zone = zone) }
         }
 
         compose.onNodeWithText(context.getString(R.string.messages_title)).assertIsDisplayed()
@@ -68,7 +73,7 @@ class MessagesScreensTest {
     fun tappingAConversationOpensItAndRowsMeetTheTouchTarget() {
         var opened: Conversation? = null
         compose.setContent {
-            SmishingTheme { ConversationListScreen(conversations, now, onOpen = { opened = it }, zone = zone) }
+            SmishingTheme { ConversationListScreen(conversations, now, onOpen = { opened = it }, onCompose = {}, zone = zone) }
         }
 
         compose.onNodeWithText("Mamá").assertHeightIsAtLeast(48.dp)
@@ -78,13 +83,13 @@ class MessagesScreensTest {
 
     @Test
     fun anEmptyListSaysThereAreNoConversationsYet() {
-        compose.setContent { SmishingTheme { ConversationListScreen(emptyList(), now, onOpen = {}, zone = zone) } }
+        compose.setContent { SmishingTheme { ConversationListScreen(emptyList(), now, onOpen = {}, onCompose = {}, zone = zone) } }
         compose.onNodeWithText(context.getString(R.string.messages_empty)).assertIsDisplayed()
     }
 
     @Test
     fun whileLoadingNeitherTheListNorTheEmptyMessageIsShown() {
-        compose.setContent { SmishingTheme { ConversationListScreen(null, now, onOpen = {}, zone = zone) } }
+        compose.setContent { SmishingTheme { ConversationListScreen(null, now, onOpen = {}, onCompose = {}, zone = zone) } }
         assertEquals(0, count(context.getString(R.string.messages_empty)))
         compose.onNodeWithText(context.getString(R.string.messages_title)).assertIsDisplayed()
     }
@@ -99,7 +104,7 @@ class MessagesScreensTest {
             ConversationMessage(2, "¿Por qué me mandan esto?", at(11, 8, 9, 5), MessageDirection.Outgoing),
             ConversationMessage(3, "Segundo recibido", at(11, 8, 9, 6), MessageDirection.Incoming),
         )
-        compose.setContent { SmishingTheme { ConversationScreen("987 654 321", messages, onBack = {}) } }
+        compose.setContent { SmishingTheme { ConversationScreen("987 654 321", messages, onBack = {}, draft = "", onDraftChange = {}, onSend = {}, error = null) } }
 
         compose.onNodeWithText("987 654 321").assertIsDisplayed()
         compose.onNodeWithText(context.getString(R.string.conversation_subtitle)).assertIsDisplayed()
@@ -121,9 +126,63 @@ class MessagesScreensTest {
     @Test
     fun theBackArrowReturnsToTheList() {
         var back = 0
-        compose.setContent { SmishingTheme { ConversationScreen("987 654 321", emptyList(), onBack = { back++ }) } }
+        compose.setContent { SmishingTheme { ConversationScreen("987 654 321", emptyList(), onBack = { back++ }, draft = "", onDraftChange = {}, onSend = {}, error = null) } }
 
         compose.onNodeWithContentDescription(context.getString(R.string.conversation_back)).performClick()
         assertEquals(1, back)
+    }
+
+    @Test
+    fun theComposeButtonOpensANewMessage() {
+        var composeTaps = 0
+        compose.setContent {
+            SmishingTheme { ConversationListScreen(conversations, now, onOpen = {}, onCompose = { composeTaps++ }, zone = zone) }
+        }
+
+        compose.onNodeWithText(context.getString(R.string.compose_action)).assertHeightIsAtLeast(48.dp).performClick()
+        assertEquals(1, composeTaps)
+    }
+
+    @Test
+    fun theInputBarSendsWhatWasTypedAndIgnoresAnEmptyDraft() {
+        var draft by mutableStateOf("")
+        var sent = 0
+        compose.setContent {
+            SmishingTheme {
+                ConversationScreen("987 654 321", emptyList(), onBack = {}, draft = draft, onDraftChange = { draft = it }, onSend = { sent++ }, error = null)
+            }
+        }
+        val send = compose.onNodeWithContentDescription(context.getString(R.string.conversation_send))
+
+        send.performClick()
+        assertEquals("Con el texto vacío no se envía", 0, sent)
+
+        compose.onNodeWithText(context.getString(R.string.conversation_input_hint)).performTextInput("Hola")
+        assertEquals("Hola", draft)
+        send.performClick()
+        assertEquals(1, sent)
+    }
+
+    @Test
+    fun aMessageThatCouldNotBeSentSaysSoAndOthersDoNot() {
+        val messages = listOf(
+            ConversationMessage(1, "Este salió", at(11, 8, 9, 0), MessageDirection.Outgoing),
+            ConversationMessage(2, "Este no salió", at(11, 8, 9, 1), MessageDirection.Outgoing, failed = true),
+        )
+        compose.setContent {
+            SmishingTheme { ConversationScreen("987 654 321", messages, onBack = {}, draft = "", onDraftChange = {}, onSend = {}, error = null) }
+        }
+
+        assertEquals(1, count(context.getString(R.string.message_failed)))
+    }
+
+    @Test
+    fun theSendErrorIsShownInTheConversation() {
+        compose.setContent {
+            SmishingTheme {
+                ConversationScreen("987 654 321", emptyList(), onBack = {}, draft = "", onDraftChange = {}, onSend = {}, error = SendOutcome.Failed)
+            }
+        }
+        compose.onNodeWithText(context.getString(R.string.send_error_failed)).assertIsDisplayed()
     }
 }
