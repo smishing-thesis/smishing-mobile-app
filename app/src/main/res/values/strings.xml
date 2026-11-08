@@ -13,6 +13,19 @@
     <string name="default_sms_held_message">Esta aplicación ya es su aplicación de mensajería principal.</string>
     <string name="default_sms_unavailable">Su teléfono no permite elegir esta aplicación como su aplicación de mensajería principal.</string>
 
+    <!-- Onboarding, paso 3: permiso de lectura (#3) -->
+    <string name="onboarding_step_three_of_three">PASO 3 DE 3</string>
+    <string name="onboarding_skip_short">Omitir</string>
+    <string name="sms_permission_title">Permiso de lectura</string>
+    <string name="sms_permission_explanation_read">Necesitamos su permiso para leer los mensajes de texto que recibe.</string>
+    <string name="sms_permission_explanation_privacy">Solo analizamos el contenido buscando enlaces sospechosos o estafas conocidas. Su privacidad está garantizada.</string>
+    <string name="sms_permission_action">Permitir</string>
+    <string name="sms_permission_held">Permiso para leer mensajes</string>
+    <!-- Los tres siguientes no están en el diseño de Figma: pendientes de revisar con quien lo diseñó. -->
+    <string name="sms_permission_held_message">Esta aplicación ya puede leer y analizar sus mensajes.</string>
+    <string name="sms_permission_blocked_message">Android ya no puede mostrar la solicitud. Puede activar el permiso en los ajustes de la aplicación.</string>
+    <string name="sms_permission_open_settings">Abrir ajustes</string>
+
     <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
     <string name="protection_off_title">Protección apagada</string>
     <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>

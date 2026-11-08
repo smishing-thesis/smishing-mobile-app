@@ -69,5 +69,10 @@ y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
   receptores y el servicio que Android exige declarar están en `data.sms`; las pantallas y las actividades, en `ui`.
   Los receptores están vacíos hasta #4: una app con el rol que no guarda los SMS los pierde, así que solo debe usarse
   como gestor de SMS en emulador. Detalle en [docs/gestor-sms.md](../docs/gestor-sms.md).
+- **Permisos y suspensión del análisis:** la app pide solo `READ_SMS` y `RECEIVE_SMS`, después del rol de SMS, que ya los
+  concede. `AnalysisGate` (en `domain.sms`) dice si el análisis está activo, que requiere el rol y todos los permisos, y
+  `GatedMessageClassifier` suspende la clasificación si falta algo. Quien reciba los SMS (#4) debe usar el clasificador con
+  compuerta. Android mata el proceso al quitar un permiso, así que las pruebas instrumentadas no pueden revocar: se
+  prueba en dos fases. Detalle en [docs/permisos-sms.md](../docs/permisos-sms.md).
 - **Pruebas compartidas:** `app/src/sharedTest` se compila en `test` (JVM) y en `androidTest` (dispositivo), para
   correr los mismos vectores en ambos. Detalle en [docs/preprocesamiento.md](../docs/preprocesamiento.md).
