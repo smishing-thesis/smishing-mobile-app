@@ -52,9 +52,9 @@ fun OnboardingStepLayout(
     stepCount: Int,
     stepLabel: String,
     title: String,
-    primaryLabel: String,
-    onPrimary: () -> Unit,
     modifier: Modifier = Modifier,
+    primaryLabel: String? = null,
+    onPrimary: (() -> Unit)? = null,
     skipLabel: String? = null,
     onSkip: (() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
@@ -81,13 +81,19 @@ fun OnboardingStepLayout(
             Text(title, style = SmishingTypography.TitleMedium, color = SmishingPalette.TextPrimary)
             body()
         }
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(top = Spacing.X2l),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
-        ) {
-            PrimaryButton(primaryLabel, onPrimary, modifier = Modifier.fillMaxWidth())
-            if (skipLabel != null && onSkip != null) LinkButton(skipLabel, onSkip)
+        val hasPrimary = primaryLabel != null && onPrimary != null
+        val hasSkip = skipLabel != null && onSkip != null
+        if (hasPrimary || hasSkip) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.X2l),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
+            ) {
+                if (primaryLabel != null && onPrimary != null) {
+                    PrimaryButton(primaryLabel, onPrimary, modifier = Modifier.fillMaxWidth())
+                }
+                if (skipLabel != null && onSkip != null) LinkButton(skipLabel, onSkip)
+            }
         }
     }
 }

@@ -71,13 +71,16 @@ SmishingTheme {
 
 ## Galería (solo debug)
 
-`ComponentGalleryActivity` muestra todos los componentes y aparece como icono "Galería de componentes" en el
-emulador. Existe solo en la variante debug. Con `--ei section N` (0 a 8) muestra una sola sección, útil para
-capturarla:
+`ComponentGalleryActivity` muestra todos los componentes. Existe solo en la variante debug y no tiene icono de
+lanzador, para que **Run** abra la app real. Se abre con `adb`; con `--ei section N` (0 a 8) muestra una sola sección,
+útil para capturarla:
 
 ```powershell
+adb shell am start -n com.app.smishing/.ui.designsystem.ComponentGalleryActivity
 adb shell am start -n com.app.smishing/.ui.designsystem.ComponentGalleryActivity --ei section 4
 ```
+
+Para abrirla desde Android Studio, en **Run → Edit Configurations** elige **Launch: Specified Activity** y esa clase.
 
 ## Verificación (2026-11-07)
 

@@ -11,6 +11,75 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SmishingDetector"
-        tools:targetApi="31" />
+        tools:targetApi="31">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            Los cuatro componentes siguientes son lo que Android exige a una app para ofrecerla como aplicación de SMS
+            predeterminada (RF-01, #2). Hoy son vacíos: recibir SMS es #4 y redactar y enviar, #6.
+            No piden permisos de SMS: esos se piden después del rol, y solo los necesarios (#3).
+        -->
+
+        <!-- Enlaces sms:, smsto:, mms: y mmsto: para redactar un mensaje. -->
+        <activity
+            android:name=".ui.ComposeSmsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SmishingDetector">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </activity>
+
+        <!-- SMS entrantes: solo el sistema puede enviarlos (BROADCAST_SMS). -->
+        <receiver
+            android:name=".data.sms.SmsDeliverReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- MMS entrantes: solo el sistema puede enviarlos (BROADCAST_WAP_PUSH). -->
+        <receiver
+            android:name=".data.sms.MmsDeliverReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_WAP_PUSH">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
+
+        <!-- "Responder por mensaje" al rechazar una llamada. -->
+        <service
+            android:name=".data.sms.RespondViaMessageService"
+            android:exported="true"
+            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </service>
+
+    </application>
 
 </manifest>

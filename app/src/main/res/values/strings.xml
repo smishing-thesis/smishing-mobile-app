@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Smishing Detector</string>
+
+    <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
+    <string name="onboarding_step_two_of_three">PASO 2 DE 3</string>
+    <string name="onboarding_skip">Omitir por ahora</string>
+    <string name="default_sms_title">Aplicación principal</string>
+    <string name="default_sms_explanation_replace">Para poder filtrar las estafas, esta aplicación necesita reemplazar a su aplicación de mensajería actual.</string>
+    <string name="default_sms_explanation_safe">Es un paso seguro y necesario para activar la protección en tiempo real.</string>
+    <string name="default_sms_action">Usar como aplicación por defecto</string>
+    <!-- Los dos siguientes no están en el diseño de Figma: pendientes de revisar con quien lo diseñó. -->
+    <string name="default_sms_held">Aplicación de mensajería principal</string>
+    <string name="default_sms_held_message">Esta aplicación ya es su aplicación de mensajería principal.</string>
+    <string name="default_sms_unavailable">Su teléfono no permite elegir esta aplicación como su aplicación de mensajería principal.</string>
+
+    <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
+    <string name="protection_off_title">Protección apagada</string>
+    <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
+    <string name="protection_activate">Activar protección</string>
 </resources>
