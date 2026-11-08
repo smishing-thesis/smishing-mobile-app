@@ -30,4 +30,14 @@
     <string name="protection_off_title">Protección apagada</string>
     <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
     <string name="protection_activate">Activar protección</string>
+
+    <!-- Conversaciones (#5) -->
+    <string name="messages_title">Mensajes</string>
+    <string name="messages_yesterday">Ayer</string>
+    <string name="conversation_subtitle">SMS</string>
+    <string name="conversation_back">Volver a mensajes</string>
+    <string name="message_received">Recibido</string>
+    <string name="message_sent">Enviado</string>
+    <!-- Este texto no está en el diseño: revisar con quien lo diseñó. -->
+    <string name="messages_empty">Todavía no tiene conversaciones.</string>
 </resources>

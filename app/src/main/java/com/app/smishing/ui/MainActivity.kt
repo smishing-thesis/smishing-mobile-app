@@ -29,13 +29,14 @@ import com.app.smishing.ui.designsystem.components.ProtectionCard
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingTheme
 import com.app.smishing.ui.designsystem.theme.Spacing
+import com.app.smishing.ui.messages.MessagesRoute
 import com.app.smishing.ui.onboarding.DefaultSmsRoleScreen
 import com.app.smishing.ui.onboarding.SmsPermissionScreen
 
 /**
- * Pantalla de entrada. Por ahora solo el onboarding de SMS: el paso 2 pide el rol de SMS (#2) y el paso 3, los permisos
- * de lectura (#3), en ese orden. Cada vez que se vuelve a la app se comprueba de nuevo si se conservan. El paso 1 y la
- * pantalla de inicio llegan con #17.
+ * Pantalla de entrada. El onboarding de SMS: el paso 2 pide el rol de SMS (#2) y el paso 3, los permisos de lectura
+ * (#3), en ese orden. Cuando se tienen los dos, muestra los mensajes (#5). Cada vez que se vuelve a la app se comprueba de
+ * nuevo si se conservan. El paso 1 y la pantalla de inicio llegan con #17.
  */
 class MainActivity : ComponentActivity() {
 
@@ -74,13 +75,15 @@ class MainActivity : ComponentActivity() {
                         onSkip = { skipped = true },
                     )
                     // Los permisos se piden después del rol, nunca antes.
-                    else -> SmsPermissionScreen(
+                    permissionState != SmsPermissionState.Granted -> SmsPermissionScreen(
                         state = permissionState,
                         blocked = blocked,
                         onRequest = { requestPermissions.launch(permissions.missing().toTypedArray()) },
                         onOpenSettings = ::openAppSettings,
                         onSkip = { skipped = true },
                     )
+                    // Con el rol y los permisos, la app muestra los mensajes (#5).
+                    else -> MessagesRoute()
                 }
             }
         }

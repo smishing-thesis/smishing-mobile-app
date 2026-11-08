@@ -7,7 +7,7 @@ análisis si se revocan. Última verificación: 2026-11-08.
 
 | Permiso | Para qué | Cuándo se pide | Evidencia de que hace falta |
 |---|---|---|---|
-| `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5 |
+| `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5, ya hecha ([conversaciones.md](conversaciones.md)) |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
 No se piden otros. `SEND_SMS` se agregará en #6, que es la historia que envía. Tampoco se pide `RECEIVE_MMS` ni
@@ -109,7 +109,8 @@ empezar, la app aún no tiene permisos. Se ejecuta en la tercera fase de la revo
 
 **Revisión manual** (capturas en el emulador): con el rol activo y `READ_SMS` quitado, la app abre directamente el paso 3
 ("PASO 3 DE 3", "Permiso de lectura"), igual que el diseño; al tocar "Permitir", Android concede el permiso sin diálogo y
-la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protección apagada".
+la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protección apagada". Desde #5, con el rol y
+los permisos concedidos esa confirmación ya no se ve: la app abre directamente la lista de mensajes.
 
 ## Lo que no cubre
 

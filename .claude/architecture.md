@@ -67,14 +67,19 @@ y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
   Detalle en [docs/design-system.md](../docs/design-system.md).
 - **App de SMS predeterminada:** el estado del rol (`SmsRoleState`) está en `domain.sms`; `AndroidSmsRoleRepository` y los
   receptores y el servicio que Android exige declarar están en `data.sms`; las pantallas y las actividades, en `ui`.
-  El receptor de SMS guarda los mensajes desde #4; el de MMS y el servicio siguen vacíos, y no hay pantalla de
-  conversaciones (#5), así que solo debe usarse como gestor de SMS en emulador. Detalle en
+  El receptor de SMS guarda los mensajes desde #4; el de MMS y el servicio siguen vacíos, y todavía no se puede
+  responder (#6), así que solo debe usarse como gestor de SMS en emulador. Detalle en
   [docs/gestor-sms.md](../docs/gestor-sms.md).
 - **Recepción de SMS:** `SmsDeliverReceiver` arma el mensaje (`assembleIncoming`, une las partes) y `ReceiveIncomingSms` lo
   guarda una sola vez en el buzón del sistema (`Telephony.Sms.Inbox`, vía `SmsInbox`/`TelephonySmsInbox`); el sistema le
   asigna la conversación por remitente. Un mensaje es el mismo si coinciden remitente, texto y `date_sent`. El análisis aún
   no se dispara desde aquí: falta dónde guardar resultados (#8 a #12). Detalle en
   [docs/recepcion-sms.md](../docs/recepcion-sms.md).
+- **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
+  `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
+  tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el
+  nombre del contacto (exigiría `READ_CONTACTS`, aún no decidido). Detalle en
+  [docs/conversaciones.md](../docs/conversaciones.md).
 - **Permisos y suspensión del análisis:** la app pide solo `READ_SMS` y `RECEIVE_SMS`, después del rol de SMS, que ya los
   concede. `AnalysisGate` (en `domain.sms`) dice si el análisis está activo, que requiere el rol y todos los permisos, y
   `GatedMessageClassifier` suspende la clasificación si falta algo. Quien reciba los SMS (#4) debe usar el clasificador con

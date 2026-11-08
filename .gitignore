@@ -19,3 +19,6 @@ keystore.properties
 *.aab
 
 .DS_Store
+
+# Figma design screenshots: local working files only, not versioned
+/designs/

@@ -4,9 +4,9 @@ Registro de #2 (RF-01): la app explica por qué necesita ser la aplicación de m
 comprueba si la conserva. Última verificación: 2026-11-08.
 
 > **ATENCIÓN.** Una app con el rol de SMS recibe en exclusiva los mensajes entrantes y debe guardarlos ella. Desde #4
-> guarda los SMS, pero **todavía pierde los MMS y no muestra las conversaciones ni avisa de los mensajes nuevos, así que
-> solo debe ponerse como gestor de SMS en un emulador, nunca en un teléfono con mensajes reales.** Ver
-> [recepcion-sms.md](recepcion-sms.md).
+> guarda los SMS y desde #5 los muestra, pero **todavía pierde los MMS, no avisa de los mensajes nuevos y no permite
+> responder, así que solo debe ponerse como gestor de SMS en un emulador, nunca en un teléfono con mensajes reales.** Ver
+> [recepcion-sms.md](recepcion-sms.md) y [conversaciones.md](conversaciones.md).
 
 ## Qué hace
 
@@ -28,7 +28,7 @@ Tres estados (`SmsRoleState`): `Held` (lo tiene), `NotHeld` (no lo tiene) y `Una
 | `MmsDeliverReceiver`, `RespondViaMessageService` | `data.sms` | vacíos; Android los exige para ofrecer el rol |
 | `ComposeSmsActivity` | `ui` | vacía (se cierra al abrirse); Android la exige para ofrecer el rol |
 | `DefaultSmsRoleScreen` | `ui.onboarding` | la pantalla del paso 2, con los componentes de [design-system.md](design-system.md) |
-| `MainActivity` | `ui` | pantalla de entrada: muestra el paso 2, lanza la solicitud y comprueba el rol en `onResume` |
+| `MainActivity` | `ui` | pantalla de entrada: muestra el paso 2, lanza la solicitud y comprueba el rol en `onResume`; con el rol y los permisos, muestra los mensajes (#5) |
 
 ### Manifest
 

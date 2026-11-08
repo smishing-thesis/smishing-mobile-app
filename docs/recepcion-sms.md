@@ -4,7 +4,8 @@ Registro de #4 (RF-02, RF-16): un SMS entrante queda una sola vez en la conversa
 2026-11-08.
 
 > **ATENCIÓN.** Aunque la app ya guarda los SMS entrantes, **sigue sin ser apta para un teléfono con mensajes reales**:
-> no muestra las conversaciones (#5), no avisa de que llegó un mensaje, y los MMS se pierden (ver "Lo que no cubre").
+> aunque muestra las conversaciones (#5), no avisa de que llegó un mensaje, no permite responder (#6) y los MMS se pierden
+> (ver "Lo que no cubre").
 > Úsala como gestor de SMS solo en un emulador.
 
 ## Qué hace
@@ -95,7 +96,7 @@ prueba falló (`expected:<2> but was:<3>`). Se revirtió.
 
 - **Los MMS se pierden.** `MmsDeliverReceiver` sigue vacío: como app predeterminada, los MMS entrantes no se guardan. No
   hay historia de MMS en el backlog; si se quiere cubrirlos, falta una.
-- **No hay notificación** de mensaje nuevo ni pantalla para leerlo (#5): una persona no se enteraría de que llegó un SMS.
+- **No hay notificación** de mensaje nuevo: una persona solo vería un SMS si abre la app (la lista está en [conversaciones.md](conversaciones.md)).
 - **El análisis no está conectado** (ver arriba): hoy ningún mensaje recibido se clasifica.
 - **Mismo mensaje, mismo segundo**: se toma por duplicado (ver arriba).
 - **Entrega real solo desde el emulador.** El mensaje largo llegó en dos fragmentos, pero no se probó con un operador, con
