@@ -3,9 +3,10 @@
 Registro de #2 (RF-01): la app explica por qué necesita ser la aplicación de mensajería predeterminada, la solicita y
 comprueba si la conserva. Última verificación: 2026-11-08.
 
-> **ATENCIÓN.** Una app con el rol de SMS recibe en exclusiva los mensajes entrantes y debe guardarlos ella. Hoy los
-> receptores están vacíos (la recepción es #4), así que **mientras #4 no esté hecho, esta app solo debe ponerse como
-> gestor de SMS en un emulador, nunca en un teléfono con mensajes reales: los SMS que lleguen se perderían.**
+> **ATENCIÓN.** Una app con el rol de SMS recibe en exclusiva los mensajes entrantes y debe guardarlos ella. Desde #4
+> guarda los SMS, pero **todavía pierde los MMS y no muestra las conversaciones ni avisa de los mensajes nuevos, así que
+> solo debe ponerse como gestor de SMS en un emulador, nunca en un teléfono con mensajes reales.** Ver
+> [recepcion-sms.md](recepcion-sms.md).
 
 ## Qué hace
 
@@ -23,7 +24,8 @@ Tres estados (`SmsRoleState`): `Held` (lo tiene), `NotHeld` (no lo tiene) y `Una
 |---|---|---|
 | `SmsRoleState`, `smsRoleState`, `SmsRoleRepository` | `domain.sms` | los tres estados y la regla que los decide |
 | `AndroidSmsRoleRepository` | `data.sms` | consulta el rol con `RoleManager` y crea el intent de la solicitud |
-| `SmsDeliverReceiver`, `MmsDeliverReceiver`, `RespondViaMessageService` | `data.sms` | vacíos; Android los exige para ofrecer el rol |
+| `SmsDeliverReceiver` | `data.sms` | desde #4 guarda los SMS entrantes ([recepcion-sms.md](recepcion-sms.md)) |
+| `MmsDeliverReceiver`, `RespondViaMessageService` | `data.sms` | vacíos; Android los exige para ofrecer el rol |
 | `ComposeSmsActivity` | `ui` | vacía (se cierra al abrirse); Android la exige para ofrecer el rol |
 | `DefaultSmsRoleScreen` | `ui.onboarding` | la pantalla del paso 2, con los componentes de [design-system.md](design-system.md) |
 | `MainActivity` | `ui` | pantalla de entrada: muestra el paso 2, lanza la solicitud y comprueba el rol en `onResume` |
@@ -100,5 +102,6 @@ sistema devolvió la función a Google Messages por su cuenta.
 - El estado `Unavailable` solo se probó con la pantalla; no se probó en un dispositivo real sin telefonía.
 - El diálogo del sistema se vio en inglés porque el emulador está en inglés; lo traduce Android, no la app.
 - No se probó con TalkBack ni con letra grande.
-- No se guarda ni se procesa ningún SMS: eso es #4. Los permisos se piden en #3.
+- Esta historia no guarda ni procesa ningún SMS: la recepción es #4 (ver [recepcion-sms.md](recepcion-sms.md)) y los
+  permisos se piden en #3.
 - Hoy ninguna prueba automática quita el rol; que la app lo nota al quitarlo se comprobó solo a mano (ver arriba).

@@ -27,7 +27,7 @@
 
         <!--
             Los cuatro componentes siguientes son lo que Android exige a una app para ofrecerla como aplicación de SMS
-            predeterminada (RF-01, #2). Hoy son vacíos: recibir SMS es #4 y redactar y enviar, #6.
+            predeterminada (RF-01, #2). El de SMS guarda los mensajes desde #4; los demás siguen vacíos (MMS no tiene historia; redactar y enviar, #6).
             No piden permisos de SMS: esos se piden después del rol, y solo los necesarios (#3).
         -->
 

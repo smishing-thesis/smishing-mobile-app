@@ -118,10 +118,11 @@ la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protec
   y su lógica, no el recorrido real.
 - **No hay un diálogo de permisos que revisar** para quien tiene el rol, porque Android los concede solo. El diálogo
   existiría en una instalación de desarrollo sin el rol, pero el flujo no lo pide antes del rol.
-- La suspensión se verificó con el clasificador y la compuerta, **no con SMS reales**: recibir y analizar mensajes es #4,
-  que deberá usar `GatedMessageClassifier`. Hoy ningún flujo de la app lo llama.
+- La suspensión se verificó con el clasificador y la compuerta, **no con SMS reales**: recibir mensajes es #4 (hecha, ver
+  [recepcion-sms.md](recepcion-sms.md)) y analizarlos va después; quien lo conecte deberá usar `GatedMessageClassifier`. Hoy ningún flujo de la app lo llama.
 - `RECEIVE_SMS` se comprobó necesario en API 29 y en el emulador; no en otras versiones de Android, ni en capas de
-  fabricante. #4 lo vuelve a comprobar de principio a fin.
+  fabricante. #4 lo comprobó de principio a fin: sin el permiso un SMS real no llegó, con él sí
+  (ver [recepcion-sms.md](recepcion-sms.md)).
 - Solo se probó en un emulador API 29 x86_64: no hay prueba en API 35, en ARM ni en un teléfono físico.
 - Los textos "ya puede leer y analizar", el del bloqueo y "Abrir ajustes" no están en el diseño y deben revisarse con
   quien lo diseñó.
