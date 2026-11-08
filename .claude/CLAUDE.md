@@ -45,5 +45,6 @@ en inglés y el campo Priority de la organización.
 
 ## Pendiente de decidir (no asumir)
 
-- Arquitectura de UI (Compose o vistas), inyección de dependencias y estructura de módulos.
+- Inyección de dependencias y módulos de Gradle. (Ya decidido: UI con Compose y Material 3, y paquetes por capas
+  `domain` y `data`; ver `architecture.md`.)
 - Cómo se implementa el límite de aportes en el teléfono y la autenticación hacia el backend (la define el backend).

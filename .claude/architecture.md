@@ -50,8 +50,8 @@ Reglas:
 
 ## Por decidir
 
-UI, inyección de dependencias, módulos de Gradle, cómo se asignan los niveles de riesgo a partir del puntaje del
-modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
+Inyección de dependencias, módulos de Gradle, cómo se asignan los niveles de riesgo a partir del puntaje del modelo,
+y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
 
 ## Decidido al implementar
 
@@ -61,5 +61,13 @@ modelo, y cómo se generan las señales detectadas (el modelo solo devuelve un p
 - **Clasificación:** el contrato `MessageClassifier` vive en `domain`; `OnDeviceClassifier` (en `data`) lo implementa con
   LiteRT. El modelo se carga una vez y las llamadas se serializan. Cómo se comparte la instancia en la app sigue
   por decidir con la inyección de dependencias. Detalle en [docs/clasificacion-local.md](../docs/clasificacion-local.md).
+- **UI:** Jetpack Compose con Material 3. La librería de componentes del diseño vive en el paquete
+  `com.app.smishing.ui.designsystem` (dentro de `app`; se puede extraer a un módulo después). Los componentes
+  reciben sus textos por parámetro: las pantallas los toman de recursos de cadenas. Solo tema claro, como el diseño.
+  Detalle en [docs/design-system.md](../docs/design-system.md).
+- **App de SMS predeterminada:** el estado del rol (`SmsRoleState`) está en `domain.sms`; `AndroidSmsRoleRepository` y los
+  receptores y el servicio que Android exige declarar están en `data.sms`; las pantallas y las actividades, en `ui`.
+  Los receptores están vacíos hasta #4: una app con el rol que no guarda los SMS los pierde, así que solo debe usarse
+  como gestor de SMS en emulador. Detalle en [docs/gestor-sms.md](../docs/gestor-sms.md).
 - **Pruebas compartidas:** `app/src/sharedTest` se compila en `test` (JVM) y en `androidTest` (dispositivo), para
   correr los mismos vectores en ambos. Detalle en [docs/preprocesamiento.md](../docs/preprocesamiento.md).
