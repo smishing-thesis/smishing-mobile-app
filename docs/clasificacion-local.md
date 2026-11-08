@@ -74,5 +74,5 @@ cuatro de ellos como sospechosos (puntaje 0.993): los dos mensajes vacíos y los
 - Son 52 mensajes sintéticos. Confirman que el flujo completo reproduce a Keras, no que el modelo acierte en
   mensajes reales: sus límites están en `.claude/model-contract.md`.
 - No se midió la demora ni la memoria (#21).
-- Aquí solo se clasifica un texto. Recibir los SMS (#4), asignar un nivel de riesgo (#9), mostrar las señales (#8),
+- Aquí solo se clasifica un texto. Conectar la recepción de SMS (#4, ya hecha) con el análisis, asignar un nivel de riesgo (#9), mostrar las señales (#8),
   alertar (#10) y guardar el historial (#12) son otros issues.

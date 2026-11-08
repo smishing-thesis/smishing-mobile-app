@@ -1,6 +1,7 @@
 package com.app.smishing.ui.designsystem.components
 
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -21,6 +22,7 @@ fun SmishingTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1,
     shape: Shape = SmishingShapes.Lg,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     OutlinedTextField(
         value = value,
@@ -29,6 +31,7 @@ fun SmishingTextField(
         textStyle = SmishingTypography.BodyMedium,
         placeholder = { Text(placeholder, style = SmishingTypography.BodyMedium, color = SmishingPalette.TextSecondary) },
         minLines = minLines,
+        keyboardOptions = keyboardOptions,
         shape = shape,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = SmishingPalette.Primary,

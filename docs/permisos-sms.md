@@ -7,11 +7,13 @@ análisis si se revocan. Última verificación: 2026-11-08.
 
 | Permiso | Para qué | Cuándo se pide | Evidencia de que hace falta |
 |---|---|---|---|
-| `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5 |
+| `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5, ya hecha ([conversaciones.md](conversaciones.md)) |
+| `SEND_SMS` | enviar los SMS que la persona redacta (#6) | el rol lo concede; si falta, la app lo pide al enviar | **comprobado en API 29** con el rol concedido: Android lo otorga solo (`GRANTED_BY_ROLE`) y el envío funciona; ver [enviar-sms.md](enviar-sms.md). **No** forma parte de la compuerta del análisis: analizar no necesita enviar |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
-No se piden otros. `SEND_SMS` se agregará en #6, que es la historia que envía. Tampoco se pide `RECEIVE_MMS` ni
-`RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su motivo en esta tabla.
+No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
+hecha), ni `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
+motivo en esta tabla.
 
 ## Cómo los otorga Android
 
@@ -109,7 +111,8 @@ empezar, la app aún no tiene permisos. Se ejecuta en la tercera fase de la revo
 
 **Revisión manual** (capturas en el emulador): con el rol activo y `READ_SMS` quitado, la app abre directamente el paso 3
 ("PASO 3 DE 3", "Permiso de lectura"), igual que el diseño; al tocar "Permitir", Android concede el permiso sin diálogo y
-la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protección apagada".
+la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protección apagada". Desde #5, con el rol y
+los permisos concedidos esa confirmación ya no se ve: la app abre directamente la lista de mensajes.
 
 ## Lo que no cubre
 
@@ -118,10 +121,11 @@ la app muestra la confirmación; "Omitir" lleva a la tarjeta provisional "Protec
   y su lógica, no el recorrido real.
 - **No hay un diálogo de permisos que revisar** para quien tiene el rol, porque Android los concede solo. El diálogo
   existiría en una instalación de desarrollo sin el rol, pero el flujo no lo pide antes del rol.
-- La suspensión se verificó con el clasificador y la compuerta, **no con SMS reales**: recibir y analizar mensajes es #4,
-  que deberá usar `GatedMessageClassifier`. Hoy ningún flujo de la app lo llama.
+- La suspensión se verificó con el clasificador y la compuerta, **no con SMS reales**: recibir mensajes es #4 (hecha, ver
+  [recepcion-sms.md](recepcion-sms.md)) y analizarlos va después; quien lo conecte deberá usar `GatedMessageClassifier`. Hoy ningún flujo de la app lo llama.
 - `RECEIVE_SMS` se comprobó necesario en API 29 y en el emulador; no en otras versiones de Android, ni en capas de
-  fabricante. #4 lo vuelve a comprobar de principio a fin.
+  fabricante. #4 lo comprobó de principio a fin: sin el permiso un SMS real no llegó, con él sí
+  (ver [recepcion-sms.md](recepcion-sms.md)).
 - Solo se probó en un emulador API 29 x86_64: no hay prueba en API 35, en ARM ni en un teléfono físico.
 - Los textos "ya puede leer y analizar", el del bloqueo y "Abrir ajustes" no están en el diseño y deben revisarse con
   quien lo diseñó.
