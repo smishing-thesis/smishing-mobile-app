@@ -23,6 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.app.smishing.data.analysis.AnalysisPipeline
+import com.app.smishing.ui.settings.SettingsRoute
+import com.app.smishing.domain.settings.PermissionStatusReader
+import com.app.smishing.domain.mitigation.MitigationSettings
+import com.app.smishing.data.settings.DataStoreMitigationSettings
+import com.app.smishing.data.settings.AndroidPermissionStatusReader
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.Icons
 import com.app.smishing.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +64,8 @@ import kotlinx.coroutines.withContext
  * (#6). Lee y envía fuera del hilo principal y vuelve a leer cuando el buzón cambia (porque llega un SMS o cambia el
  * estado de uno enviado), así que no hace falta reabrir la app. "Atrás" vuelve a la lista.
  *
+ * La barra inferior tiene tres pestañas: mensajes, historial (#12) y ajustes (#13, #25).
+ *
  * Si no se puede enviar por falta del permiso de enviar, lo pide y la persona toca Enviar otra vez.
  */
 @Composable
@@ -66,6 +75,8 @@ fun MessagesRoute(
     sendSms: SendSms = rememberSendSms(),
     assessor: RiskAssessor = rememberAssessor(),
     history: AnalysisHistory = rememberHistory(),
+    mitigationSettings: MitigationSettings = rememberMitigationSettings(),
+    permissionStatuses: PermissionStatusReader = rememberPermissionStatuses(),
     /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
     openMessageId: Long? = null,
     onMessageOpened: () -> Unit = {},
@@ -203,7 +214,12 @@ fun MessagesRoute(
                     error = sendError,
                     modifier = Modifier,
                 )
-                tab == 1 && threadId == null -> {
+                tab == 2 && threadId == null -> SettingsRoute(
+            settings = mitigationSettings,
+            permissions = permissionStatuses,
+            modifier = Modifier,
+        )
+        tab == 1 && threadId == null -> {
                     var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
                     LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
                     HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, modifier = Modifier)
@@ -250,12 +266,25 @@ fun MessagesRoute(
                 items = listOf(
                     NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat),
                     NavItem(stringResource(R.string.nav_history), SmishingIcons.History),
+                    NavItem(stringResource(R.string.nav_settings), Icons.Outlined.Settings),
                 ),
                 selectedIndex = tab,
                 onSelect = { tab = it },
             )
         }
     }
+}
+
+@Composable
+private fun rememberMitigationSettings(): MitigationSettings {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { DataStoreMitigationSettings(context) }
+}
+
+@Composable
+private fun rememberPermissionStatuses(): PermissionStatusReader {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { AndroidPermissionStatusReader(context) }
 }
 
 @Composable

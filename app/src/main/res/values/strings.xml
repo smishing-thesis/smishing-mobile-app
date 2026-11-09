@@ -100,4 +100,28 @@
     <string name="history_chip_low">Sin señales</string>
     <string name="nav_messages">Mensajes</string>
     <string name="nav_history">Historial</string>
+
+    <!-- Ajustes (#13, #25, #31). Los textos de los modos son los del diseño; el título de la sección y los textos de los permisos no. -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_mode_title">Cuando llegue un mensaje con posible estafa</string>
+    <string name="settings_mode_automatic_title">Protegerme automáticamente</string>
+    <string name="settings_mode_automatic_description">Bloqueamos el número y quitamos el mensaje de su buzón</string>
+    <string name="settings_mode_ask_title">Preguntarme antes de actuar</string>
+    <string name="settings_mode_ask_description">Le mostraremos las opciones para que usted decida</string>
+    <string name="settings_mode_disabled_title">Solo avisarme</string>
+    <string name="settings_mode_disabled_description">Le avisaremos pero no tomaremos ninguna acción</string>
+    <string name="settings_mode_note_role">Para actuar sobre sus mensajes, la aplicación debe ser la de mensajería principal.</string>
+    <string name="settings_permissions_title">Permisos</string>
+    <string name="settings_permission_default_sms">Aplicación de mensajería principal</string>
+    <string name="settings_permission_read_sms">Permiso para leer mensajes</string>
+    <string name="settings_permission_send_sms">Permiso para enviar mensajes</string>
+    <string name="settings_permission_notifications">Notificaciones</string>
+    <string name="settings_limited_default_sms">Sin esto, la aplicación no recibe ni guarda sus mensajes, y no puede analizarlos.</string>
+    <string name="settings_limited_read_sms">Sin este permiso, la aplicación no puede leer ni analizar los mensajes que llegan.</string>
+    <string name="settings_limited_send_sms">Sin este permiso, no puede enviar mensajes desde la aplicación.</string>
+    <string name="settings_limited_notifications">Sin este permiso, no podemos avisarle de un mensaje con posible estafa.</string>
+    <string name="settings_open_system">Abrir ajustes</string>
+    <string name="settings_state_granted">Concedido</string>
+    <string name="settings_state_denied">No concedido</string>
+    <string name="nav_settings">Ajustes</string>
 </resources>

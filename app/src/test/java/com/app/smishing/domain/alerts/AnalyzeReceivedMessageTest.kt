@@ -4,6 +4,10 @@ import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.classification.MessageClassifier
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.mitigation.MitigationDecision
+import com.app.smishing.domain.mitigation.MitigationMode
+import com.app.smishing.domain.mitigation.MitigationSettings
+import com.app.smishing.domain.mitigation.Mitigator
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.signals.DetectedSignal
@@ -43,16 +47,43 @@ class AnalyzeReceivedMessageTest {
     private val notFlagged = ClassificationResult.Classified(0.1f, false, 0.9, "1.0.0", "1.1.0")
     private val message = IncomingSms("+10000000001", "Texto del mensaje con http://ejemplo.invalid", 1_000L)
 
+    private class FakeSettings(var current: MitigationMode = MitigationMode.Ask, private val failWith: Exception? = null) : MitigationSettings {
+        var reads = 0
+        override fun mode(): MitigationMode {
+            reads++
+            failWith?.let { throw it }
+            return current
+        }
+        override fun setMode(mode: MitigationMode) { current = mode }
+    }
+
     private val alerts = mutableListOf<RiskAlert>()
     private val history = FakeHistory()
-    private fun analyze(classification: ClassificationResult, vararg types: SignalType, history: AnalysisHistory = this.history, errors: MutableList<Throwable> = mutableListOf()) =
-        AnalyzeReceivedMessage(
-            assessor = RiskAssessor(FakeClassifier(classification), FakeDetector(*types)),
-            history = history,
-            notifier = { alerts += it },
-            clock = { 5_000L },
-            onHistoryError = { errors += it },
-        ).onReceived(messageId = 42, message = message)
+    private val settings = FakeSettings()
+    private val applied = mutableListOf<Pair<MitigationDecision, AnalysisRecord>>()
+    private var mitigatorFails: Exception? = null
+    private val mitigator = Mitigator { decision, record ->
+        applied += decision to record
+        mitigatorFails?.let { throw it }
+    }
+
+    private fun analyze(
+        classification: ClassificationResult,
+        vararg types: SignalType,
+        history: AnalysisHistory = this.history,
+        errors: MutableList<Throwable> = mutableListOf(),
+        settings: MitigationSettings = this.settings,
+        mitigationErrors: MutableList<Throwable> = mutableListOf(),
+    ) = AnalyzeReceivedMessage(
+        assessor = RiskAssessor(FakeClassifier(classification), FakeDetector(*types)),
+        history = history,
+        notifier = { alerts += it },
+        settings = settings,
+        mitigator = mitigator,
+        clock = { 5_000L },
+        onHistoryError = { errors += it },
+        onMitigationError = { mitigationErrors += it },
+    ).onReceived(messageId = 42, message = message)
 
     // --- La alerta (#10) ---
 
@@ -126,6 +157,8 @@ class AnalyzeReceivedMessageTest {
             assessor = RiskAssessor(FakeClassifier(flagged), FakeDetector(SignalType.Urgency)),
             history = recording,
             notifier = { order += "avisar" },
+            settings = settings,
+            mitigator = mitigator,
         ).onReceived(1, message)
         assertEquals(listOf("guardar", "avisar"), order)
     }
@@ -156,5 +189,94 @@ class AnalyzeReceivedMessageTest {
         val text = history.saved.single().toString()
         assertFalse("ejemplo.invalid" in text)
         assertFalse("+10000000001" in text)
+    }
+
+    // --- El modo de mitigación (#13) ---
+
+    @Test
+    fun inAskModeAHighRiskMessageAsksAndCarriesTheSavedRecord() {
+        settings.current = MitigationMode.Ask
+        analyze(flagged, SignalType.Urgency)
+        val (decision, record) = applied.single()
+        assertEquals(MitigationDecision.AskUser, decision)
+        assertEquals(history.saved.single().copy(id = 1), record)
+    }
+
+    @Test
+    fun inAutomaticModeAHighRiskMessageIsActedOn() {
+        settings.current = MitigationMode.Automatic
+        analyze(flagged, SignalType.Urgency)
+        assertEquals(listOf(MitigationDecision.Act), applied.map { it.first })
+    }
+
+    @Test
+    fun inDisabledModeNothingIsDoneToTheMessageButTheAlertStillShows() {
+        settings.current = MitigationMode.Disabled
+        assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency))
+        assertTrue(applied.isEmpty())
+        assertEquals(1, alerts.size)
+    }
+
+    @Test
+    fun mediumAndLowRiskNeverActWhateverTheModeAndTheModeIsNotEvenRead() {
+        for (mode in MitigationMode.entries) {
+            settings.current = mode
+            analyze(flagged, SignalType.Link) // medio
+            analyze(notFlagged) // bajo
+        }
+        assertTrue(applied.isEmpty())
+        assertEquals(0, settings.reads)
+    }
+
+    @Test
+    fun theModeIsReadAfterTheRecordIsSavedAndBeforeTheMitigatorOrTheAlert() {
+        val order = mutableListOf<String>()
+        val reading = object : MitigationSettings {
+            override fun mode(): MitigationMode { order += "leer modo"; return MitigationMode.Automatic }
+            override fun setMode(mode: MitigationMode) = Unit
+        }
+        val recording = object : AnalysisHistory by history {
+            override fun save(record: AnalysisRecord): Long { order += "guardar"; return history.save(record) }
+        }
+        AnalyzeReceivedMessage(
+            assessor = RiskAssessor(FakeClassifier(flagged), FakeDetector(SignalType.Urgency)),
+            history = recording,
+            notifier = { order += "avisar" },
+            settings = reading,
+            mitigator = { _, _ -> order += "actuar" },
+        ).onReceived(1, message)
+        assertEquals(listOf("guardar", "leer modo", "actuar", "avisar"), order)
+    }
+
+    @Test
+    fun ifTheModeCannotBeReadNothingIsDoneButTheAlertStillShows() {
+        val errors = mutableListOf<Throwable>()
+        val broken = FakeSettings(failWith = IllegalStateException("preferencias ilegibles"))
+
+        assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency, settings = broken, mitigationErrors = errors))
+
+        assertTrue("Sin modo legible no se debe actuar", applied.isEmpty())
+        assertEquals(1, errors.size)
+        assertEquals(1, alerts.size)
+    }
+
+    @Test
+    fun ifTheActionFailsTheAlertStillShowsAndTheErrorIsReported() {
+        mitigatorFails = IllegalStateException("no se pudo")
+        val errors = mutableListOf<Throwable>()
+
+        assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency, mitigationErrors = errors))
+
+        assertEquals(1, errors.size)
+        assertEquals(1, alerts.size)
+    }
+
+    @Test
+    fun aMessageTheModelDidNotEvaluateIsNotActedOnInAnyMode() {
+        for (mode in MitigationMode.entries) {
+            settings.current = mode
+            analyze(ClassificationResult.NotClassified(ClassificationResult.NotClassified.Reason.entries.first()), SignalType.Urgency)
+        }
+        assertTrue(applied.isEmpty())
     }
 }

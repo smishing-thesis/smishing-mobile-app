@@ -98,8 +98,13 @@ Inyección de dependencias y módulos de Gradle.
   resultado y señales (la explicación, con su regla y fragmento), con las versiones del modelo, del preprocesamiento, de las reglas de
   señales y de la política. Guarda el **texto** de los mensajes, sin cifrar, y está **excluida de las copias de seguridad**
   (`data_extraction_rules.xml`, `backup_rules.xml`; `BackupRulesTest` lo fija). La pestaña Historial (`HistoryScreen`) lista los
-  registros y su detalle sale de lo guardado. Falta una política de borrado y la tabla de acciones de mitigación (#13 a #16).
+  registros y su detalle sale de lo guardado. Falta una política de borrado (#52) y la tabla de acciones de mitigación (#14 a #16).
   Detalle en [docs/historial.md](../docs/historial.md).
+- **Modo de mitigación y ajustes (#13, #25, #31):** `MitigationMode` (automático, preguntar —por defecto—, desactivado) se guarda en un
+  **DataStore** (`DataStoreMitigationSettings`, `data.settings`). `AnalyzeReceivedMessage` guarda el registro, **consulta el modo antes
+  de actuar** (`MitigationPolicy`: solo el nivel alto actúa) y avisa; quien ejecuta la decisión es un `Mitigator`, que hoy solo anota
+  la decisión (bloquear es #14, retirar es #15). La pestaña Ajustes muestra el modo y el estado de cada permiso con lo que queda
+  limitado y un acceso a los ajustes del sistema. Detalle en [docs/ajustes-y-modo.md](../docs/ajustes-y-modo.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el
