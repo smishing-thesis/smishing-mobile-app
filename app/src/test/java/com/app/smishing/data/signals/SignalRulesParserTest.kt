@@ -9,7 +9,8 @@ import org.junit.Test
 class SignalRulesParserTest {
 
     private val json = checkNotNull(javaClass.classLoader?.getResourceAsStream("signal_rules.json")) { "Falta signal_rules.json" }
-        .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        // Git en Windows puede dejar el archivo con CRLF: las pruebas que editan el texto buscan saltos de línea simples.
+        .bufferedReader(Charsets.UTF_8).use { it.readText() }.replace("\r\n", "\n")
 
     private fun rejects(modified: String, expectedInMessage: String) {
         try {

@@ -10,8 +10,9 @@ class ReceiveIncomingSmsTest {
     private class FakeInbox : SmsInbox {
         val stored = mutableListOf<IncomingSms>()
         override fun contains(message: IncomingSms) = message in stored
-        override fun store(message: IncomingSms) {
+        override fun store(message: IncomingSms): Long {
             stored += message
+            return stored.size.toLong()
         }
     }
 
@@ -22,7 +23,7 @@ class ReceiveIncomingSmsTest {
 
     @Test
     fun aSinglePartMessageIsStoredOnce() {
-        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola"))))
+        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola"))).outcome)
         assertEquals(listOf(IncomingSms("+10000000001", "Hola", 1_000L)), inbox.stored)
     }
 
@@ -36,32 +37,32 @@ class ReceiveIncomingSmsTest {
 
     @Test
     fun theSameDeliveryTwiceIsStoredOnlyOnce() {
-        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola"))))
-        assertEquals(ReceiveOutcome.Duplicate, receive.receive(listOf(part("Hola"))))
+        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola"))).outcome)
+        assertEquals(ReceiveOutcome.Duplicate, receive.receive(listOf(part("Hola"))).outcome)
         assertEquals(1, inbox.stored.size)
     }
 
     @Test
     fun theSameTextSentAtAnotherTimeIsANewMessage() {
         receive.receive(listOf(part("Hola", sentAt = 1_000L)))
-        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola", sentAt = 61_000L))))
+        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola", sentAt = 61_000L))).outcome)
         assertEquals(2, inbox.stored.size)
     }
 
     @Test
     fun theSameTextFromAnotherSenderIsANewMessage() {
         receive.receive(listOf(part("Hola")))
-        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola", sender = "+10000000002"))))
+        assertEquals(ReceiveOutcome.Stored, receive.receive(listOf(part("Hola", sender = "+10000000002"))).outcome)
         assertEquals(2, inbox.stored.size)
     }
 
     @Test
     fun nothingIsStoredWithoutSenderOrText() {
-        assertEquals(ReceiveOutcome.Ignored, receive.receive(emptyList()))
-        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part("Hola", sender = null))))
-        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part("Hola", sender = "  "))))
-        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part(null))))
-        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part(""))))
+        assertEquals(ReceiveOutcome.Ignored, receive.receive(emptyList()).outcome)
+        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part("Hola", sender = null))).outcome)
+        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part("Hola", sender = "  "))).outcome)
+        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part(null))).outcome)
+        assertEquals(ReceiveOutcome.Ignored, receive.receive(listOf(part(""))).outcome)
         assertEquals(emptyList<IncomingSms>(), inbox.stored)
     }
 
@@ -69,6 +70,24 @@ class ReceiveIncomingSmsTest {
     fun theSenderIsTakenFromTheFirstPartThatHasOne() {
         assertEquals("+10000000001", assembleIncoming(listOf(part("a", sender = null), part("b")))?.sender)
         assertNull(assembleIncoming(listOf(part("a", sender = null))))
+    }
+
+    @Test
+    fun aStoredMessageComesBackWithItsInboxIdAndTheAssembledMessage() {
+        val result = receive.receive(listOf(part("Hola, "), part("mundo", sentAt = 1_001L)))
+
+        assertEquals(ReceiveOutcome.Stored, result.outcome)
+        assertEquals(1L, result.messageId)
+        assertEquals(IncomingSms("+10000000001", "Hola, mundo", 1_000L), result.message)
+    }
+
+    @Test
+    fun aDuplicateOrAnIgnoredMessageHasNoIdSoNothingIsAnalysedTwice() {
+        receive.receive(listOf(part("Hola")))
+        for (result in listOf(receive.receive(listOf(part("Hola"))), receive.receive(emptyList()))) {
+            assertEquals(null, result.messageId)
+            assertEquals(null, result.message)
+        }
     }
 
     @Test

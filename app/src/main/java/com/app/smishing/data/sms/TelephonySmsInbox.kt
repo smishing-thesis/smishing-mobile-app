@@ -1,5 +1,6 @@
 package com.app.smishing.data.sms
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.provider.Telephony
@@ -25,7 +26,7 @@ class TelephonySmsInbox(context: Context) : SmsInbox {
             null,
         )?.use { it.moveToFirst() } ?: false
 
-    override fun store(message: IncomingSms) {
+    override fun store(message: IncomingSms): Long {
         val values = ContentValues().apply {
             put(Telephony.Sms.ADDRESS, message.sender)
             put(Telephony.Sms.BODY, message.body)
@@ -34,6 +35,7 @@ class TelephonySmsInbox(context: Context) : SmsInbox {
             put(Telephony.Sms.READ, 0)
             put(Telephony.Sms.SEEN, 0)
         }
-        checkNotNull(resolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)) { "El buzón no guardó el mensaje" }
+        val row = checkNotNull(resolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)) { "El buzón no guardó el mensaje" }
+        return ContentUris.parseId(row)
     }
 }

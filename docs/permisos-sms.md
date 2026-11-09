@@ -9,6 +9,7 @@ análisis si se revocan. Última verificación: 2026-11-08.
 |---|---|---|---|
 | `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5, ya hecha ([conversaciones.md](conversaciones.md)) |
 | `SEND_SMS` | enviar los SMS que la persona redacta (#6) | el rol lo concede; si falta, la app lo pide al enviar | **comprobado en API 29** con el rol concedido: Android lo otorga solo (`GRANTED_BY_ROLE`) y el envío funciona; ver [enviar-sms.md](enviar-sms.md). **No** forma parte de la compuerta del análisis: analizar no necesita enviar |
+| `POST_NOTIFICATIONS` | mostrar la alerta de un mensaje riesgoso (#10) | solo Android 13 (API 33) o superior lo pide en tiempo de ejecución, al abrir los mensajes | **no se verificó**: el emulador es API 29 y ahí el permiso no existe. En API 29 la alerta se mostró sin pedirlo; ver [alerta-de-riesgo.md](alerta-de-riesgo.md). No forma parte de la compuerta del análisis |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
 No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
@@ -122,7 +123,7 @@ los permisos concedidos esa confirmación ya no se ve: la app abre directamente 
 - **No hay un diálogo de permisos que revisar** para quien tiene el rol, porque Android los concede solo. El diálogo
   existiría en una instalación de desarrollo sin el rol, pero el flujo no lo pide antes del rol.
 - La suspensión se verificó con el clasificador y la compuerta, **no con SMS reales**: recibir mensajes es #4 (hecha, ver
-  [recepcion-sms.md](recepcion-sms.md)) y analizarlos va después; quien lo conecte deberá usar `GatedMessageClassifier`. Hoy ningún flujo de la app lo llama.
+  [recepcion-sms.md](recepcion-sms.md)) y analizarlos llegó con #10 ([alerta-de-riesgo.md](alerta-de-riesgo.md)), que usa `GatedMessageClassifier` desde `AnalysisPipeline`.
 - `RECEIVE_SMS` se comprobó necesario en API 29 y en el emulador; no en otras versiones de Android, ni en capas de
   fabricante. #4 lo comprobó de principio a fin: sin el permiso un SMS real no llegó, con él sí
   (ver [recepcion-sms.md](recepcion-sms.md)).

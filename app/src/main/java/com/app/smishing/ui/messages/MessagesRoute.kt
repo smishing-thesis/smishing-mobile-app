@@ -22,7 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
+import com.app.smishing.domain.risk.RiskAssessor
+import com.app.smishing.ui.alerts.MessageDetailScreen
+import com.app.smishing.ui.alerts.MessageDetailState
 import com.app.smishing.data.sms.AndroidSmsSender
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.messaging.ConversationMessage
@@ -46,6 +50,10 @@ fun MessagesRoute(
     modifier: Modifier = Modifier,
     repository: ConversationRepository = rememberTelephonyRepository(),
     sendSms: SendSms = rememberSendSms(),
+    assessor: RiskAssessor = rememberAssessor(),
+    /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
+    openMessageId: Long? = null,
+    onMessageOpened: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -90,13 +98,40 @@ fun MessagesRoute(
         }
     }
 
-    BackHandler(enabled = composing || openThreadId != null) {
+    // El detalle de un mensaje (#10): se abre al tocar una alerta y se cierra con "atrás".
+    var detailMessageId by rememberSaveable { mutableStateOf<Long?>(null) }
+    LaunchedEffect(openMessageId) {
+        if (openMessageId != null) {
+            detailMessageId = openMessageId
+            composing = false
+            onMessageOpened()
+        }
+    }
+
+    BackHandler(enabled = composing || openThreadId != null || detailMessageId != null) {
         sendError = null
-        if (composing) composing = false else openThreadId = null
+        when {
+            detailMessageId != null -> detailMessageId = null
+            composing -> composing = false
+            else -> openThreadId = null
+        }
     }
 
     val threadId = openThreadId
+    val detailId = detailMessageId
     when {
+        detailId != null -> {
+            var detail by remember(detailId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+            // Se vuelve a evaluar el mensaje: el resultado es el mismo que al recibirlo, y así no hace falta guardarlo.
+            LaunchedEffect(detailId) {
+                detail = withContext(Dispatchers.IO) {
+                    val message = repository.message(detailId)
+                    if (message == null) MessageDetailState.Missing
+                    else MessageDetailState.Loaded(message.body, assessor.assess(message.body))
+                }
+            }
+            MessageDetailScreen(state = detail, onBack = { detailMessageId = null }, modifier = modifier)
+        }
         composing -> NewMessageScreen(
             recipient = recipient,
             onRecipientChange = { recipient = it },
@@ -154,6 +189,12 @@ fun MessagesRoute(
             )
         }
     }
+}
+
+@Composable
+private fun rememberAssessor(): RiskAssessor {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { AnalysisPipeline.assessor(context) }
 }
 
 @Composable

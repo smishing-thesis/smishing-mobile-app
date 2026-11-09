@@ -7,6 +7,7 @@ import com.app.smishing.domain.messaging.ConversationMessage
 import com.app.smishing.domain.messaging.ConversationRepository
 import com.app.smishing.domain.messaging.MessageDirection
 import com.app.smishing.domain.messaging.SmsRow
+import com.app.smishing.domain.messaging.StoredMessage
 import com.app.smishing.domain.messaging.latestPerConversation
 
 /**
@@ -53,6 +54,25 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
                 )
             }.toList()
         }.orEmpty()
+
+    override fun message(messageId: Long): StoredMessage? =
+        resolver.query(
+            Telephony.Sms.CONTENT_URI,
+            arrayOf(Telephony.Sms._ID, Telephony.Sms.THREAD_ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.TYPE),
+            "${Telephony.Sms._ID} = ?",
+            arrayOf(messageId.toString()),
+            null,
+        )?.use { cursor ->
+            if (!cursor.moveToFirst()) null
+            else StoredMessage(
+                id = cursor.getLong(0),
+                threadId = cursor.getLong(1),
+                address = cursor.getString(2).orEmpty(),
+                body = cursor.getString(3).orEmpty(),
+                atMillis = cursor.getLong(4),
+                direction = if (cursor.getInt(5) == Telephony.Sms.MESSAGE_TYPE_INBOX) MessageDirection.Incoming else MessageDirection.Outgoing,
+            )
+        }
 
     private companion object {
         const val NOT_A_DRAFT = "${Telephony.Sms.TYPE} != ${Telephony.Sms.MESSAGE_TYPE_DRAFT}"

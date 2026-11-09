@@ -119,7 +119,8 @@ Léase con las advertencias de abajo: son 84 mensajes inventados, y las reglas d
   salen de los datos. Si el equipo prefiere otra combinación, cambia solo `RiskPolicy`.
 - **Medio** mezcla dos casos distintos ("el modelo lo marca sin respaldo" y "las señales solas"); #10 y #11 decidirán si se
   presentan distinto. Hoy `rule` los distingue.
-- **Qué hace la app con cada nivel** (alertar, bloquear, retirar) no está decidido aquí: es de #10, #13 y siguientes.
+- **Qué hace la app con cada nivel**: desde #10 **solo el nivel alto alerta** ([alerta-de-riesgo.md](alerta-de-riesgo.md)); bloquear o retirar
+  es de #13 y siguientes.
 - El nivel **no se muestra, no se guarda y no se calcula sobre los mensajes que llegan** todavía.
 - No se midió el tiempo de evaluar un mensaje (modelo más señales) en un teléfono de gama baja.
 - Solo se probó en el emulador API 29 x86_64 y en la JVM.

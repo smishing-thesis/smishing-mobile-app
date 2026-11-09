@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 
 /**
  * Arma el PDU de un SMS-DELIVER (3GPP TS 23.040) con texto en el alfabeto GSM de 7 bits, para entregarlo al receptor
- * tal como lo haría el sistema. Solo admite letras, números, espacio y `.,:-`, que en GSM 7 valen lo mismo que en ASCII.
+ * tal como lo haría el sistema. Solo admite letras, números, espacio y `.,:-/`, que en GSM 7 valen lo mismo que en ASCII.
  */
 object SmsPdu {
 
@@ -13,7 +13,7 @@ object SmsPdu {
 
     fun deliver(senderDigits: String, text: String, secondsAfterSentAt: Int = 0): ByteArray {
         require(senderDigits.all(Char::isDigit))
-        require(text.all { it.isLetterOrDigit() && it.code < 128 || it in " .,:-" }) { "Carácter fuera del subconjunto de la prueba" }
+        require(text.all { it.isLetterOrDigit() && it.code < 128 || it in " .,:-/" }) { "Carácter fuera del subconjunto de la prueba" }
         val out = ByteArrayOutputStream()
         out.write(0x00) // sin centro de mensajes en el PDU
         out.write(0x04) // SMS-DELIVER, sin más mensajes por venir

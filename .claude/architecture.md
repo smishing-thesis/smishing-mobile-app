@@ -85,6 +85,11 @@ Inyección de dependencias y módulos de Gradle.
   Cada `RiskAssessment` guarda la regla que decidió, el puntaje y el umbral del modelo, y las versiones del modelo, del
   preprocesamiento, de las reglas de señales y de la política. Sin evaluación del modelo no hay nivel. Es una propuesta sin
   validar con datos reales. Detalle en [docs/nivel-de-riesgo.md](../docs/nivel-de-riesgo.md).
+- **Alerta de riesgo (#10):** tras guardar un SMS, `SmsDeliverReceiver` lo evalúa con `AnalysisPipeline` y, si el nivel es alto
+  (`AlertPolicy`), `AndroidRiskAlertNotifier` muestra "Posible estafa detectada" con el remitente y un motivo, **sin el texto del
+  mensaje** y con versión pública sin remitente. Tocarla abre el detalle del mensaje (`MessageDetailScreen`), que **vuelve a evaluar** el
+  mensaje en lugar de leer un resultado guardado (el almacenamiento es #12) y lo muestra como texto plano, sin activar enlaces.
+  Pide `POST_NOTIFICATIONS` en Android 13 o superior. Detalle en [docs/alerta-de-riesgo.md](../docs/alerta-de-riesgo.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el
@@ -97,8 +102,8 @@ Inyección de dependencias y módulos de Gradle.
   [docs/enviar-sms.md](../docs/enviar-sms.md).
 - **Permisos y suspensión del análisis:** la app pide solo `READ_SMS` y `RECEIVE_SMS`, después del rol de SMS, que ya los
   concede. `AnalysisGate` (en `domain.sms`) dice si el análisis está activo, que requiere el rol y todos los permisos, y
-  `GatedMessageClassifier` suspende la clasificación si falta algo. Quien reciba los SMS (#4) debe usar el clasificador con
-  compuerta. Android mata el proceso al quitar un permiso, así que las pruebas instrumentadas no pueden revocar: se
+  `GatedMessageClassifier` suspende la clasificación si falta algo. El receptor de SMS (#4) y el detalle usan el clasificador con
+  compuerta, armado por `AnalysisPipeline` (`data.analysis`). Android mata el proceso al quitar un permiso, así que las pruebas instrumentadas no pueden revocar: se
   prueba en dos fases. Detalle en [docs/permisos-sms.md](../docs/permisos-sms.md).
 - **Pruebas compartidas:** `app/src/sharedTest` se compila en `test` (JVM) y en `androidTest` (dispositivo), para
   correr los mismos vectores en ambos. Detalle en [docs/preprocesamiento.md](../docs/preprocesamiento.md).
