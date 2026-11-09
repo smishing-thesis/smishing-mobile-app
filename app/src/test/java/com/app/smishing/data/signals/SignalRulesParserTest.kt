@@ -23,7 +23,7 @@ class SignalRulesParserTest {
     @Test
     fun thePackagedRulesParse() {
         val rules = SignalRulesParser.parse(json)
-        assertEquals("1.0.0", rules.version)
+        assertEquals("1.1.0", rules.version)
         assertTrue(rules.urgency.size >= 5)
         assertTrue(rules.dataRequest.isNotEmpty())
         assertTrue(rules.entities.any { it.id == "bcp" && "viabcp.com" in it.officialDomains })
@@ -39,7 +39,7 @@ class SignalRulesParserTest {
     }
 
     @Test
-    fun anUnknownVersionIsRejected() = rejects(json.replace("\"version\": \"1.0.0\"", "\"version\": \"9.9.9\""), "9.9.9")
+    fun anUnknownVersionIsRejected() = rejects(json.replace("\"version\": \"1.1.0\"", "\"version\": \"9.9.9\""), "9.9.9")
 
     @Test
     fun aPatternThatDoesNotCompileIsRejectedNamingTheRule() =

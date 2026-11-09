@@ -3,9 +3,11 @@
 Registro de #8 (RF-04): la app identifica, cuando corresponden, las señales de **urgencia**, **enlace**, **suplantación** y
 **solicitud de datos** en un SMS. Última verificación: 2026-11-08.
 
-> **ATENCIÓN.** Estas señales son **reglas escritas a mano**, no salen del modelo. Se probaron con mensajes sintéticos, no
-> con mensajes reales: las cifras de abajo no son una estimación de cómo funcionan en un teléfono. Y todavía no se
-> muestran en pantalla (eso es #11) ni se calculan sobre los mensajes que llegan (falta dónde guardar los resultados, #12).
+> **ATENCIÓN.** Estas señales son **reglas escritas a mano**, no salen del modelo. Se midieron con un conjunto de mensajes
+> sintéticos y con el corpus real anonimizado (ver "Validación con el corpus real"): **detectan una parte pequeña del
+> smishing real** (urgencia o solicitud de datos en 28 % de los mensajes de smishing del corpus), así que explican algunas
+> alertas pero no sirven como detector por sí solas. Y todavía no se muestran en pantalla (eso es #11) ni se calculan sobre
+> los mensajes que llegan (falta dónde guardar los resultados, #12).
 
 ## Qué es cada señal
 
@@ -27,7 +29,7 @@ Dos cuidados para no acusar a mensajes legítimos:
 
 ## Cómo funciona
 
-1. Las reglas están en `app/src/main/assets/signal_rules.json` (versionado, `1.0.0`), no en el código: cambiar una lista de
+1. Las reglas están en `app/src/main/assets/signal_rules.json` (versionado, `1.1.0`), no en el código: cambiar una lista de
    palabras no exige tocar Kotlin. Un lector (`SignalRulesParser`) rechaza versiones desconocidas, patrones que no compilan
    y reglas repetidas, nombrando la regla.
 2. El detector (`RuleBasedSignalDetector`) aplica las reglas a una copia del mensaje del **mismo largo**: en minúsculas, sin
@@ -86,7 +88,7 @@ Emulador Pixel 4, Android 10 (API 29), x86_64, con Temurin 17 y `--rerun`.
 
 | Ejecución | Pruebas | Fallos |
 |---|---|---|
-| `testDebugUnitTest` (JVM) | 106 (35 nuevas) | 0 |
+| `testDebugUnitTest` (JVM) | 107 (36 nuevas; 1 solo corre con el corpus, ver abajo) | 0 |
 | `connectedDebugAndroidTest` | 84 (28 nuevas): 83 ejecutadas y 1 omitida a propósito | 0 |
 
 Las 27 pruebas del contrato corren **igual en la JVM y en el dispositivo**, así que el motor de expresiones regulares de
@@ -114,6 +116,53 @@ Android da lo mismo que el de la JVM para estas reglas.
   suplantación). Léase con la advertencia de "Lo que no cubre": las reglas se afinaron viendo esos mismos mensajes.
 - Los mensajes ofuscados ("8CP", "cu3nta", "I n t e r b a n k", "Y4pe") se reconocen igual que los normales.
 
+## Validación con el corpus real
+
+Se midieron las reglas con `sms-anonymizer/data/labeled/final.csv`, el corpus real ya anonimizado y etiquetado (versión
+1.0.4): **4 057 mensajes legítimos y 53 de smishing, sin repetidos**. El corpus real no se versiona y este informe no lleva
+texto: solo conteos. La medición la hace `CorpusSignalReportTest` (JVM), que **no corre por defecto**: solo si la variable de
+entorno `SMISHING_CORPUS_CSV` apunta al CSV, y escribe en `app/build/reports` (no versionado) conteos e índices, nunca mensajes.
+
+**Lo que este corpus no permite medir.** La anonimización reemplaza **todos los enlaces por `<URL>`** y los nombres por
+`<NAMED_ENTITY>`. Entonces:
+- **Suplantación no es medible**: sin el dominio real no se sabe si el enlace es el oficial. Con un enlace de reemplazo, el
+  11,5 % de los legítimos "suplantaba" (todo aviso real de Entel, Movistar o Yape): es un artefacto de la prueba, no un
+  resultado. Esa cifra no debe citarse.
+- **Enlace** se mide solo como presencia, y casi no distingue: lo traen el **73,5 %** de los legítimos y el **98 %** del
+  smishing (52 de 53).
+
+**Método.** Para no ajustar las reglas a lo que se mide, el corpus se dividió por índice en **desarrollo** (pares: 2 027
+legítimos y 28 de smishing) y **reserva** (impares: 2 030 y 25), y de la reserva solo se tomaron los números, sin leer sus
+mensajes. Se leyeron solo los de smishing de desarrollo sin señal y las frases (no los mensajes) que activaban cada regla
+en los legítimos.
+
+**Resultado.** Mensajes con urgencia o solicitud de datos, con las reglas `1.1.0`:
+
+| Conjunto | Legítimos | Smishing |
+|---|---|---|
+| Desarrollo | 44 de 2 027 (2,2 %) | 9 de 28 (32,1 %) |
+| Reserva | 31 de 2 030 (1,5 %) | 6 de 25 (24,0 %) |
+| **Todo el corpus** | **75 de 4 057 (1,8 %)** | **15 de 53 (28,3 %)** |
+
+Con solo 53 mensajes de smishing la incertidumbre es grande: el 28,3 % tiene un intervalo de confianza del 95 % de
+aproximadamente **18 % a 42 %**. Por señal, en todo el corpus (legítimos / smishing): urgencia 63 de 4 057 (1,6 %) / 9 de 53
+(17 %); solicitud de datos 12 de 4 057 (0,3 %) / 8 de 53 (15 %).
+
+**Qué muestra.**
+- Las falsas alarmas de **urgencia** en los legítimos son sobre todo **avisos de cobro** ("paga hoy y evita el corte", "vence
+  hoy"): esos avisos de verdad presionan. La señal describe el mensaje, no su intención, así que **urgencia por sí sola no
+  distingue** una estafa de un cobro legítimo: #9 no debe darle un peso alto.
+- Los mensajes de smishing sin urgencia ni solicitud de datos son sobre todo un **gancho de dinero o premio** ("se han
+  abonado…", "bono", "retirar el monto", "ganadores", "puntos por vencer") seguido de un enlace. **Ninguna de las cuatro
+  señales de #8 lo describe**, y es lo más común que quedó sin explicar. Un posible quinto tipo ("beneficio o premio") queda
+  como decisión para el equipo; no se agregó porque no está en el criterio de #8 y exige decidir cómo pesa en #9.
+
+**Qué se cambió y qué no.** Se agregó una regla (`urgency.legal_threat`: "demanda judicial", "acciones legales"; versión de las
+reglas `1.1.0`): no tuvo ninguna falsa alarma en desarrollo. **Su efecto no se demostró**: sumó 1 mensaje de smishing en
+desarrollo (el que la motivó) y 0 en la reserva. Se descartaron "próximo a vencer" (4 legítimos contra 3 de smishing en
+desarrollo) y "evitar recargos/corte" (11 contra 1): no distinguían. No se tocó la solicitud de datos, cuyas pocas falsas
+alarmas (4 en desarrollo) son instrucciones como "ingrese el siguiente código".
+
 ## Lo que no cubre
 
 - **Son reglas hechas por mí y probadas con 84 mensajes sintéticos que ya había visto al escribirlas.** Para evitar falsas
@@ -121,7 +170,9 @@ Android da lo mismo que el de la JVM para estas reglas.
   descartaron por aparecer en avisos reales, y "cuenta" no cuenta como dato). Por eso **el 0 falsas alarmas no es una
   estimación**: con mensajes reales habrá más. La medición honesta necesita mensajes que no se hayan usado para escribir las
   reglas.
-- **No se midió con mensajes reales** ni se comparó con lo que el modelo detecta.
+- **Con mensajes reales solo se midieron urgencia y solicitud de datos**, y con pocos mensajes de smishing (53). La suplantación y
+  los dominios oficiales **siguen sin validarse con datos reales**: el corpus no conserva los enlaces. Tampoco se comparó con lo
+  que el modelo detecta.
 - Cinco mensajes de smishing del conjunto solo producen "enlace" (`smishing_bank_08`, `smishing_prize_02`,
   `smishing_prize_04`, `smishing_short_01`, `smishing_short_03`): no tienen urgencia, entidad ni solicitud de datos tal como
   se definen (premios, un aviso de "bloquea aquí", enlaces sueltos). **No se ajustaron las reglas a ellos.**

@@ -26,7 +26,7 @@ class SignalDetectorInstrumentedTest : SignalDetectorContract() {
     fun theFactoryBuildsTheDetectorFromThePackagedRules() {
         val detector = AndroidSignalDetectorFactory.create(instrumentation.targetContext)
         val analysis = detector.detect("BCP: Su cuenta será bloqueada. Actualice sus datos en http://bcp-seguro.info")
-        assertEquals("1.0.0", analysis.rulesVersion)
+        assertEquals("1.1.0", analysis.rulesVersion)
         assertEquals(
             setOf(SignalType.Urgency, SignalType.Impersonation, SignalType.Link, SignalType.DataRequest),
             analysis.types,

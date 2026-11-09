@@ -76,6 +76,8 @@ abstract class SignalDetectorContract {
             "Actualice su clave o perderá el acceso",
             "Su clave de internet vence hoy",
             "Último aviso antes de la multa",
+            "De no responder, procederemos con una demanda judicial en su contra",
+            "Tomaremos acciones legales si no responde",
         )) {
             assertTrue("Debía detectar urgencia en: $message", SignalType.Urgency in types(message))
         }
@@ -192,7 +194,7 @@ abstract class SignalDetectorContract {
     @Test
     fun everySignalNamesItsRuleAndTheAnalysisNamesTheRulesVersion() {
         val analysis = detector.detect("BCP: Su cuenta será bloqueada. Actualice sus datos en http://bcp-seguro.info")
-        assertEquals("1.0.0", analysis.rulesVersion)
+        assertEquals("1.1.0", analysis.rulesVersion)
         assertEquals(
             setOf(SignalType.Urgency, SignalType.Impersonation, SignalType.Link, SignalType.DataRequest),
             analysis.types,

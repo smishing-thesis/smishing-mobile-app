@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Reglas para identificar señales en un SMS en español. Los patrones se aplican sobre el texto en minúsculas, sin tildes y con sustituciones comunes (0=o, 3=e, 4=a, 5=s, 7=t, 8=b, @=a, $=s): por eso los plazos se escriben con \\w y no con \\d.",
   "link": {
     "tlds": [
@@ -41,6 +41,10 @@
     {
       "id": "expires_today",
       "pattern": "\\b(?:vence|caduca|expira)\\s+hoy\\b"
+    },
+    {
+      "id": "legal_threat",
+      "pattern": "\\b(?:demanda|proceso)\\s+judicial\\b|\\baccion(?:es)?\\s+legal(?:es)?\\b"
     }
   ],
   "dataRequest": [

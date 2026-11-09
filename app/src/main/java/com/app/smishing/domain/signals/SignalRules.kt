@@ -28,7 +28,7 @@ data class SignalRules(
 ) {
     companion object {
         /** Versiones de las reglas que esta app sabe interpretar. */
-        val SUPPORTED_VERSIONS = setOf("1.0.0")
+        val SUPPORTED_VERSIONS = setOf("1.0.0", "1.1.0")
     }
 }
 
