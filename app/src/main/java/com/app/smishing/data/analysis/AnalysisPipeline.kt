@@ -1,11 +1,14 @@
 package com.app.smishing.data.analysis
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.app.smishing.data.classification.OnDeviceClassifier
+import com.app.smishing.data.mitigation.LoggingMitigator
 import com.app.smishing.data.signals.AndroidSignalDetectorFactory
 import com.app.smishing.data.sms.AndroidSmsPermissionRepository
 import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.domain.classification.GatedMessageClassifier
+import com.app.smishing.domain.mitigation.Mitigator
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.domain.sms.RoleAndPermissionsGate
 
@@ -21,6 +24,18 @@ object AnalysisPipeline {
 
     @Volatile
     private var assessor: RiskAssessor? = null
+
+    @Volatile
+    private var mitigator: Mitigator = LoggingMitigator()
+
+    /** Quien ejecuta lo que decide el modo de mitigación (#13). Hoy solo anota la decisión; #14 y #15 le agregan las acciones. */
+    fun mitigator(): Mitigator = mitigator
+
+    /** Solo para pruebas: cambia el ejecutor para ver qué decisiones le llegan. */
+    @VisibleForTesting
+    fun replaceMitigator(replacement: Mitigator) {
+        mitigator = replacement
+    }
 
     fun assessor(context: Context): RiskAssessor =
         assessor ?: synchronized(this) { assessor ?: build(context.applicationContext).also { assessor = it } }

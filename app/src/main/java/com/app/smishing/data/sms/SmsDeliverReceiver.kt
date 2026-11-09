@@ -9,6 +9,7 @@ import com.app.smishing.data.alerts.AndroidRiskAlertNotifier
 import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.data.settings.DataStoreMitigationSettings
 import com.app.smishing.domain.alerts.AnalyzeReceivedMessage
 import com.app.smishing.domain.sms.IncomingSms
 import com.app.smishing.domain.sms.ReceiveIncomingSms
@@ -62,8 +63,11 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 assessor = AnalysisPipeline.assessor(context),
                 history = RoomAnalysisHistory(HistoryDatabase.get(context)),
                 notifier = AndroidRiskAlertNotifier(context),
+                settings = DataStoreMitigationSettings(context),
+                mitigator = AnalysisPipeline.mitigator(),
                 // Solo el tipo de error: su mensaje podría traer el contenido.
                 onHistoryError = { Log.e(TAG, "No se pudo guardar el análisis en el historial: ${it.javaClass.simpleName}") },
+                onMitigationError = { Log.e(TAG, "No se pudo aplicar el modo de mitigación: ${it.javaClass.simpleName}") },
             ).onReceived(messageId, message)
             Log.i(TAG, "Análisis del SMS entrante: $outcome")
         } catch (e: Throwable) {

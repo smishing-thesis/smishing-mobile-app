@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.litert)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.datastore.preferences)
     ksp(libs.androidx.room.compiler)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

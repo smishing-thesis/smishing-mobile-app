@@ -2,6 +2,10 @@ package com.app.smishing.domain.alerts
 
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.mitigation.MitigationDecision
+import com.app.smishing.domain.mitigation.MitigationPolicy
+import com.app.smishing.domain.mitigation.MitigationSettings
+import com.app.smishing.domain.mitigation.Mitigator
 import com.app.smishing.domain.risk.RiskAssessment
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.domain.risk.RiskLevel
@@ -62,30 +66,41 @@ enum class AnalysisOutcome {
 }
 
 /**
- * Evalúa un SMS recién recibido, lo guarda en el historial (#12) y, si su nivel de riesgo pide alerta, avisa (#10).
+ * Evalúa un SMS recién recibido, lo guarda en el historial (#12), consulta el modo de mitigación (#13) y, si su nivel de riesgo
+ * pide alerta, avisa (#10).
  *
- * El registro se guarda **antes** de avisar, así el detalle de la alerta encuentra lo guardado. Si guardar falla, igual se avisa
- * ([onHistoryError] lo anota): la alerta no depende del historial.
+ * El orden importa:
+ * 1. **Guarda el registro** antes de actuar o avisar, así el detalle de la alerta lo encuentra. Si guardar falla, sigue
+ *    ([onHistoryError] lo anota): nada depende del historial.
+ * 2. **Consulta el modo antes de cualquier acción** sobre el mensaje. Solo si el modo pide actuar o preguntar se llama al
+ *    [mitigator]; con "solo avisarme", o con un nivel que no es alto, no se toca el mensaje. Si no se puede leer el modo, no se
+ *    actúa ([onMitigationError] lo anota).
+ * 3. **Avisa**, pase lo que pase con lo anterior.
  */
 class AnalyzeReceivedMessage(
     private val assessor: RiskAssessor,
     private val history: AnalysisHistory,
     private val notifier: RiskAlertNotifier,
+    private val settings: MitigationSettings,
+    private val mitigator: Mitigator,
     private val clock: () -> Long = System::currentTimeMillis,
     private val onHistoryError: (Throwable) -> Unit = {},
+    private val onMitigationError: (Throwable) -> Unit = {},
 ) {
 
     fun onReceived(messageId: Long, message: IncomingSms): AnalysisOutcome =
         when (val result = assessor.assess(message.body)) {
-            // Muy corto o análisis suspendido: sin nivel, no se guarda ni se avisa (política de entrada del modelo).
+            // Muy corto o análisis suspendido: sin nivel, no se guarda ni se actúa ni se avisa (política de entrada del modelo).
             is RiskResult.NotAssessed -> AnalysisOutcome.NotAssessed
             is RiskResult.Assessed -> {
                 val now = clock()
+                var record = AnalysisRecord(0, messageId, message.sender, message.body, now, now, result.assessment)
                 try {
-                    history.save(AnalysisRecord(0, messageId, message.sender, message.body, now, now, result.assessment))
+                    record = record.copy(id = history.save(record))
                 } catch (e: Exception) {
                     onHistoryError(e)
                 }
+                mitigate(record)
                 val reason = AlertPolicy.reasonFor(result.assessment)
                 if (reason == null) AnalysisOutcome.Recorded
                 else {
@@ -94,4 +109,15 @@ class AnalyzeReceivedMessage(
                 }
             }
         }
+
+    private fun mitigate(record: AnalysisRecord) {
+        try {
+            // Se consulta el modo solo si el nivel permite actuar: con medio o bajo no hay nada que decidir.
+            if (record.assessment.level !in MitigationPolicy.ACTIONABLE_LEVELS) return
+            val decision = MitigationPolicy.decide(record.assessment.level, settings.mode())
+            if (decision != MitigationDecision.DoNothing) mitigator.apply(decision, record)
+        } catch (e: Exception) {
+            onMitigationError(e)
+        }
+    }
 }

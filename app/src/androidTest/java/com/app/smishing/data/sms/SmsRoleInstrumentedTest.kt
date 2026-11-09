@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -28,7 +29,12 @@ import com.app.smishing.R
 import com.app.smishing.DeviceReport
 import com.app.smishing.PlainLanguage
 import com.app.smishing.Shell
+import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
+import com.app.smishing.data.mitigation.LoggingMitigator
+import com.app.smishing.data.settings.DataStoreMitigationSettings
+import com.app.smishing.domain.mitigation.MitigationDecision
+import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.data.classification.OnDeviceClassifier
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
@@ -448,6 +454,82 @@ class SmsRoleInstrumentedTest {
             compose.onNodeWithText(context.getString(R.string.detail_title)).assertIsDisplayed()
         } finally {
             manager.cancelAll()
+            finishOpenActivities()
+            deleteSyntheticMessages()
+        }
+    }
+
+    /**
+     * #13 de punta a punta: la persona elige el modo en Ajustes, queda guardado, y el receptor lo consulta **antes de actuar** sobre
+     * un mensaje de riesgo alto: "preguntar" muestra las opciones, "automático" actúa, "solo avisarme" no toca el mensaje. Con
+     * cualquier modo la alerta aparece, y un mensaje que no es de riesgo alto no dispara ninguna acción. El ejecutor se sustituye por
+     * uno que anota la decisión (bloquear y retirar son #14 y #15). Datos sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenTheChosenModeDecidesWhatHappensToARiskyMessage() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val history = RoomAnalysisHistory(database)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        val decisions = java.util.Collections.synchronizedList(mutableListOf<MitigationDecision>())
+        AnalysisPipeline.replaceMitigator { decision, _ -> decisions += decision }
+        settings.setMode(MitigationMode.Ask)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        fun alerts() = manager.activeNotifications.count { it.packageName == context.packageName }
+        fun choose(mode: MitigationMode, title: Int) {
+            compose.onNodeWithText(context.getString(title)).performClick()
+            waitUntil { settings.mode() == mode }
+            compose.onNodeWithText(context.getString(title)).assertIsSelected()
+        }
+        try {
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            val harmless = "Te quiero mucho, cuidate"
+
+            ActivityScenario.launch(MainActivity::class.java).use {
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_title)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.nav_settings)).performClick()
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.settings_mode_ask_title)) > 0 }
+
+                // Sin elegir otra cosa, el modo es "preguntar".
+                compose.waitUntil(TIMEOUT_MS) {
+                    compose.onNodeWithText(context.getString(R.string.settings_mode_ask_title))
+                        .fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true
+                }
+                deliver(SENDER_F, risky, secondsAfterSentAt = 1)
+                waitUntil { alerts() == 1 }
+                assertEquals(listOf(MitigationDecision.AskUser), decisions.toList())
+
+                // "Protegerme automáticamente": actúa, y avisa igual.
+                choose(MitigationMode.Automatic, R.string.settings_mode_automatic_title)
+                deliver(SENDER_F, risky, secondsAfterSentAt = 2) // otra hora: el mismo mensaje a la misma hora se descarta como duplicado
+                waitUntil { alerts() == 2 }
+                assertEquals(listOf(MitigationDecision.AskUser, MitigationDecision.Act), decisions.toList())
+
+                // "Solo avisarme": avisa, pero no se toca el mensaje.
+                choose(MitigationMode.Disabled, R.string.settings_mode_disabled_title)
+                deliver(SENDER_F, risky, secondsAfterSentAt = 3)
+                waitUntil { alerts() == 3 }
+                assertEquals("Con «solo avisarme» no debía haber acción", 2, decisions.size)
+
+                // Con el modo automático, un mensaje que no es de riesgo alto no dispara nada (se espera a que ya esté evaluado).
+                choose(MitigationMode.Automatic, R.string.settings_mode_automatic_title)
+                deliver(SENDER_F, harmless)
+                waitUntil { history.all().size == 4 }
+                Thread.sleep(700)
+                assertEquals("El de riesgo medio no debía disparar una acción", 2, decisions.size)
+                assertEquals("Ni avisar", 3, alerts())
+            }
+            // La elección sigue guardada fuera de la pantalla.
+            assertEquals(MitigationMode.Automatic, DataStoreMitigationSettings(context).mode())
+        } finally {
+            AnalysisPipeline.replaceMitigator(LoggingMitigator())
+            settings.setMode(MitigationMode.Ask)
+            manager.cancelAll()
+            database.clearAllTables()
             finishOpenActivities()
             deleteSyntheticMessages()
         }

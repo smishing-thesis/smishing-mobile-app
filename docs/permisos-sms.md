@@ -12,6 +12,9 @@ análisis si se revocan. Última verificación: 2026-11-08.
 | `POST_NOTIFICATIONS` | mostrar la alerta de un mensaje riesgoso (#10) | solo Android 13 (API 33) o superior lo pide en tiempo de ejecución, al abrir los mensajes | **no se verificó**: el emulador es API 29 y ahí el permiso no existe. En API 29 la alerta se mostró sin pedirlo; ver [alerta-de-riesgo.md](alerta-de-riesgo.md). No forma parte de la compuerta del análisis |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
+El estado de estos permisos y de las notificaciones se ve, con lo que queda limitado si faltan, en la pestaña Ajustes (#25; ver
+[ajustes-y-modo.md](ajustes-y-modo.md)).
+
 No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
 hecha), ni `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
 motivo en esta tabla.

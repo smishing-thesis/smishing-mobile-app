@@ -12,6 +12,7 @@ Revisar el tablero antes de empezar: el estado y la prioridad reales están all�
 | Mitigación y reporte | #13 modo manual, automático o desactivado · #14 bloquear remitente · #15 retirar del buzón · #16 marcar como seguro y revertir · #26 modo de reporte · #27 reportar · #28 y #29 acciones en el historial · #31 pantalla de ajustes |
 | Aporte opcional | #18 activar o revocar el aporte · #19 desidentificar antes de compartir |
 | Evaluación | #22 flujo, permisos y reversión · #23 clasificación y comprensión de alertas |
+| Reemplazo de la app de mensajería (fase 1) | #48 recibir y guardar MMS · #49 avisar de cada SMS recibido · #50 leídos y no leídos · #51 borrar mensajes y conversaciones · #52 borrar el historial y su retención · #53 nombre del contacto |
 
 ## Orden sugerido
 
@@ -24,6 +25,16 @@ Revisar el tablero antes de empezar: el estado y la prioridad reales están all�
 6. **Aporte opcional:** #19 y #18. El envío real depende del backend (`smishing-backend`), así que puede ir al final
    o probarse con un servidor simulado.
 7. **Cierre:** #24, #32, #35, #22, #23.
+
+## Alcance de la primera fase (prueba manual)
+
+Se implementa esto y luego se detiene el desarrollo para probar todo en un teléfono; de lo que salga se crean más issues.
+
+1. **Protección:** #13 + #31 (parcial: falta "Compartir reportes") + #25; luego #14, #15, #16, #28; luego #17 (estado de la protección
+   y primer paso del onboarding).
+2. **Base:** #32 (APK de prueba), #20 (sin internet), #21 (demora acotada).
+3. **Reemplazo de la app de mensajería:** #48 a #53.
+4. **Fase 2 (después de probar):** #18, #19, #26, #27, #29, #22, #23, #24, #35.
 
 ## Dependencias con otros repos
 
