@@ -55,4 +55,30 @@
     <string name="send_error_invalid_recipient">Escriba un número de teléfono válido.</string>
     <string name="send_error_failed">No se pudo enviar el mensaje. Inténtelo de nuevo.</string>
     <string name="send_error_not_allowed">La aplicación no tenía permiso para enviar mensajes y lo pidió. Toque Enviar otra vez.</string>
+
+    <!-- Alerta de riesgo (#10) -->
+    <string name="alert_channel_name">Alertas de estafa</string>
+    <string name="alert_channel_description">Avisa cuando un mensaje recibido parece una estafa.</string>
+    <string name="alert_title">Posible estafa detectada</string>
+    <string name="alert_public_text">Abra la aplicación para ver el detalle.</string>
+    <string name="alert_view_details">Ver detalles</string>
+    <string name="alert_reason_urgency">Le pide actuar con urgencia</string>
+    <string name="alert_reason_impersonation">Finge ser de una entidad</string>
+    <string name="alert_reason_data_request">Le pide sus datos o claves</string>
+    <string name="alert_reason_link">Contiene un enlace</string>
+
+    <!-- Detalle del análisis (#10). Los textos de los niveles y de "sin señales" no están en el diseño: revisar con quien lo diseñó. -->
+    <string name="detail_title">Detalle del análisis</string>
+    <string name="detail_banner_high">Posible estafa</string>
+    <string name="detail_banner_medium">Mensaje sospechoso</string>
+    <string name="detail_banner_low">Sin señales de riesgo</string>
+    <string name="detail_original_label">Mensaje original</string>
+    <string name="detail_why_label">¿Por qué es riesgoso?</string>
+    <string name="detail_model_only">El análisis lo considera sospechoso, aunque no encontró señales concretas.</string>
+    <string name="detail_no_signals">No se encontraron señales de riesgo.</string>
+    <string name="detail_not_assessed_title">Análisis</string>
+    <string name="detail_not_assessed">Este mensaje no se pudo analizar: es muy corto o el análisis está suspendido.</string>
+    <string name="detail_recommendation_title">Recomendación</string>
+    <string name="detail_recommendation">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
 </resources>

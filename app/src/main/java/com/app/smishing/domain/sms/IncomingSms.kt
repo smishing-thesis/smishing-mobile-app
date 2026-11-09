@@ -29,19 +29,25 @@ interface SmsInbox {
     /** `true` si el mensaje ya está en el buzón. */
     fun contains(message: IncomingSms): Boolean
 
-    /** Lo guarda; el sistema lo asigna a la conversación de su remitente. */
-    fun store(message: IncomingSms)
+    /** Lo guarda y devuelve su id en el buzón; el sistema lo asigna a la conversación de su remitente. */
+    fun store(message: IncomingSms): Long
 }
 
 enum class ReceiveOutcome { Stored, Duplicate, Ignored }
 
+/**
+ * Lo que pasó al recibir un SMS. Solo si se guardó ([ReceiveOutcome.Stored]) trae su [messageId] en el buzón y el [message]:
+ * es lo que se necesita para analizarlo y avisar.
+ */
+data class ReceiveResult(val outcome: ReceiveOutcome, val messageId: Long? = null, val message: IncomingSms? = null)
+
 /** Registra un SMS entrante: lo guarda una sola vez en el buzón. */
 class ReceiveIncomingSms(private val inbox: SmsInbox) {
 
-    fun receive(parts: List<SmsPart>): ReceiveOutcome {
-        val message = assembleIncoming(parts) ?: return ReceiveOutcome.Ignored
-        if (inbox.contains(message)) return ReceiveOutcome.Duplicate
-        inbox.store(message)
-        return ReceiveOutcome.Stored
+    fun receive(parts: List<SmsPart>): ReceiveResult {
+        val message = assembleIncoming(parts) ?: return ReceiveResult(ReceiveOutcome.Ignored)
+        if (inbox.contains(message)) return ReceiveResult(ReceiveOutcome.Duplicate)
+        val id = inbox.store(message)
+        return ReceiveResult(ReceiveOutcome.Stored, id, message)
     }
 }

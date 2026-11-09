@@ -5,16 +5,22 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
+import com.app.smishing.data.alerts.AndroidRiskAlertNotifier
+import com.app.smishing.data.analysis.AnalysisPipeline
+import com.app.smishing.domain.alerts.AlertOnRiskyMessage
+import com.app.smishing.domain.sms.IncomingSms
 import com.app.smishing.domain.sms.ReceiveIncomingSms
+import com.app.smishing.domain.sms.ReceiveOutcome
 import com.app.smishing.domain.sms.SmsPart
 import java.util.concurrent.Executors
 
 /**
- * Recibe los SMS entrantes cuando la app es la predeterminada (#4) y los guarda una sola vez en el buzón del sistema.
+ * Recibe los SMS entrantes cuando la app es la predeterminada (#4), los guarda una sola vez en el buzón del sistema y, si
+ * el mensaje es riesgoso, avisa (#10).
  *
  * Android entrega `SMS_DELIVER` solo a la app predeterminada y solo si tiene `RECEIVE_SMS`. Quien guarda el mensaje
- * es esta app: si no lo guardara, se perdería. El análisis no se dispara aquí todavía: no hay dónde guardar su
- * resultado (ver docs/recepcion-sms.md).
+ * es esta app: si no lo guardara, se perdería. Guardarlo va primero y no depende del análisis: si el modelo falla, el
+ * mensaje ya está a salvo.
  *
  * No se registra el contenido del mensaje, ni el remitente.
  */
@@ -31,14 +37,31 @@ class SmsDeliverReceiver : BroadcastReceiver() {
         val pending: PendingResult? = goAsync()
         EXECUTOR.execute {
             try {
-                val outcome = ReceiveIncomingSms(TelephonySmsInbox(appContext)).receive(parts)
-                Log.i(TAG, "SMS entrante: $outcome (${parts.size} fragmentos)")
+                val result = ReceiveIncomingSms(TelephonySmsInbox(appContext)).receive(parts)
+                Log.i(TAG, "SMS entrante: ${result.outcome} (${parts.size} fragmentos)")
+                val message = result.message
+                val messageId = result.messageId
+                if (result.outcome == ReceiveOutcome.Stored && message != null && messageId != null) {
+                    alertIfRisky(appContext, messageId, message)
+                }
             } catch (e: RuntimeException) {
                 // Solo el tipo de error: su mensaje podría traer el contenido.
                 Log.e(TAG, "No se pudo guardar el SMS entrante: ${e.javaClass.simpleName}")
             } finally {
                 pending?.finish()
             }
+        }
+    }
+
+    /** Evalúa el mensaje ya guardado y avisa si es riesgoso. Un fallo del análisis no debe tocar el mensaje guardado. */
+    private fun alertIfRisky(context: Context, messageId: Long, message: IncomingSms) {
+        try {
+            val outcome = AlertOnRiskyMessage(AnalysisPipeline.assessor(context), AndroidRiskAlertNotifier(context))
+                .onReceived(messageId, message)
+            Log.i(TAG, "Análisis del SMS entrante: $outcome")
+        } catch (e: Throwable) {
+            // Solo el tipo de error. También se atrapan los `Error` (por ejemplo, la biblioteca nativa del modelo).
+            Log.e(TAG, "No se pudo analizar el SMS entrante: ${e.javaClass.simpleName}")
         }
     }
 

@@ -4,8 +4,10 @@ import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.provider.Telephony
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -18,6 +20,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.app.smishing.R
 import com.app.smishing.DeviceReport
 import com.app.smishing.Shell
@@ -359,6 +363,77 @@ class SmsRoleInstrumentedTest {
         context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.BODY} = ?", arrayOf(ECHO_TEXT))
     }
 
+    /**
+     * #10 de punta a punta: un SMS riesgoso recibido genera una notificación que indica el riesgo sin mostrar el texto del
+     * mensaje, y tocarla abre el detalle sin activar ningún enlace. Un mensaje que no es de riesgo alto no avisa. Datos
+     * sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenARiskyMessageAlertsAndTheAlertOpensItsDetailWithoutActivatingLinks() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        try {
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            val harmless = "Te quiero mucho, cuidate"
+
+            // El que no es de riesgo alto no avisa (el modelo lo marca, pero ninguna señal lo respalda: nivel medio).
+            deliver(SENDER_F, harmless)
+            deliver(SENDER_F, risky)
+
+            // Las dos entregas se procesan en orden: cuando aparece la alerta, la primera ya se evaluó.
+            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            val alerts = manager.activeNotifications.filter { it.packageName == context.packageName }
+            assertEquals("Solo el de riesgo alto debía avisar", 1, alerts.size)
+            val notification = alerts.single().notification
+
+            // Indica el riesgo, con el remitente y un motivo, y no revela el texto del mensaje.
+            val extras = notification.extras
+            assertEquals(context.getString(R.string.alert_title), extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString())
+            assertEquals(
+                "+$SENDER_F — ${context.getString(R.string.alert_reason_urgency)}",
+                extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString(),
+            )
+            val visible = extras.keySet().mapNotNull { extras.get(it)?.toString() }.joinToString(" ")
+            for (secret in listOf("bbva-pe.top", "Actualice", "tarjeta")) {
+                assertTrue("La notificación no debía mostrar «$secret»", secret !in visible)
+            }
+            // En la pantalla de bloqueo, la versión pública no dice ni el remitente ni el motivo.
+            assertEquals(android.app.Notification.VISIBILITY_PRIVATE, notification.visibility)
+            val publicText = notification.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString()
+            assertEquals(context.getString(R.string.alert_public_text), publicText)
+            assertTrue(SENDER_F !in publicText)
+
+            // Tocarla abre el detalle: el riesgo, el mensaje tal cual y por qué se avisó.
+            notification.contentIntent.send()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
+            compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
+            compose.onNodeWithText(risky).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.alert_reason_urgency)).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.alert_reason_link)).assertIsDisplayed()
+
+            // Sin activar enlaces: el enlace del mensaje es texto plano y tocarlo no abre nada ni saca de la app.
+            compose.onNodeWithText(risky).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
+            compose.onNodeWithText(risky).performClick()
+            Thread.sleep(1_500)
+            val resumed = Shell.run("dumpsys activity activities").lines().first { "mResumedActivity" in it }
+            assertTrue("Debía seguir en la app y no abrir un navegador: $resumed", context.packageName in resumed)
+            compose.onNodeWithText(context.getString(R.string.detail_title)).assertIsDisplayed()
+        } finally {
+            manager.cancelAll()
+            finishOpenActivities()
+            deleteSyntheticMessages()
+        }
+    }
+
+    private fun finishOpenActivities() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).forEach { it.finish() }
+        }
+    }
+
     private fun insertSent(sender: String, body: String, at: Long) {
         val values = ContentValues().apply {
             put(Telephony.Sms.ADDRESS, "+$sender")
@@ -396,7 +471,7 @@ class SmsRoleInstrumentedTest {
         }
 
     private fun deleteSyntheticMessages() {
-        for (sender in listOf(SENDER_A, SENDER_B, SENDER_C, SENDER_D, SENDER_E)) {
+        for (sender in listOf(SENDER_A, SENDER_B, SENDER_C, SENDER_D, SENDER_E, SENDER_F)) {
             context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.ADDRESS} = ?", arrayOf("+$sender"))
         }
     }
@@ -423,6 +498,7 @@ class SmsRoleInstrumentedTest {
         const val SENDER_C = "10000000003"
         const val SENDER_D = "10000000004"
         const val SENDER_E = "10000000005"
+        const val SENDER_F = "10000000006"
         // +999 no es un código de país asignado: son números imposibles, y bien distintos entre sí para que el proveedor
         // de SMS no los fusione en una sola conversación (compara los números de forma laxa).
         // El número del propio emulador: lo que se le envía, él mismo lo entrega.

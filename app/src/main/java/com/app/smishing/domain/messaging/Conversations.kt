@@ -43,8 +43,23 @@ fun latestPerConversation(rowsNewestFirst: Sequence<SmsRow>): List<Conversation>
     return latest.values.toList()
 }
 
+/** Un mensaje del buzón, con su remitente, para abrir su detalle. Igual que los demás, no muestra su texto en `toString`. */
+data class StoredMessage(
+    val id: Long,
+    val threadId: Long,
+    val address: String,
+    val body: String,
+    val atMillis: Long,
+    val direction: MessageDirection,
+) {
+    override fun toString() = "StoredMessage(id=$id, threadId=$threadId, atMillis=$atMillis, direction=$direction)"
+}
+
 /** Las conversaciones del teléfono y los mensajes de cada una. */
 interface ConversationRepository {
+    /** Un mensaje por su id en el buzón, o `null` si ya no está. */
+    fun message(messageId: Long): StoredMessage?
+
     /** Las conversaciones, la más reciente primero. */
     fun conversations(): List<Conversation>
 

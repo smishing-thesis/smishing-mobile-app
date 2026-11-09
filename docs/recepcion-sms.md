@@ -34,10 +34,10 @@ regla y es muy improbable; el texto igual en otro momento, o de otro remitente, 
 **Privacidad.** `IncomingSms.toString()` no incluye remitente ni texto. El receptor solo registra el resultado
 (`Stored`, `Duplicate`, `Ignored`) y el número de fragmentos; si falla, solo el tipo de excepción.
 
-**El análisis todavía no se dispara aquí.** El diseño dice que el registro del mensaje dispara el análisis, pero hoy no hay
-dónde guardar un resultado (Room, señales, alertas y el historial son #8 a #12): clasificar ahora descartaría el
-resultado. Cuando esas historias existan, el análisis se conecta a este punto y **debe usar `GatedMessageClassifier`**
-(ver [permisos-sms.md](permisos-sms.md)), no el clasificador directo.
+**El análisis se dispara aquí desde #10.** Después de guardar el mensaje, el receptor lo evalúa y, si es de riesgo alto, avisa
+(ver [alerta-de-riesgo.md](alerta-de-riesgo.md)). Usa el clasificador **con la compuerta** del rol y los permisos
+(`GatedMessageClassifier`, ver [permisos-sms.md](permisos-sms.md)). Guardar va primero: si el análisis falla, el mensaje ya está a
+salvo. El resultado no se guarda todavía (historial y almacenamiento, #12).
 
 ## Cómo verificar
 
@@ -96,8 +96,8 @@ prueba falló (`expected:<2> but was:<3>`). Se revirtió.
 
 - **Los MMS se pierden.** `MmsDeliverReceiver` sigue vacío: como app predeterminada, los MMS entrantes no se guardan. No
   hay historia de MMS en el backlog; si se quiere cubrirlos, falta una.
-- **No hay notificación** de mensaje nuevo: una persona solo vería un SMS si abre la app (la lista está en [conversaciones.md](conversaciones.md)).
-- **El análisis no está conectado** (ver arriba): hoy ningún mensaje recibido se clasifica.
+- **Solo hay notificación de los mensajes de riesgo alto** ([alerta-de-riesgo.md](alerta-de-riesgo.md)): de los demás mensajes nuevos, una
+  persona solo se enteraría si abre la app (la lista está en [conversaciones.md](conversaciones.md)).
 - **Mismo mensaje, mismo segundo**: se toma por duplicado (ver arriba).
 - **Entrega real solo desde el emulador.** El mensaje largo llegó en dos fragmentos, pero no se probó con un operador, con
   SMS de clase 0 (flash), con doble SIM ni con otras codificaciones (UCS-2: acentos y emojis) en el PDU de la prueba.
