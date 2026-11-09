@@ -1,13 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older that API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Qué se copia cuando Android respalda la app (Android 11 o inferior; la app funciona desde Android 10).
+
+   El historial de análisis (#12) guarda el TEXTO de mensajes: la base de datos no debe salir del teléfono. Ver también
+   data_extraction_rules.xml, que hace lo mismo para Android 12 o superior.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="database" path="." />
 </full-backup-content>

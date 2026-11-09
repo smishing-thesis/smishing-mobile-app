@@ -31,18 +31,19 @@ texto del mensaje** y por eso no lo filtra en la pantalla de bloqueo. La otra ve
   el detalle", **sin remitente ni motivo** (versión pública).
 - No se registra el remitente, el motivo ni el texto en logs.
 
-## Cómo se abre el detalle sin guardar nada
+## Cómo se abre el detalle
 
-No se guarda el resultado del análisis (el historial y el almacenamiento son #12). La notificación solo lleva el **id del mensaje** en
-el buzón. Al tocarla, el detalle lee el mensaje y **lo vuelve a evaluar**: como la evaluación es determinista (mismo modelo, mismas
-reglas, misma política), da el mismo nivel y los mismos motivos que al recibirlo. Si el mensaje ya no está en el buzón, el detalle
-lo dice.
+La notificación solo lleva el **id del mensaje** en el buzón. Desde #12 el análisis se **guarda en el historial antes de avisar**
+([historial.md](historial.md)), y al tocar la alerta el detalle muestra **lo guardado**: lo mismo que motivó la alerta. Si ese mensaje no
+tiene registro (es anterior al historial), el detalle lo **vuelve a evaluar**; como la evaluación es determinista (mismo modelo, mismas
+reglas, misma política), da el mismo nivel y los mismos motivos. Solo se usa un registro si el texto del mensaje coincide con el suyo.
+Si el mensaje ya no está en el buzón y no hay registro, el detalle lo dice.
 
 ## Código
 
 | Pieza | Capa | Qué hace |
 |---|---|---|
-| `AlertPolicy`, `AlertReason`, `RiskAlert`, `AlertOnRiskyMessage` | `domain.alerts` | cuándo se avisa y por qué motivo; evalúa el mensaje y avisa |
+| `AlertPolicy`, `AlertReason`, `RiskAlert`, `AnalyzeReceivedMessage` | `domain.alerts` | cuándo se avisa y por qué motivo; evalúa el mensaje, lo guarda en el historial y avisa |
 | `AnalysisPipeline` | `data.analysis` | arma una sola vez por proceso el modelo con la compuerta y las reglas de señales |
 | `AndroidRiskAlertNotifier` | `data.alerts` | la notificación (canal "Alertas de estafa", versión pública, "Ver detalles") |
 | `SmsDeliverReceiver` | `data.sms` | tras guardar el SMS, lo evalúa y avisa; un fallo del análisis no toca el mensaje guardado |
@@ -77,7 +78,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 .\gradlew.bat connectedDebugAndroidTest --rerun
 ```
 
-- `AlertOnRiskyMessageTest` (JVM): solo el nivel alto avisa; sin nivel no se avisa; el motivo es el primero en el orden del diseño y el
+- `AnalyzeReceivedMessageTest` (JVM; antes `AlertOnRiskyMessageTest`): solo el nivel alto avisa; sin nivel no se avisa; el motivo es el primero en el orden del diseño y el
   enlace solo nunca lo es; la alerta no lleva el texto ni muestra el remitente en `toString`.
 - `ReceiveIncomingSmsTest` (JVM): un mensaje guardado devuelve su id y el mensaje; un duplicado o uno ignorado no, para no analizarlo dos veces.
 - `MessageDetailScreenTest` (dispositivo, 8): el nivel, el mensaje, los motivos y la recomendación; "Posible estafa" y no "Peligroso";

@@ -1,19 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Qué se copia cuando Android respalda la app (Android 12 o superior).
+
+   El historial de análisis (#12) guarda el TEXTO de mensajes: la base de datos no debe salir del teléfono, ni a la nube de Google
+   ni a otro teléfono al migrar. Por eso se excluye todo el dominio de bases de datos. Si algún día se respaldan preferencias,
+   se incluirán aquí de forma explícita.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="database" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="database" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>

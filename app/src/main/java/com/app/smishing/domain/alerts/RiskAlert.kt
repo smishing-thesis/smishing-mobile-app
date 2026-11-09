@@ -1,5 +1,7 @@
 package com.app.smishing.domain.alerts
 
+import com.app.smishing.domain.history.AnalysisHistory
+import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.risk.RiskAssessment
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.domain.risk.RiskLevel
@@ -48,27 +50,47 @@ object AlertPolicy {
 }
 
 /** Qué pasó al evaluar un mensaje recibido. */
-enum class AlertOutcome { Alerted, NotRisky, NotAssessed }
+enum class AnalysisOutcome {
+    /** Se guardó en el historial y se avisó. */
+    Alerted,
+
+    /** Se guardó en el historial y no pidió alerta. */
+    Recorded,
+
+    /** El modelo no lo evaluó (muy corto o análisis suspendido): no hay nivel, ni registro, ni alerta. */
+    NotAssessed,
+}
 
 /**
- * Evalúa un SMS recién recibido y, si su nivel de riesgo pide alerta, avisa (#10). No guarda nada: el detalle vuelve a evaluar el
- * mensaje cuando se abre, y el resultado es el mismo porque la evaluación es determinista.
+ * Evalúa un SMS recién recibido, lo guarda en el historial (#12) y, si su nivel de riesgo pide alerta, avisa (#10).
+ *
+ * El registro se guarda **antes** de avisar, así el detalle de la alerta encuentra lo guardado. Si guardar falla, igual se avisa
+ * ([onHistoryError] lo anota): la alerta no depende del historial.
  */
-class AlertOnRiskyMessage(
+class AnalyzeReceivedMessage(
     private val assessor: RiskAssessor,
+    private val history: AnalysisHistory,
     private val notifier: RiskAlertNotifier,
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val onHistoryError: (Throwable) -> Unit = {},
 ) {
 
-    fun onReceived(messageId: Long, message: IncomingSms): AlertOutcome =
+    fun onReceived(messageId: Long, message: IncomingSms): AnalysisOutcome =
         when (val result = assessor.assess(message.body)) {
-            // Muy corto o análisis suspendido: sin nivel, no se avisa (política de entrada del modelo).
-            is RiskResult.NotAssessed -> AlertOutcome.NotAssessed
+            // Muy corto o análisis suspendido: sin nivel, no se guarda ni se avisa (política de entrada del modelo).
+            is RiskResult.NotAssessed -> AnalysisOutcome.NotAssessed
             is RiskResult.Assessed -> {
+                val now = clock()
+                try {
+                    history.save(AnalysisRecord(0, messageId, message.sender, message.body, now, now, result.assessment))
+                } catch (e: Exception) {
+                    onHistoryError(e)
+                }
                 val reason = AlertPolicy.reasonFor(result.assessment)
-                if (reason == null) AlertOutcome.NotRisky
+                if (reason == null) AnalysisOutcome.Recorded
                 else {
                     notifier.notify(RiskAlert(messageId, message.sender, reason))
-                    AlertOutcome.Alerted
+                    AnalysisOutcome.Alerted
                 }
             }
         }

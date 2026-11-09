@@ -6,8 +6,8 @@ Registro de #8 (RF-04): la app identifica, cuando corresponden, las señales de 
 > **ATENCIÓN.** Estas señales son **reglas escritas a mano**, no salen del modelo. Se midieron con un conjunto de mensajes
 > sintéticos y con el corpus real anonimizado (ver "Validación con el corpus real"): **detectan una parte pequeña del
 > smishing real** (urgencia o solicitud de datos en 28 % de los mensajes de smishing del corpus), así que explican algunas
-> alertas pero no sirven como detector por sí solas. Y todavía no se muestran en pantalla (eso es #11) ni se calculan sobre
-> los mensajes que llegan (falta dónde guardar los resultados, #12).
+> alertas pero no sirven como detector por sí solas. Desde #10 a #12 se calculan sobre los mensajes que llegan y se guardan en el
+> historial ([historial.md](historial.md)).
 
 ## Qué es cada señal
 
@@ -185,4 +185,5 @@ alarmas (4 en desarrollo) son instrucciones como "ingrese el siguiente código".
 - Un mensaje legítimo con un enlace siempre produce la señal de **enlace**: es solo "hay un enlace". Qué pesa eso lo decide #9.
 - **No se midió el tiempo** de las reglas en un teléfono de gama baja.
 - Solo se probó en el emulador API 29 x86_64 y en la JVM.
-- Las señales **no se muestran** (#11) ni se calculan sobre los mensajes recibidos (#12), y no se combinan con el modelo (#9).
+- Las señales se calculan sobre los mensajes recibidos (#10), se muestran en el detalle (#11) y se guardan en el historial (#12); se
+  combinan con el modelo en el nivel de riesgo (#9).

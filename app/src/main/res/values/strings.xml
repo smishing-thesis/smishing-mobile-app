@@ -91,4 +91,13 @@
     <string name="detail_recommendation_title">Recomendación</string>
     <string name="detail_recommendation">No abra enlaces ni responda con sus datos. Si tiene dudas, llame a la entidad a un número que ya conozca.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
+
+    <!-- Historial (#12). Los textos de la marca de estado no son los del diseño ("Peligroso", "Seguro"): afirman menos. -->
+    <string name="history_title">Historial</string>
+    <string name="history_empty">Todavía no hay mensajes analizados.</string>
+    <string name="history_chip_high">Posible estafa</string>
+    <string name="history_chip_medium">Sospechoso</string>
+    <string name="history_chip_low">Sin señales</string>
+    <string name="nav_messages">Mensajes</string>
+    <string name="nav_history">Historial</string>
 </resources>

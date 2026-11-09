@@ -134,3 +134,49 @@ fun MessageInputBar(
         }
     }
 }
+
+/**
+ * Fila de la lista del historial (#12): remitente y fecha arriba; abajo, el inicio del mensaje y la marca de estado ([chip],
+ * por ejemplo un `StatusChip`).
+ */
+@Composable
+fun HistoryRow(
+    sender: String,
+    date: String,
+    snippet: String,
+    onClick: () -> Unit,
+    chip: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .heightIn(min = 72.dp)
+                .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.X2s),
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(sender, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
+                Text(date, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.Sm),
+            ) {
+                Text(
+                    snippet,
+                    style = SmishingTypography.BodyMedium,
+                    color = SmishingPalette.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                chip()
+            }
+        }
+        HorizontalDivider(color = SmishingPalette.Border)
+    }
+}

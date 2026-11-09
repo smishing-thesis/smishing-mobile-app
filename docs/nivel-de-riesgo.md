@@ -6,7 +6,7 @@ alto**, y cada nivel es **trazable**. Última verificación: 2026-11-08.
 > **ATENCIÓN.** La política es una **propuesta de diseño**, no un valor validado con datos reales. No se pudo medir con el
 > corpus real: el modelo de la app se entrenó con todo ese corpus, así que medirlo ahí sería evaluar datos de entrenamiento.
 > Las cifras de abajo son del conjunto controlado de 84 mensajes sintéticos. Y el nivel todavía no se muestra ni se guarda
-> (alerta #10, explicación #11, historial #12).
+> (alerta #10, explicación #11 e historial #12 lo usan desde entonces).
 
 ## La política (versión `1.0.0`)
 
@@ -121,6 +121,7 @@ Léase con las advertencias de abajo: son 84 mensajes inventados, y las reglas d
   presentan distinto. Hoy `rule` los distingue.
 - **Qué hace la app con cada nivel**: desde #10 **solo el nivel alto alerta** ([alerta-de-riesgo.md](alerta-de-riesgo.md)); bloquear o retirar
   es de #13 y siguientes.
-- El nivel **no se muestra, no se guarda y no se calcula sobre los mensajes que llegan** todavía.
+- El nivel se calcula sobre los mensajes que llegan, se muestra en el detalle y en el historial y se **guarda** con sus versiones
+  (#10 a #12, [historial.md](historial.md)).
 - No se midió el tiempo de evaluar un mensaje (modelo más señales) en un teléfono de gama baja.
 - Solo se probó en el emulador API 29 x86_64 y en la JVM.
