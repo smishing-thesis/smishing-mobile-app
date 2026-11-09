@@ -10,6 +10,8 @@ sealed interface ClassificationResult {
     data class Classified(
         val score: Float,
         val isSmishing: Boolean,
+        /** El umbral con el que se decidió `isSmishing` (el del JSON, no 0.5): es parte de lo que hace trazable el resultado. */
+        val threshold: Double,
         val modelVersion: String,
         val preprocessingVersion: String,
     ) : ClassificationResult

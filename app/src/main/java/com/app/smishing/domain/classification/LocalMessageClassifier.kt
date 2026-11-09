@@ -21,6 +21,7 @@ class LocalMessageClassifier(
         return ClassificationResult.Classified(
             score = score,
             isSmishing = modelInfo.isSmishing(score),
+            threshold = modelInfo.threshold,
             modelVersion = modelInfo.version,
             preprocessingVersion = input.preprocessingVersion,
         )

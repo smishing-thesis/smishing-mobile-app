@@ -25,7 +25,7 @@ class GatedMessageClassifierTest {
         }
     }
 
-    private val classified = Classified(score = 0.95f, isSmishing = true, modelVersion = "1.0.0", preprocessingVersion = "1.1.0")
+    private val classified = Classified(score = 0.95f, isSmishing = true, threshold = 0.9, modelVersion = "1.0.0", preprocessingVersion = "1.1.0")
     private val suspended = AnalysisStatus.Suspended(setOf(SuspensionReason.PermissionsNotGranted))
 
     @Test

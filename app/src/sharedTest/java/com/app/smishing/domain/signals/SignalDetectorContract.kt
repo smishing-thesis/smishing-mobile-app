@@ -1,5 +1,6 @@
 package com.app.smishing.domain.signals
 
+import com.app.smishing.ControlledMessages
 import com.app.smishing.data.preprocessing.PreprocessingConfigParser
 import com.app.smishing.data.signals.SignalRulesParser
 import org.junit.Assert.assertEquals
@@ -230,10 +231,7 @@ abstract class SignalDetectorContract {
 
     // --- El conjunto controlado ---
 
-    private data class Controlled(val id: String, val category: String, val label: String, val message: String)
-
-    private fun controlled(): List<Controlled> =
-        parseCsv(controlledCsv().removePrefix("﻿")).drop(1).filter { it.size >= 4 }.map { Controlled(it[0], it[1], it[2], it[3]) }
+    private fun controlled(): List<ControlledMessages.Case> = ControlledMessages.parse(controlledCsv())
 
     @Test
     fun theControlledSetIsTheExpectedOne() {
@@ -287,32 +285,5 @@ abstract class SignalDetectorContract {
         }
         rows.forEach(::println)
         assertTrue(rows.isNotEmpty())
-    }
-
-    /** Un CSV con comillas, comas y comillas dobles escapadas; las filas pueden traer saltos de línea entre comillas. */
-    private fun parseCsv(text: String): List<List<String>> {
-        val rows = mutableListOf<List<String>>()
-        var row = mutableListOf<String>()
-        val field = StringBuilder()
-        var inQuotes = false
-        var i = 0
-        while (i < text.length) {
-            val c = text[i]
-            when {
-                inQuotes && c == '"' && i + 1 < text.length && text[i + 1] == '"' -> { field.append('"'); i++ }
-                c == '"' -> inQuotes = !inQuotes
-                !inQuotes && c == ',' -> { row.add(field.toString()); field.clear() }
-                !inQuotes && (c == '\n' || c == '\r') -> {
-                    if (c == '\r' && i + 1 < text.length && text[i + 1] == '\n') i++
-                    row.add(field.toString()); field.clear()
-                    if (row.any { it.isNotEmpty() }) rows.add(row)
-                    row = mutableListOf()
-                }
-                else -> field.append(c)
-            }
-            i++
-        }
-        if (field.isNotEmpty() || row.isNotEmpty()) { row.add(field.toString()); rows.add(row) }
-        return rows
     }
 }

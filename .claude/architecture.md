@@ -50,8 +50,7 @@ Reglas:
 
 ## Por decidir
 
-Inyección de dependencias, módulos de Gradle y cómo se asignan los niveles de riesgo a partir del puntaje del modelo y las
-señales (#9).
+Inyección de dependencias y módulos de Gradle.
 
 ## Decidido al implementar
 
@@ -80,6 +79,12 @@ señales (#9).
   `RuleBasedSignalDetector` (`domain.signals`). Cada señal lleva el id de su regla y el análisis, la versión de las reglas,
   para que el nivel de riesgo (#9) sea trazable. Aún no se muestran (#11) ni se calculan sobre los mensajes recibidos (#12).
   Detalle y límites en [docs/senales.md](../docs/senales.md).
+- **Nivel de riesgo (#9):** `RiskPolicy` (`domain.risk`, función pura) combina la salida del modelo y las señales en bajo, medio o
+  alto: alto si el modelo lo marca y hay respaldo (urgencia, suplantación o solicitud de datos; el enlace solo no cuenta);
+  medio si el modelo lo marca sin respaldo, o si el modelo no lo marca pero hay suplantación o dos respaldos; bajo en el resto.
+  Cada `RiskAssessment` guarda la regla que decidió, el puntaje y el umbral del modelo, y las versiones del modelo, del
+  preprocesamiento, de las reglas de señales y de la política. Sin evaluación del modelo no hay nivel. Es una propuesta sin
+  validar con datos reales. Detalle en [docs/nivel-de-riesgo.md](../docs/nivel-de-riesgo.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el
