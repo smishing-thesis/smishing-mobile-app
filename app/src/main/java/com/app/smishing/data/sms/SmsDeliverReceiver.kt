@@ -7,7 +7,9 @@ import android.provider.Telephony
 import android.util.Log
 import com.app.smishing.data.alerts.AndroidRiskAlertNotifier
 import com.app.smishing.data.analysis.AnalysisPipeline
-import com.app.smishing.domain.alerts.AlertOnRiskyMessage
+import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.domain.alerts.AnalyzeReceivedMessage
 import com.app.smishing.domain.sms.IncomingSms
 import com.app.smishing.domain.sms.ReceiveIncomingSms
 import com.app.smishing.domain.sms.ReceiveOutcome
@@ -15,8 +17,8 @@ import com.app.smishing.domain.sms.SmsPart
 import java.util.concurrent.Executors
 
 /**
- * Recibe los SMS entrantes cuando la app es la predeterminada (#4), los guarda una sola vez en el buzón del sistema y, si
- * el mensaje es riesgoso, avisa (#10).
+ * Recibe los SMS entrantes cuando la app es la predeterminada (#4), los guarda una sola vez en el buzón del sistema, guarda su
+ * análisis en el historial (#12) y, si el mensaje es riesgoso, avisa (#10).
  *
  * Android entrega `SMS_DELIVER` solo a la app predeterminada y solo si tiene `RECEIVE_SMS`. Quien guarda el mensaje
  * es esta app: si no lo guardara, se perdería. Guardarlo va primero y no depende del análisis: si el modelo falla, el
@@ -56,8 +58,13 @@ class SmsDeliverReceiver : BroadcastReceiver() {
     /** Evalúa el mensaje ya guardado y avisa si es riesgoso. Un fallo del análisis no debe tocar el mensaje guardado. */
     private fun alertIfRisky(context: Context, messageId: Long, message: IncomingSms) {
         try {
-            val outcome = AlertOnRiskyMessage(AnalysisPipeline.assessor(context), AndroidRiskAlertNotifier(context))
-                .onReceived(messageId, message)
+            val outcome = AnalyzeReceivedMessage(
+                assessor = AnalysisPipeline.assessor(context),
+                history = RoomAnalysisHistory(HistoryDatabase.get(context)),
+                notifier = AndroidRiskAlertNotifier(context),
+                // Solo el tipo de error: su mensaje podría traer el contenido.
+                onHistoryError = { Log.e(TAG, "No se pudo guardar el análisis en el historial: ${it.javaClass.simpleName}") },
+            ).onReceived(messageId, message)
             Log.i(TAG, "Análisis del SMS entrante: $outcome")
         } catch (e: Throwable) {
             // Solo el tipo de error. También se atrapan los `Error` (por ejemplo, la biblioteca nativa del modelo).

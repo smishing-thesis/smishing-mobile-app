@@ -46,7 +46,11 @@ sealed interface MessageDetailState {
  *
  * **El mensaje se muestra como texto plano: ningún enlace de su texto se activa** (es lo que pide #10), y así debe seguir.
  *
- * Todavía no tiene las acciones automáticas ni "Este mensaje es seguro" (#13 a #16). El lenguaje es provisional hasta #11.
+ * El lenguaje es el de #11: palabras corrientes, cada señal con la parte del mensaje que la motivó, y sin presentar la sospecha
+ * como certeza (se dice lo que se sabe y lo que no, y que el análisis puede equivocarse). **Nunca se muestra el puntaje del
+ * modelo ni porcentajes.**
+ *
+ * Todavía no tiene las acciones automáticas ni "Este mensaje es seguro" (#13 a #16).
  */
 @Composable
 fun MessageDetailScreen(state: MessageDetailState, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -84,9 +88,19 @@ private fun Loaded(state: MessageDetailState.Loaded) {
         is RiskResult.Assessed -> {
             val assessment = result.assessment
             StatusBanner(statusOf(assessment.level), stringResource(bannerText(assessment.level)))
+            Text(
+                stringResource(summaryText(assessment.level)),
+                style = SmishingTypography.BodyMedium,
+                color = SmishingPalette.TextPrimary,
+            )
             Original(state.body)
             SectionLabel(stringResource(R.string.detail_why_label))
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.Sm)) { Reasons(assessment) }
+            Text(
+                stringResource(R.string.detail_disclaimer),
+                style = SmishingTypography.Note,
+                color = SmishingPalette.TextSecondary,
+            )
             if (assessment.level != RiskLevel.Low) {
                 InfoPanel(stringResource(R.string.detail_recommendation_title), stringResource(R.string.detail_recommendation))
             }
@@ -109,7 +123,15 @@ private fun Reasons(assessment: RiskAssessment) {
         Text(stringResource(text), style = SmishingTypography.BodyMedium, color = SmishingPalette.TextSecondary)
         return
     }
-    for (type in types) RiskReasonRow(icon = iconOf(type), text = stringResource(reasonText(type)))
+    for (type in types) {
+        // Lo que dijo el mensaje y motivó la señal, entre comillas: así se ve de dónde sale el aviso.
+        val fragment = assessment.signals.signals.first { it.type == type }.fragment
+        RiskReasonRow(
+            icon = iconOf(type),
+            text = stringResource(reasonText(type)),
+            detail = stringResource(R.string.detail_found_in_message, fragment),
+        )
+    }
 }
 
 private fun statusOf(level: RiskLevel) = when (level) {
@@ -124,11 +146,17 @@ private fun bannerText(level: RiskLevel) = when (level) {
     RiskLevel.Low -> R.string.detail_banner_low
 }
 
+private fun summaryText(level: RiskLevel) = when (level) {
+    RiskLevel.High -> R.string.detail_summary_high
+    RiskLevel.Medium -> R.string.detail_summary_medium
+    RiskLevel.Low -> R.string.detail_summary_low
+}
+
 private fun reasonText(type: SignalType) = when (type) {
-    SignalType.Urgency -> R.string.alert_reason_urgency
-    SignalType.Impersonation -> R.string.alert_reason_impersonation
-    SignalType.Link -> R.string.alert_reason_link
-    SignalType.DataRequest -> R.string.alert_reason_data_request
+    SignalType.Urgency -> R.string.detail_reason_urgency
+    SignalType.Impersonation -> R.string.detail_reason_impersonation
+    SignalType.Link -> R.string.detail_reason_link
+    SignalType.DataRequest -> R.string.detail_reason_data_request
 }
 
 private fun iconOf(type: SignalType): ImageVector = when (type) {

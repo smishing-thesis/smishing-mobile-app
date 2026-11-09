@@ -40,9 +40,9 @@ fun OriginalMessageBox(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Un motivo por el que un mensaje es riesgoso: icono en un círculo y texto. */
+/** Un motivo por el que un mensaje es riesgoso: icono en un círculo, texto y, si hay, una segunda línea ([detail]) con lo que lo motivó. */
 @Composable
-fun RiskReasonRow(icon: ImageVector, text: String, modifier: Modifier = Modifier) {
+fun RiskReasonRow(icon: ImageVector, text: String, modifier: Modifier = Modifier, detail: String? = null) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = 40.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -57,7 +57,10 @@ fun RiskReasonRow(icon: ImageVector, text: String, modifier: Modifier = Modifier
         ) {
             Icon(icon, contentDescription = null, tint = SmishingPalette.TextSecondary, modifier = Modifier.size(20.dp))
         }
-        Text(text, style = SmishingTypography.BodyMedium, color = SmishingPalette.TextPrimary)
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
+            Text(text, style = SmishingTypography.BodyMedium, color = SmishingPalette.TextPrimary)
+            if (detail != null) Text(detail, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+        }
     }
 }
 

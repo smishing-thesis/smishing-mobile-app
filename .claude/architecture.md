@@ -71,9 +71,8 @@ Inyección de dependencias y módulos de Gradle.
   [docs/gestor-sms.md](../docs/gestor-sms.md).
 - **Recepción de SMS:** `SmsDeliverReceiver` arma el mensaje (`assembleIncoming`, une las partes) y `ReceiveIncomingSms` lo
   guarda una sola vez en el buzón del sistema (`Telephony.Sms.Inbox`, vía `SmsInbox`/`TelephonySmsInbox`); el sistema le
-  asigna la conversación por remitente. Un mensaje es el mismo si coinciden remitente, texto y `date_sent`. El análisis aún
-  no se dispara desde aquí: falta dónde guardar resultados (#8 a #12). Detalle en
-  [docs/recepcion-sms.md](../docs/recepcion-sms.md).
+  asigna la conversación por remitente. Un mensaje es el mismo si coinciden remitente, texto y `date_sent`. Desde #10 y #12 el
+  receptor también lo evalúa, guarda su análisis y avisa. Detalle en [docs/recepcion-sms.md](../docs/recepcion-sms.md).
 - **Señales (#8):** el modelo solo devuelve un puntaje, así que las señales (urgencia, suplantación, enlace y solicitud de
   datos) se identifican con reglas escritas a mano en `signal_rules.json` (assets, versionado), que aplica
   `RuleBasedSignalDetector` (`domain.signals`). Cada señal lleva el id de su regla y el análisis, la versión de las reglas,
@@ -87,9 +86,20 @@ Inyección de dependencias y módulos de Gradle.
   validar con datos reales. Detalle en [docs/nivel-de-riesgo.md](../docs/nivel-de-riesgo.md).
 - **Alerta de riesgo (#10):** tras guardar un SMS, `SmsDeliverReceiver` lo evalúa con `AnalysisPipeline` y, si el nivel es alto
   (`AlertPolicy`), `AndroidRiskAlertNotifier` muestra "Posible estafa detectada" con el remitente y un motivo, **sin el texto del
-  mensaje** y con versión pública sin remitente. Tocarla abre el detalle del mensaje (`MessageDetailScreen`), que **vuelve a evaluar** el
-  mensaje en lugar de leer un resultado guardado (el almacenamiento es #12) y lo muestra como texto plano, sin activar enlaces.
+  mensaje** y con versión pública sin remitente. Tocarla abre el detalle del mensaje (`MessageDetailScreen`), que muestra **lo guardado** en el historial
+  (#12) y, si no hay registro, vuelve a evaluar el mensaje; lo muestra como texto plano, sin activar enlaces.
   Pide `POST_NOTIFICATIONS` en Android 13 o superior. Detalle en [docs/alerta-de-riesgo.md](../docs/alerta-de-riesgo.md).
+- **Explicación de la alerta (#11):** el detalle y los motivos de la notificación describen lo que dice el mensaje y no afirman lo que
+  es; el detalle nombra cada señal con la parte del mensaje que la motivó, dice lo que se sabe y lo que no, y nunca muestra el puntaje
+  ni porcentajes. `PlainLanguage` y `ExplanationWordingTest` lo comprueban sobre todas las cadenas; que se entienda lo evalúa #23.
+  Detalle en [docs/explicacion-de-la-alerta.md](../docs/explicacion-de-la-alerta.md).
+- **Historial (#12):** `AnalyzeReceivedMessage` (`domain.alerts`) evalúa cada SMS recibido, **guarda su análisis antes de avisar** y
+  avisa si el nivel es alto. El historial es una base **Room** (`HistoryDatabase`, `data.history`) con tres tablas: mensaje analizado,
+  resultado y señales (la explicación, con su regla y fragmento), con las versiones del modelo, del preprocesamiento, de las reglas de
+  señales y de la política. Guarda el **texto** de los mensajes, sin cifrar, y está **excluida de las copias de seguridad**
+  (`data_extraction_rules.xml`, `backup_rules.xml`; `BackupRulesTest` lo fija). La pestaña Historial (`HistoryScreen`) lista los
+  registros y su detalle sale de lo guardado. Falta una política de borrado y la tabla de acciones de mitigación (#13 a #16).
+  Detalle en [docs/historial.md](../docs/historial.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el

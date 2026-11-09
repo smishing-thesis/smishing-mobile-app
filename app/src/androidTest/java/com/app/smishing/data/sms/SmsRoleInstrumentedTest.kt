@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Telephony
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
@@ -24,12 +26,17 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.app.smishing.R
 import com.app.smishing.DeviceReport
+import com.app.smishing.PlainLanguage
 import com.app.smishing.Shell
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.data.classification.OnDeviceClassifier
+import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.history.RoomAnalysisHistory
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.classification.GatedMessageClassifier
 import com.app.smishing.domain.messaging.formatConversationDate
+import com.app.smishing.domain.risk.RiskLevel
+import com.app.smishing.domain.signals.SignalType
 import com.app.smishing.domain.sms.AnalysisStatus
 import com.app.smishing.domain.sms.RoleAndPermissionsGate
 import com.app.smishing.domain.sms.SmsPermissionState
@@ -114,7 +121,8 @@ class SmsRoleInstrumentedTest {
             // Con el rol y los permisos, la app deja el onboarding y muestra los mensajes (#5).
             val messages = context.getString(R.string.messages_title)
             compose.waitUntil(TIMEOUT_MS) { count(messages) > 0 }
-            compose.onNodeWithText(messages).assertIsDisplayed()
+            // "Mensajes" es el título y también la pestaña de la barra inferior: basta con que esté.
+            assertTrue(count(messages) >= 1)
         }
 
         // 5. Con el análisis activo, el clasificador con compuerta analiza el mensaje.
@@ -411,8 +419,25 @@ class SmsRoleInstrumentedTest {
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
             compose.onNodeWithText(risky).assertIsDisplayed()
-            compose.onNodeWithText(context.getString(R.string.alert_reason_urgency)).assertIsDisplayed()
-            compose.onNodeWithText(context.getString(R.string.alert_reason_link)).assertIsDisplayed()
+
+            // #11: nombra cada señal detectada con la parte del mensaje que la motivó, y no presenta la sospecha como certeza.
+            val named = mapOf(
+                R.string.detail_reason_urgency to "sera suspendida",
+                R.string.detail_reason_impersonation to "BBVA",
+                R.string.detail_reason_link to "http://bbva-pe.top",
+                R.string.detail_reason_data_request to "Actualice sus datos",
+            )
+            for ((reason, fragment) in named) {
+                compose.onNodeWithText(context.getString(reason)).assertIsDisplayed()
+                compose.onNodeWithText(context.getString(R.string.detail_found_in_message, fragment)).assertIsDisplayed()
+            }
+            compose.onNodeWithText(context.getString(R.string.detail_summary_high)).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_disclaimer)).assertIsDisplayed()
+            val shown = visibleTexts().filter { it != risky }
+            assertTrue("Debía haber textos en pantalla", shown.size > 8)
+            for (text in shown) {
+                assertEquals(text, emptyList<String>(), PlainLanguage.violations(text))
+            }
 
             // Sin activar enlaces: el enlace del mensaje es texto plano y tocarlo no abre nada ni saca de la app.
             compose.onNodeWithText(risky).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
@@ -428,9 +453,101 @@ class SmsRoleInstrumentedTest {
         }
     }
 
+    /** Todos los textos que muestra la pantalla ahora, en el árbol sin fusionar. */
+    private fun visibleTexts(): List<String> {
+        fun walk(node: androidx.compose.ui.semantics.SemanticsNode): List<String> =
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::walk)
+        return walk(compose.onRoot(useUnmergedTree = true).fetchSemanticsNode())
+    }
+
     private fun finishOpenActivities() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).forEach { it.finish() }
+        }
+    }
+
+    /**
+     * #12 de punta a punta: cada SMS analizado queda en el historial local con su resultado, su nivel, su explicación y la versión
+     * del modelo; se consulta desde la pestaña Historial; y **sigue ahí aunque el mensaje se borre del buzón**. Un mensaje
+     * demasiado corto, que el modelo no evalúa, no entra. Datos sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenTheHistoryKeepsEachAnalysisLocallyAndItSurvivesDeletingTheMessage() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val database = HistoryDatabase.get(context)
+        val history = RoomAnalysisHistory(database)
+        database.clearAllTables()
+        deleteSyntheticMessages()
+        try {
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            val harmless = "Te quiero mucho, cuidate"
+            val tooShort = "Hola ya"
+            deliver(SENDER_F, risky)
+            deliver(SENDER_F, harmless)
+            deliver(SENDER_F, tooShort)
+
+            // Las tres entregas se procesan en orden: cuando están los dos primeros, la tercera ya se evaluó (y no debe haber entrado).
+            waitUntil { history.all().size >= 2 }
+            Thread.sleep(1_000)
+            val all = history.all()
+            assertEquals("Entran los evaluados y no el demasiado corto", 2, all.size)
+
+            // Lo que pide la historia: resultado, nivel, explicación y versión del modelo.
+            val riskyRecord = all.single { it.body == risky }
+            val a = riskyRecord.assessment
+            assertEquals("+$SENDER_F", riskyRecord.sender)
+            assertEquals(RiskLevel.High, a.level)
+            assertEquals("risk.model_and_evidence", a.rule.id)
+            assertTrue(a.model.isSmishing)
+            assertTrue(a.model.score.toDouble() > a.model.threshold)
+            assertEquals("1.0.0", a.model.modelVersion)
+            assertEquals("1.1.0", a.model.preprocessingVersion)
+            assertEquals("1.1.0", a.signals.rulesVersion)
+            assertEquals("1.0.0", a.policyVersion)
+            assertEquals(
+                mapOf(
+                    SignalType.Urgency to "sera suspendida",
+                    SignalType.Impersonation to "BBVA",
+                    SignalType.Link to "http://bbva-pe.top",
+                    SignalType.DataRequest to "Actualice sus datos",
+                ),
+                a.signals.signals.associate { it.type to it.fragment },
+            )
+            assertEquals(RiskLevel.Medium, all.single { it.body == harmless }.assessment.level)
+            assertTrue("El mensaje corto no debía entrar", all.none { it.body == tooShort })
+
+            ActivityScenario.launch(MainActivity::class.java).use {
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_title)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.nav_history)).performClick()
+
+                // La lista del historial: los dos mensajes, con su marca de estado.
+                compose.waitUntil(TIMEOUT_MS) { count(risky) > 0 }
+                assertEquals(2, compose.onAllNodesWithText("+$SENDER_F").fetchSemanticsNodes().size)
+                compose.onNodeWithText(context.getString(R.string.history_chip_high)).assertIsDisplayed()
+                compose.onNodeWithText(context.getString(R.string.history_chip_medium)).assertIsDisplayed()
+
+                // Su detalle sale de lo guardado: nivel, mensaje y explicación.
+                compose.onNodeWithText(risky).performClick()
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
+                compose.onNodeWithText(context.getString(R.string.detail_found_in_message, "Actualice sus datos")).assertIsDisplayed()
+                compose.onNodeWithContentDescription(context.getString(R.string.conversation_back)).performClick()
+                compose.waitUntil(TIMEOUT_MS) { count(risky) > 0 }
+
+                // Se borra el mensaje del buzón: el registro sigue en el historial y sigue abriéndose.
+                deleteSyntheticMessages()
+                assertEquals("El mensaje debía haber salido del buzón", 0, inbox(SENDER_F).size)
+                assertEquals(2, history.all().size)
+                compose.onNodeWithText(risky).performClick()
+                compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 }
+                compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
+                compose.onNodeWithText(risky).assertIsDisplayed()
+            }
+        } finally {
+            database.clearAllTables()
+            finishOpenActivities()
+            deleteSyntheticMessages()
         }
     }
 

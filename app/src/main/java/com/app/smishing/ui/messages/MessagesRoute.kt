@@ -23,6 +23,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.app.smishing.data.analysis.AnalysisPipeline
+import com.app.smishing.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import com.app.smishing.ui.designsystem.icons.SmishingIcons
+import com.app.smishing.ui.designsystem.components.SmishingBottomBar
+import com.app.smishing.ui.designsystem.components.NavItem
+import com.app.smishing.ui.history.HistoryScreen
+import com.app.smishing.domain.risk.RiskResult
+import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.history.AnalysisHistory
+import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.ui.alerts.MessageDetailScreen
@@ -51,6 +65,7 @@ fun MessagesRoute(
     repository: ConversationRepository = rememberTelephonyRepository(),
     sendSms: SendSms = rememberSendSms(),
     assessor: RiskAssessor = rememberAssessor(),
+    history: AnalysisHistory = rememberHistory(),
     /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
     openMessageId: Long? = null,
     onMessageOpened: () -> Unit = {},
@@ -98,20 +113,31 @@ fun MessagesRoute(
         }
     }
 
+    // El historial (#12): la pestaña activa (0 = mensajes, 1 = historial) y el registro abierto. Se recarga cuando la base cambia.
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var historyRecordId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var historyVersion by remember { mutableIntStateOf(0) }
+    DisposableEffect(history) {
+        val subscription = history.onChange { historyVersion++ }
+        onDispose { subscription.close() }
+    }
+
     // El detalle de un mensaje (#10): se abre al tocar una alerta y se cierra con "atrás".
     var detailMessageId by rememberSaveable { mutableStateOf<Long?>(null) }
     LaunchedEffect(openMessageId) {
         if (openMessageId != null) {
             detailMessageId = openMessageId
+            historyRecordId = null
             composing = false
             onMessageOpened()
         }
     }
 
-    BackHandler(enabled = composing || openThreadId != null || detailMessageId != null) {
+    BackHandler(enabled = composing || openThreadId != null || detailMessageId != null || historyRecordId != null) {
         sendError = null
         when {
             detailMessageId != null -> detailMessageId = null
+            historyRecordId != null -> historyRecordId = null
             composing -> composing = false
             else -> openThreadId = null
         }
@@ -119,76 +145,123 @@ fun MessagesRoute(
 
     val threadId = openThreadId
     val detailId = detailMessageId
-    when {
-        detailId != null -> {
-            var detail by remember(detailId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
-            // Se vuelve a evaluar el mensaje: el resultado es el mismo que al recibirlo, y así no hace falta guardarlo.
-            LaunchedEffect(detailId) {
-                detail = withContext(Dispatchers.IO) {
-                    val message = repository.message(detailId)
-                    if (message == null) MessageDetailState.Missing
-                    else MessageDetailState.Loaded(message.body, assessor.assess(message.body))
+    val recordId = historyRecordId
+    // La barra inferior solo está en las pantallas de primer nivel: no en un detalle, una conversación ni al redactar.
+    val showBar = detailId == null && recordId == null && !composing && threadId == null
+    Column(modifier = modifier.fillMaxSize()) {
+        Box(modifier = Modifier.weight(1f)) {
+            when {
+                detailId != null -> {
+                    var detail by remember(detailId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+                    // Se muestra lo guardado al recibir el mensaje (#12): es lo que motivó la alerta. Si no hay registro (un mensaje
+                    // anterior al historial), se evalúa el mensaje, que da lo mismo porque la evaluación es determinista.
+                    LaunchedEffect(detailId) {
+                        detail = withContext(Dispatchers.IO) {
+                            val record = history.byMessageId(detailId)
+                            val message = repository.message(detailId)
+                            when {
+                                // El registro solo vale si es de este mensaje: si el almacenamiento de SMS del sistema se borró,
+                                // sus ids empiezan de nuevo y un mensaje nuevo podría tener el id de un registro viejo.
+                                record != null && (message == null || message.body == record.body) ->
+                                    MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment))
+                                message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body))
+                                else -> MessageDetailState.Missing
+                            }
+                        }
+                    }
+                    MessageDetailScreen(state = detail, onBack = { detailMessageId = null }, modifier = Modifier)
+                }
+                recordId != null -> {
+                    var detail by remember(recordId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+                    LaunchedEffect(recordId) {
+                        detail = withContext(Dispatchers.IO) {
+                            val record = history.byId(recordId)
+                            if (record == null) MessageDetailState.Missing
+                            else MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment))
+                        }
+                    }
+                    MessageDetailScreen(state = detail, onBack = { historyRecordId = null }, modifier = Modifier)
+                }
+                composing -> NewMessageScreen(
+                    recipient = recipient,
+                    onRecipientChange = { recipient = it },
+                    body = body,
+                    onBodyChange = { body = it },
+                    onSend = {
+                        send(recipient, body) { sent ->
+                            openAddress = normalizeRecipient(recipient) ?: recipient
+                            openThreadId = sent.threadId
+                            composing = false
+                            recipient = ""
+                            body = ""
+                        }
+                    },
+                    onBack = {
+                        sendError = null
+                        composing = false
+                    },
+                    error = sendError,
+                    modifier = Modifier,
+                )
+                tab == 1 && threadId == null -> {
+                    var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
+                    LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
+                    HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, modifier = Modifier)
+                }
+                threadId == null -> {
+                    var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
+                    LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
+                    ConversationListScreen(
+                        conversations = conversations,
+                        nowMillis = System.currentTimeMillis(),
+                        onOpen = {
+                            sendError = null
+                            openThreadId = it.threadId
+                            openAddress = it.address
+                        },
+                        onCompose = {
+                            sendError = null
+                            composing = true
+                        },
+                        modifier = Modifier,
+                    )
+                }
+                else -> {
+                    var messages by remember(threadId) { mutableStateOf<List<ConversationMessage>?>(null) }
+                    LaunchedEffect(threadId, version) { messages = withContext(Dispatchers.IO) { repository.messages(threadId) } }
+                    ConversationScreen(
+                        address = openAddress,
+                        messages = messages,
+                        onBack = {
+                            sendError = null
+                            openThreadId = null
+                        },
+                        draft = draft,
+                        onDraftChange = { draft = it },
+                        onSend = { send(openAddress, draft) { draft = "" } },
+                        error = sendError,
+                        modifier = Modifier,
+                    )
                 }
             }
-            MessageDetailScreen(state = detail, onBack = { detailMessageId = null }, modifier = modifier)
         }
-        composing -> NewMessageScreen(
-            recipient = recipient,
-            onRecipientChange = { recipient = it },
-            body = body,
-            onBodyChange = { body = it },
-            onSend = {
-                send(recipient, body) { sent ->
-                    openAddress = normalizeRecipient(recipient) ?: recipient
-                    openThreadId = sent.threadId
-                    composing = false
-                    recipient = ""
-                    body = ""
-                }
-            },
-            onBack = {
-                sendError = null
-                composing = false
-            },
-            error = sendError,
-            modifier = modifier,
-        )
-        threadId == null -> {
-            var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
-            LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
-            ConversationListScreen(
-                conversations = conversations,
-                nowMillis = System.currentTimeMillis(),
-                onOpen = {
-                    sendError = null
-                    openThreadId = it.threadId
-                    openAddress = it.address
-                },
-                onCompose = {
-                    sendError = null
-                    composing = true
-                },
-                modifier = modifier,
-            )
-        }
-        else -> {
-            var messages by remember(threadId) { mutableStateOf<List<ConversationMessage>?>(null) }
-            LaunchedEffect(threadId, version) { messages = withContext(Dispatchers.IO) { repository.messages(threadId) } }
-            ConversationScreen(
-                address = openAddress,
-                messages = messages,
-                onBack = {
-                    sendError = null
-                    openThreadId = null
-                },
-                draft = draft,
-                onDraftChange = { draft = it },
-                onSend = { send(openAddress, draft) { draft = "" } },
-                error = sendError,
-                modifier = modifier,
+        if (showBar) {
+            SmishingBottomBar(
+                items = listOf(
+                    NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat),
+                    NavItem(stringResource(R.string.nav_history), SmishingIcons.History),
+                ),
+                selectedIndex = tab,
+                onSelect = { tab = it },
             )
         }
     }
+}
+
+@Composable
+private fun rememberHistory(): AnalysisHistory {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { RoomAnalysisHistory(HistoryDatabase.get(context)) }
 }
 
 @Composable

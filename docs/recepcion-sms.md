@@ -37,7 +37,7 @@ regla y es muy improbable; el texto igual en otro momento, o de otro remitente, 
 **El análisis se dispara aquí desde #10.** Después de guardar el mensaje, el receptor lo evalúa y, si es de riesgo alto, avisa
 (ver [alerta-de-riesgo.md](alerta-de-riesgo.md)). Usa el clasificador **con la compuerta** del rol y los permisos
 (`GatedMessageClassifier`, ver [permisos-sms.md](permisos-sms.md)). Guardar va primero: si el análisis falla, el mensaje ya está a
-salvo. El resultado no se guarda todavía (historial y almacenamiento, #12).
+salvo. Desde #12 el resultado se guarda en el historial local ([historial.md](historial.md)).
 
 ## Cómo verificar
 
