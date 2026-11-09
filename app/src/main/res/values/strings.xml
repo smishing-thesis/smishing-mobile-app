@@ -62,23 +62,33 @@
     <string name="alert_title">Posible estafa detectada</string>
     <string name="alert_public_text">Abra la aplicación para ver el detalle.</string>
     <string name="alert_view_details">Ver detalles</string>
-    <string name="alert_reason_urgency">Le pide actuar con urgencia</string>
-    <string name="alert_reason_impersonation">Finge ser de una entidad</string>
-    <string name="alert_reason_data_request">Le pide sus datos o claves</string>
-    <string name="alert_reason_link">Contiene un enlace</string>
+    <!-- Motivo corto de la notificación (#10, #11): describe lo que dice el mensaje, no afirma lo que es. -->
+    <string name="alert_reason_urgency">Le mete prisa para que actúe</string>
+    <string name="alert_reason_impersonation">Dice ser de una entidad conocida</string>
+    <string name="alert_reason_data_request">Le pide datos personales o claves</string>
 
     <!-- Detalle del análisis (#10). Los textos de los niveles y de "sin señales" no están en el diseño: revisar con quien lo diseñó. -->
     <string name="detail_title">Detalle del análisis</string>
     <string name="detail_banner_high">Posible estafa</string>
     <string name="detail_banner_medium">Mensaje sospechoso</string>
     <string name="detail_banner_low">Sin señales de riesgo</string>
+    <!-- Resumen en lenguaje claro (#11): dice lo que se sabe y lo que no, sin presentar la sospecha como certeza. -->
+    <string name="detail_summary_high">Este mensaje tiene señales de las estafas por SMS. No podemos estar seguros de que lo sea, pero conviene tratarlo con mucho cuidado.</string>
+    <string name="detail_summary_medium">Algo en este mensaje nos hace dudar, pero no estamos seguros. Revíselo con cuidado antes de abrir enlaces o responder.</string>
+    <string name="detail_summary_low">No encontramos señales de estafa en este mensaje. Eso no garantiza que sea de fiar: si algo le parece raro, desconfíe.</string>
     <string name="detail_original_label">Mensaje original</string>
-    <string name="detail_why_label">¿Por qué es riesgoso?</string>
-    <string name="detail_model_only">El análisis lo considera sospechoso, aunque no encontró señales concretas.</string>
-    <string name="detail_no_signals">No se encontraron señales de riesgo.</string>
+    <string name="detail_why_label">Qué encontramos</string>
+    <string name="detail_reason_urgency">Le mete prisa para que actúe sin pensar</string>
+    <string name="detail_reason_impersonation">Nombra a una entidad conocida, pero el enlace no es el suyo o le pide datos</string>
+    <string name="detail_reason_link">Trae un enlace: no lo abra si no está seguro</string>
+    <string name="detail_reason_data_request">Le pide datos personales o claves</string>
+    <string name="detail_found_in_message">En el mensaje: «%1$s»</string>
+    <string name="detail_model_only">Nuestro análisis automático lo ve sospechoso, aunque no encontramos nada concreto que señalar.</string>
+    <string name="detail_no_signals">No encontramos señales concretas.</string>
+    <string name="detail_disclaimer">Este análisis es automático y puede equivocarse.</string>
     <string name="detail_not_assessed_title">Análisis</string>
-    <string name="detail_not_assessed">Este mensaje no se pudo analizar: es muy corto o el análisis está suspendido.</string>
+    <string name="detail_not_assessed">No pudimos analizar este mensaje: es muy corto o el análisis está apagado.</string>
     <string name="detail_recommendation_title">Recomendación</string>
-    <string name="detail_recommendation">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_recommendation">No abra enlaces ni responda con sus datos. Si tiene dudas, llame a la entidad a un número que ya conozca.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
 </resources>

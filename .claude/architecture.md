@@ -90,6 +90,10 @@ Inyección de dependencias y módulos de Gradle.
   mensaje** y con versión pública sin remitente. Tocarla abre el detalle del mensaje (`MessageDetailScreen`), que **vuelve a evaluar** el
   mensaje en lugar de leer un resultado guardado (el almacenamiento es #12) y lo muestra como texto plano, sin activar enlaces.
   Pide `POST_NOTIFICATIONS` en Android 13 o superior. Detalle en [docs/alerta-de-riesgo.md](../docs/alerta-de-riesgo.md).
+- **Explicación de la alerta (#11):** el detalle y los motivos de la notificación describen lo que dice el mensaje y no afirman lo que
+  es; el detalle nombra cada señal con la parte del mensaje que la motivó, dice lo que se sabe y lo que no, y nunca muestra el puntaje
+  ni porcentajes. `PlainLanguage` y `ExplanationWordingTest` lo comprueban sobre todas las cadenas; que se entienda lo evalúa #23.
+  Detalle en [docs/explicacion-de-la-alerta.md](../docs/explicacion-de-la-alerta.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el

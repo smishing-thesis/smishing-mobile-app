@@ -60,11 +60,12 @@ insiste.
 
 ## Decisiones que conviene revisar
 
-- **Textos fuera del diseño:** los del detalle para los niveles ("Posible estafa", "Mensaje sospechoso", "Sin señales de riesgo"),
+- **Los textos del detalle y de los motivos se redactaron en #11** ([explicacion-de-la-alerta.md](explicacion-de-la-alerta.md)). Quedan
+  fuera del diseño los del detalle para los niveles ("Posible estafa", "Mensaje sospechoso", "Sin señales de riesgo"),
   "No se encontraron señales de riesgo", el texto de un mensaje no analizado y el de un mensaje que ya no está. El mockup dice
   "Mensaje **Peligroso**"; se usó "Posible estafa" para **no presentar la probabilidad como certeza**, que es lo que pide #11.
-- **El pulido del lenguaje del detalle es de #11.** Los motivos usan las frases del diseño ("Finge ser de una entidad" afirma más de
-  lo que sabemos; #11 puede suavizarlas).
+- **El lenguaje del detalle y de los motivos es el de #11**: ya no usan "Finge ser de una entidad" ni las frases del mockup que afirmaban
+  más de lo que se sabe.
 - **El detalle todavía no tiene** "Acciones realizadas", "Este mensaje es seguro" ni las acciones de bloquear o retirar (#13 a #16).
 
 ## Cómo verificar

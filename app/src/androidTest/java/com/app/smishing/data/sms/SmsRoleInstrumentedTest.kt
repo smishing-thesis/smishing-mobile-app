@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Telephony
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
@@ -24,6 +26,7 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.app.smishing.R
 import com.app.smishing.DeviceReport
+import com.app.smishing.PlainLanguage
 import com.app.smishing.Shell
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.data.classification.OnDeviceClassifier
@@ -411,8 +414,25 @@ class SmsRoleInstrumentedTest {
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
             compose.onNodeWithText(risky).assertIsDisplayed()
-            compose.onNodeWithText(context.getString(R.string.alert_reason_urgency)).assertIsDisplayed()
-            compose.onNodeWithText(context.getString(R.string.alert_reason_link)).assertIsDisplayed()
+
+            // #11: nombra cada señal detectada con la parte del mensaje que la motivó, y no presenta la sospecha como certeza.
+            val named = mapOf(
+                R.string.detail_reason_urgency to "sera suspendida",
+                R.string.detail_reason_impersonation to "BBVA",
+                R.string.detail_reason_link to "http://bbva-pe.top",
+                R.string.detail_reason_data_request to "Actualice sus datos",
+            )
+            for ((reason, fragment) in named) {
+                compose.onNodeWithText(context.getString(reason)).assertIsDisplayed()
+                compose.onNodeWithText(context.getString(R.string.detail_found_in_message, fragment)).assertIsDisplayed()
+            }
+            compose.onNodeWithText(context.getString(R.string.detail_summary_high)).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_disclaimer)).assertIsDisplayed()
+            val shown = visibleTexts().filter { it != risky }
+            assertTrue("Debía haber textos en pantalla", shown.size > 8)
+            for (text in shown) {
+                assertEquals(text, emptyList<String>(), PlainLanguage.violations(text))
+            }
 
             // Sin activar enlaces: el enlace del mensaje es texto plano y tocarlo no abre nada ni saca de la app.
             compose.onNodeWithText(risky).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
@@ -426,6 +446,13 @@ class SmsRoleInstrumentedTest {
             finishOpenActivities()
             deleteSyntheticMessages()
         }
+    }
+
+    /** Todos los textos que muestra la pantalla ahora, en el árbol sin fusionar. */
+    private fun visibleTexts(): List<String> {
+        fun walk(node: androidx.compose.ui.semantics.SemanticsNode): List<String> =
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } + node.children.flatMap(::walk)
+        return walk(compose.onRoot(useUnmergedTree = true).fetchSemanticsNode())
     }
 
     private fun finishOpenActivities() {
