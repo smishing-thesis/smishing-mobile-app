@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "description": "Reglas para identificar señales en un SMS en español. Los patrones se aplican sobre el texto en minúsculas, sin tildes y con sustituciones comunes (0=o, 3=e, 4=a, 5=s, 7=t, 8=b, @=a, $=s): por eso los plazos se escriben con \\w y no con \\d.",
+  "link": {
+    "tlds": [
+      "com", "net", "org", "info", "xyz", "top", "online", "site", "club", "link", "click", "pe", "co", "me", "ly", "gl",
+      "cc", "tk", "ml", "ga", "cf", "gq", "biz", "vip", "shop", "store", "live", "page", "cloud", "support", "help",
+      "work", "icu", "app", "io", "in", "us", "ws", "cn", "ru", "buzz", "fun", "one", "pw", "website", "tech", "space",
+      "life", "today", "services", "security", "digital", "world", "email", "run", "mobi", "name", "pro"
+    ]
+  },
+  "urgency": [
+    {
+      "id": "status_threat",
+      "pattern": "\\b(?:sera|ha sido|fue|esta|quedo|quedara)\\s+(?:bloquead|suspendid|desactivad|inhabilitad|embargad|multad)[oa]s?\\b"
+    },
+    {
+      "id": "will_be_cancelled",
+      "pattern": "\\bsera\\s+(?:cancelad|anulad)[oa]s?\\b"
+    },
+    {
+      "id": "deadline_hours",
+      "pattern": "\\b(?:antes de|dentro de|en las proximas)\\s+\\w{1,3}\\s+(?:horas|hrs)\\b"
+    },
+    {
+      "id": "immediately",
+      "pattern": "\\b(?:de inmediato|inmediatamente|urgente|urgentemente|ahora mismo|ya mismo|a la brevedad|ultimo aviso)\\b"
+    },
+    {
+      "id": "act_now",
+      "pattern": "\\b(?:regularic|regulariz|actualic|actualiz|verific|valid|confirm|reclam|pag|ingres|cancel|desbloque)\\w{0,7}\\s+(?:ahora|hoy)\\b"
+    },
+    {
+      "id": "avoid_penalty",
+      "pattern": "\\bevit[ea]\\s+(?:el|la|un|una)?\\s*(?:embargo|bloqueo|cierre|corte|multa|suspension|cancelacion|recargo)\\b"
+    },
+    {
+      "id": "or_lose",
+      "pattern": "\\bo\\s+(?:sera|seras|perdera|perderas|pagara|pagaras)\\b"
+    },
+    {
+      "id": "expires_today",
+      "pattern": "\\b(?:vence|caduca|expira)\\s+hoy\\b"
+    }
+  ],
+  "dataRequest": [
+    {
+      "id": "ask_for_data",
+      "pattern": "\\b(?:ingrese|ingresa|confirme|confirma|actualice|actualiza|verifique|verifica|valide|valida|envie|envia|proporcione|digite|digita|responda|responde|reenvie|brinde|facilite|complete|completa)\\b[^.!?]{0,40}?\\b(?:datos|clave|contrasena|password|pin|cvv|token|codigo|dni|tarjeta|identidad|direccion|usuario|documento|correo|credenciales)\\b"
+    }
+  ],
+  "impersonation": {
+    "entities": [
+      { "id": "bcp", "names": ["bcp", "banco de credito"], "officialDomains": ["viabcp.com", "bcp.com.pe"] },
+      { "id": "interbank", "names": ["interbank"], "officialDomains": ["interbank.pe"] },
+      { "id": "bbva", "names": ["bbva"], "officialDomains": ["bbva.pe"] },
+      { "id": "scotiabank", "names": ["scotiabank"], "officialDomains": ["scotiabank.com.pe"] },
+      { "id": "banco_de_la_nacion", "names": ["banco de la nacion"], "officialDomains": ["bn.com.pe"] },
+      { "id": "yape", "names": ["yape"], "officialDomains": ["yape.com.pe"] },
+      { "id": "sunat", "names": ["sunat"], "officialDomains": ["gob.pe"] },
+      { "id": "reniec", "names": ["reniec"], "officialDomains": ["gob.pe"] },
+      { "id": "sat", "names": ["sat"], "ambiguous": true, "officialDomains": ["gob.pe"] },
+      { "id": "mtc", "names": ["mtc"], "officialDomains": ["gob.pe"] },
+      { "id": "olva", "names": ["olva", "olva courier"], "officialDomains": ["olvacourier.com"] },
+      { "id": "serpost", "names": ["serpost"], "officialDomains": ["serpost.com.pe"] },
+      { "id": "dhl", "names": ["dhl"], "officialDomains": ["dhl.com"] },
+      { "id": "claro", "names": ["claro"], "ambiguous": true, "officialDomains": ["claro.com.pe"] },
+      { "id": "movistar", "names": ["movistar"], "officialDomains": ["movistar.com.pe"] },
+      { "id": "entel", "names": ["entel"], "officialDomains": ["entel.pe"] },
+      { "id": "bitel", "names": ["bitel"], "officialDomains": ["bitel.com.pe"] },
+      { "id": "mercado_libre", "names": ["mercado libre", "mercadolibre"], "officialDomains": ["mercadolibre.com.pe", "mercadolibre.com"] }
+    ]
+  }
+}

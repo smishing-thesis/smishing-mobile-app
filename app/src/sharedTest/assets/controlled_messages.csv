@@ -1,0 +1,85 @@
+﻿id,category,label,message
+personal_short_01,personal_short,legitimate,ok
+personal_short_02,personal_short,legitimate,hola
+personal_short_03,personal_short,legitimate,gracias!
+personal_short_04,personal_short,legitimate,ya llegue
+personal_short_05,personal_short,legitimate,jajaja
+personal_short_06,personal_short,legitimate,si
+personal_short_07,personal_short,legitimate,te llamo luego
+personal_short_08,personal_short,legitimate,"dale, nos vemos"
+personal_conversational_01,personal_conversational,legitimate,"Te quiero mucho, cuidate"
+personal_conversational_02,personal_conversational,legitimate,"No puedo hablar ahora, te llamo luego"
+personal_conversational_03,personal_conversational,legitimate,"Ya llegue a casa, la cena esta lista"
+personal_conversational_04,personal_conversational,legitimate,Nos vemos el lunes en la oficina a las 9
+personal_conversational_05,personal_conversational,legitimate,Feliz cumpleaños! Que lo pases muy bien con tu familia
+personal_conversational_06,personal_conversational,legitimate,"Mamá, puedes recogerme a las 6 de la tarde?"
+personal_conversational_07,personal_conversational,legitimate,"Gracias por avisarme, mañana llevo los documentos"
+personal_conversational_08,personal_conversational,legitimate,"Estoy en una reunión, te escribo en un rato"
+personal_conversational_09,personal_conversational,legitimate,"Oye, ya compré las entradas para el sábado"
+personal_conversational_10,personal_conversational,legitimate,Avísame cuando salgas del trabajo para ir juntos
+personal_long_01,personal_long,legitimate,"Hola amor, acabo de hablar con el doctor y dice que todo salió bien con los exámenes. Mañana en la tarde paso a recoger los resultados y después vamos a almorzar donde tu mamá, avísale por favor."
+personal_long_02,personal_long,legitimate,"Buenos días profesor, le escribo para avisarle que no podré asistir a la clase de hoy porque tengo una cita médica. Le envío mañana el trabajo pendiente por correo. Disculpe las molestias."
+personal_long_03,personal_long,legitimate,"Chicos, recuerden que la reunión de mañana es a las 10 en la oficina del tercer piso. Traigan sus laptops y el avance del informe, vamos a revisar todo antes de enviarlo al cliente."
+personal_long_04,personal_long,legitimate,"Hola vecino, soy del departamento 302. Ayer en la noche hubo mucho ruido en el pasillo y quería saber si tú también lo escuchaste. Si quieres conversamos con el administrador para ver qué se puede hacer."
+otp_01,otp,legitimate,Tu código de verificación es 458920. No lo compartas con nadie.
+otp_02,otp,legitimate,Yape: tu código de seguridad es 123456 y vence en 5 minutos.
+otp_03,otp,legitimate,"BCP: tu clave de operaciones es 774411. Nunca la compartas, el banco no te la pedirá por llamada."
+otp_04,otp,legitimate,Tu código de Uber es 5521. No lo compartas.
+otp_05,otp,legitimate,Interbank: usa el código 908172 para confirmar tu transferencia de S/ 350.00. Vence en 3 minutos.
+otp_06,otp,legitimate,Tu código de acceso a WhatsApp es 482-193. No compartas este código con otras personas.
+bank_notice_01,bank_notice,legitimate,BCP: Realizaste una compra de S/ 85.00 en TOTTUS con tu tarjeta terminada en 4521.
+bank_notice_02,bank_notice,legitimate,"Interbank: Se abonó S/ 1,200.00 a tu cuenta de ahorros terminada en 8890."
+bank_notice_03,bank_notice,legitimate,BBVA: Tu pago de S/ 150.00 fue procesado correctamente. Gracias por usar BBVA.
+bank_notice_04,bank_notice,legitimate,Scotiabank: Retiraste S/ 200.00 en cajero con tu tarjeta de débito.
+bank_notice_05,bank_notice,legitimate,"Banco de la Nación: Recibiste una transferencia de S/ 540.00. Saldo disponible S/ 1,020.50."
+bank_notice_06,bank_notice,legitimate,Yape: Juan Pérez te yapeó S/ 30.00. Revisa tu movimiento en la app.
+delivery_notice_01,delivery_notice,legitimate,Olva Courier: tu pedido 12345678 llega hoy entre 2 y 6 pm. Ten tu DNI a la mano.
+delivery_notice_02,delivery_notice,legitimate,Tu paquete fue entregado. Gracias por comprar con nosotros.
+delivery_notice_03,delivery_notice,legitimate,Rappi: tu repartidor está por llegar con tu pedido. Sigue su ubicación en la app.
+delivery_notice_04,delivery_notice,legitimate,Serpost: tu envío está disponible para recojo en la agencia de Miraflores hasta el viernes.
+service_notice_01,service_notice,legitimate,Claro: tu recibo de marzo vence el 15. Paga en la app Mi Claro o en agentes autorizados.
+service_notice_02,service_notice,legitimate,Movistar: recargaste S/ 10.00 y tienes 2 GB para navegar por 7 días.
+service_notice_03,service_notice,legitimate,Entel: tu plan se renovó hoy. Consulta tu saldo marcando *123#.
+service_notice_04,service_notice,legitimate,Recordatorio: tienes una cita médica mañana a las 10:30 en la clínica San Felipe.
+service_notice_05,service_notice,legitimate,SEDAPAL: corte programado de agua el jueves de 8 a.m. a 2 p.m. en tu zona. Almacena agua.
+promo_01,promo,legitimate,Hasta 50% de descuento en toda la tienda este fin de semana. Más información en tienda.
+promo_02,promo,legitimate,Hoy 2x1 en entradas de cine con tu tarjeta. Válido hasta las 11 pm.
+promo_03,promo,legitimate,Tu cupón de S/ 20 vence pronto. Úsalo en tu próxima compra.
+promo_04,promo,legitimate,Promo Claro: doble de datos por 3 días. Marca *123# para activarla.
+promo_05,promo,legitimate,Cyber Wow: ofertas de hasta 70% en tecnología. Solo hoy.
+promo_06,promo,legitimate,Te regalamos una bebida gratis en tu próxima visita. Presenta este mensaje en caja.
+legit_with_link_01,legit_with_link,legitimate,Interbank: Tu estado de cuenta ya está disponible. Revísalo en https://interbank.pe
+legit_with_link_02,legit_with_link,legitimate,Claro: Consulta tu saldo y tus consumos en https://www.claro.com.pe
+legit_with_link_03,legit_with_link,legitimate,Olva Courier: sigue tu pedido en https://www.olvacourier.com con tu número de seguimiento.
+legit_with_link_04,legit_with_link,legitimate,SUNAT: Tu declaración fue recibida. Descarga la constancia en https://www.sunat.gob.pe
+legit_with_link_05,legit_with_link,legitimate,BBVA: tu cita en agencia está confirmada para el martes a las 4 pm. Detalle en https://www.bbva.pe
+smishing_bank_01,smishing_bank,smishing,BCP: Su cuenta ha sido bloqueada por seguridad. Verifique aquí http://bcp-seguro.info
+smishing_bank_02,smishing_bank,smishing,"Interbank: detectamos un cargo no reconocido, ingrese a http://interbank-clientes.net para anularlo"
+smishing_bank_03,smishing_bank,smishing,BBVA: Su tarjeta será suspendida hoy. Actualice sus datos en http://bbva-pe.top
+smishing_bank_04,smishing_bank,smishing,"Banco de la Nación: su cuenta presenta una incidencia, regularice ahora en http://bn-seguridad.xyz"
+smishing_bank_05,smishing_bank,smishing,"Scotiabank: acceso bloqueado, confirme su identidad en http://scotia-verifica.info antes de 24 horas"
+smishing_bank_06,smishing_bank,smishing,Yape: tu cuenta será desactivada. Valida tus datos aquí http://yape-validacion.net
+smishing_bank_07,smishing_bank,smishing,"Estimado cliente, su clave de internet vence hoy. Actualícela en http://bcp-clave.top o perderá el acceso"
+smishing_bank_08,smishing_bank,smishing,"Alerta: se intentó ingresar a tu banca por internet desde otro dispositivo. Si no fuiste tú, bloquea en http://banca-segura.xyz"
+smishing_delivery_01,smishing_delivery,smishing,Olva: no pudimos entregar tu paquete. Reprograma la entrega aquí http://olva-envios.xyz
+smishing_delivery_02,smishing_delivery,smishing,"SERPOST: tu envío está retenido, paga S/ 3.50 para liberarlo http://serpost-pago.info"
+smishing_delivery_03,smishing_delivery,smishing,DHL: tu paquete está en aduana. Paga la tasa de importación en http://dhl-aduana.top
+smishing_delivery_04,smishing_delivery,smishing,Tienes un paquete pendiente. Confirma tu dirección en http://paquete-pe.net para recibirlo hoy
+smishing_delivery_05,smishing_delivery,smishing,Tu pedido no pudo ser entregado por dirección incorrecta. Corrígela en http://envio-urgente.xyz
+smishing_prize_01,smishing_prize,smishing,Felicidades! Ganaste un iPhone 15. Reclama tu premio en http://premio-claro.top
+smishing_prize_02,smishing_prize,smishing,Has sido seleccionado para un bono de S/ 500. Ingresa a http://bono-peru.info para cobrarlo
+smishing_prize_03,smishing_prize,smishing,Sorteo: ganaste S/ 1000. Confirma tus datos en http://sorteo-movistar.net antes de 48 horas
+smishing_prize_04,smishing_prize,smishing,Tu número resultó ganador de una Smart TV. Llama o ingresa a http://gana-ahora.xyz
+smishing_gov_01,smishing_gov,smishing,SUNAT: tiene una deuda pendiente. Regularice en http://sunat-pe.info o será multado
+smishing_gov_02,smishing_gov,smishing,"RENIEC: su DNI vence pronto, actualice sus datos en http://reniec-tramite.top"
+smishing_gov_03,smishing_gov,smishing,SAT: multa pendiente de pago. Evite el embargo cancelando hoy en http://sat-multas.net
+smishing_gov_04,smishing_gov,smishing,MTC: tienes una papeleta pendiente. Consulta y paga con descuento en http://mtc-papeletas.xyz
+smishing_obfuscated_01,smishing_obfuscated,smishing,8CP: Su cu3nta ha sid0 bl0queada. Verifiqu3 aqui http://bcp-seguro.info
+smishing_obfuscated_02,smishing_obfuscated,smishing,"I n t e r b a n k: cargo no reconocido, ingrese a http://interbank-clientes.net"
+smishing_obfuscated_03,smishing_obfuscated,smishing,BCP ★ su cuenta ★ será bloqueada ★ verifique ahora http://bcp-seguro.info
+smishing_obfuscated_04,smishing_obfuscated,smishing,"BBVA: tu tarj3ta fu3 susp3ndida, actualiza tus dat0s en http://bbva-pe.top"
+smishing_obfuscated_05,smishing_obfuscated,smishing,"S U N A T: deuda pendiente, regulariza hoy en http://sunat-pe.info"
+smishing_obfuscated_06,smishing_obfuscated,smishing,"Y4pe: t u cu3nta s3rá d3sactivada, v4lida aquí http://yape-validacion.net"
+smishing_short_01,smishing_short,smishing,Entra aquí http://bit.ly/3kfj2
+smishing_short_02,smishing_short,smishing,Tu paquete: http://olva-envios.xyz
+smishing_short_03,smishing_short,smishing,Gana dinero fácil: http://x.co/abc

@@ -50,8 +50,8 @@ Reglas:
 
 ## Por decidir
 
-Inyección de dependencias, módulos de Gradle, cómo se asignan los niveles de riesgo a partir del puntaje del modelo,
-y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
+Inyección de dependencias, módulos de Gradle y cómo se asignan los niveles de riesgo a partir del puntaje del modelo y las
+señales (#9).
 
 ## Decidido al implementar
 
@@ -75,6 +75,11 @@ y cómo se generan las señales detectadas (el modelo solo devuelve un puntaje).
   asigna la conversación por remitente. Un mensaje es el mismo si coinciden remitente, texto y `date_sent`. El análisis aún
   no se dispara desde aquí: falta dónde guardar resultados (#8 a #12). Detalle en
   [docs/recepcion-sms.md](../docs/recepcion-sms.md).
+- **Señales (#8):** el modelo solo devuelve un puntaje, así que las señales (urgencia, suplantación, enlace y solicitud de
+  datos) se identifican con reglas escritas a mano en `signal_rules.json` (assets, versionado), que aplica
+  `RuleBasedSignalDetector` (`domain.signals`). Cada señal lleva el id de su regla y el análisis, la versión de las reglas,
+  para que el nivel de riesgo (#9) sea trazable. Aún no se muestran (#11) ni se calculan sobre los mensajes recibidos (#12).
+  Detalle y límites en [docs/senales.md](../docs/senales.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el
