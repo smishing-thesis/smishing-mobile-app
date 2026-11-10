@@ -13,7 +13,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,7 +22,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.app.smishing.R
+import androidx.lifecycle.lifecycleScope
+import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.data.settings.AndroidPermissionStatusReader
+import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.domain.history.AnalysisHistory
+import com.app.smishing.domain.settings.OnboardingProgress
+import com.app.smishing.domain.settings.PermissionStatusReader
+import com.app.smishing.ui.home.HomeRoute
+import com.app.smishing.ui.onboarding.WelcomeScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.app.smishing.data.sms.AndroidSmsPermissionRepository
 import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.domain.sms.SmsPermissionState
@@ -38,12 +51,15 @@ import com.app.smishing.ui.onboarding.SmsPermissionScreen
 /**
  * Pantalla de entrada. El onboarding de SMS: el paso 2 pide el rol de SMS (#2) y el paso 3, los permisos de lectura
  * (#3), en ese orden. Cuando se tienen los dos, muestra los mensajes (#5). Cada vez que se vuelve a la app se comprueba de
- * nuevo si se conservan. El paso 1 y la pantalla de inicio llegan con #17.
+ * nuevo si se conservan. El paso 1 (bienvenida, una sola vez) y la pantalla de inicio son de #17.
  */
 class MainActivity : ComponentActivity() {
 
     private lateinit var roles: AndroidSmsRoleRepository
     private lateinit var permissions: AndroidSmsPermissionRepository
+    private lateinit var onboarding: OnboardingProgress
+    private lateinit var permissionStatuses: PermissionStatusReader
+    private lateinit var history: AnalysisHistory
     private var roleState by mutableStateOf(SmsRoleState.NotHeld)
     private var permissionState by mutableStateOf(SmsPermissionState.NotGranted)
 
@@ -54,6 +70,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         roles = AndroidSmsRoleRepository(this)
         permissions = AndroidSmsPermissionRepository(this)
+        onboarding = DataStoreOnboardingProgress(this)
+        permissionStatuses = AndroidPermissionStatusReader(this)
+        history = RoomAnalysisHistory(HistoryDatabase.get(this))
         refresh()
         pendingMessageId = messageIdOf(intent)
 
@@ -61,6 +80,9 @@ class MainActivity : ComponentActivity() {
             SmishingTheme {
                 var skipped by rememberSaveable { mutableStateOf(false) }
                 var blocked by rememberSaveable { mutableStateOf(false) }
+                // La bienvenida (paso 1) se muestra una sola vez; `null` mientras se lee lo guardado.
+                var welcomeSeen by remember { mutableStateOf<Boolean?>(null) }
+                LaunchedEffect(Unit) { welcomeSeen = withContext(Dispatchers.IO) { onboarding.welcomeSeen() } }
 
                 val requestRole = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                     refresh()
@@ -74,7 +96,20 @@ class MainActivity : ComponentActivity() {
 
                 val ready = roleState == SmsRoleState.Held && permissionState == SmsPermissionState.Granted
                 when {
-                    skipped && !ready -> ProtectionOffPlaceholder(onActivate = { skipped = false })
+                    // Con el rol y los permisos no se muestra la bienvenida: quien ya los tiene no la necesita.
+                    !ready && welcomeSeen == null -> Box(Modifier.fillMaxSize().background(SmishingPalette.Background))
+                    !ready && welcomeSeen == false -> WelcomeScreen(
+                        onNext = {
+                            welcomeSeen = true
+                            lifecycleScope.launch(Dispatchers.IO) { onboarding.setWelcomeSeen(true) }
+                        },
+                    )
+                    // "Omitir" lleva a Inicio con la protección apagada (#17); "Activar protección" vuelve al onboarding.
+                    skipped && !ready -> HomeRoute(
+                        permissions = permissionStatuses,
+                        history = history,
+                        onActivate = { skipped = false },
+                    )
                     roleState != SmsRoleState.Held -> DefaultSmsRoleScreen(
                         state = roleState,
                         onRequest = { roles.requestIntent()?.let(requestRole::launch) },
@@ -133,23 +168,6 @@ class MainActivity : ComponentActivity() {
     private fun openAppSettings() {
         startActivity(
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = Uri.fromParts("package", packageName, null) },
-        )
-    }
-}
-
-/** Provisional: destino de "Omitir" hasta que exista la pantalla de inicio (#17). */
-@Composable
-private fun ProtectionOffPlaceholder(onActivate: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize().background(SmishingPalette.Background).padding(Spacing.Md),
-        contentAlignment = Alignment.Center,
-    ) {
-        ProtectionCard(
-            active = false,
-            title = stringResource(R.string.protection_off_title),
-            message = stringResource(R.string.protection_off_message),
-            actionLabel = stringResource(R.string.protection_activate),
-            onAction = onActivate,
         )
     }
 }

@@ -30,7 +30,7 @@ Quien ejecuta la decisión es un `Mitigator`. Con `Act` bloquea al remitente y r
 
 ## La pantalla
 
-Tercera pestaña de la barra inferior, "Ajustes" (solo cuando la app ya tiene el rol y los permisos de SMS):
+Cuarta pestaña de la barra inferior (tras Inicio, Mensajes e Historial), "Ajustes" (solo cuando la app ya tiene el rol y los permisos de SMS):
 
 - **Modo:** las tres opciones con su explicación; la actual aparece seleccionada y al elegir otra se guarda en el acto.
 - **Permisos (#25):** para cada uno, concedido o no (también dicho a los lectores de pantalla). Si no está concedido, la pantalla

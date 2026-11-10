@@ -23,7 +23,7 @@ class ExplanationWordingTest {
         (0 until nodes.length).associate { nodes.item(it).attributes.getNamedItem("name").nodeValue to nodes.item(it).textContent }
     }
 
-    private fun explanation() = strings.filterKeys { it.startsWith("detail_") || it.startsWith("alert_") || it.startsWith("history_") || it.startsWith("settings_") }
+    private fun explanation() = strings.filterKeys { it.startsWith("detail_") || it.startsWith("alert_") || it.startsWith("history_") || it.startsWith("settings_") || it.startsWith("home_") || it.startsWith("welcome_") || it.startsWith("protection_") }
 
     @Test
     fun theTextsToCheckAreTheOnesOfTheDetailAndTheAlert() {

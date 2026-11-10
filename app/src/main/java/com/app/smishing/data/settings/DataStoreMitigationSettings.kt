@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+internal val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 /**
  * Las preferencias de mitigación en un DataStore de Jetpack (#13), como define la arquitectura. Se guarda el `id` del modo, no su

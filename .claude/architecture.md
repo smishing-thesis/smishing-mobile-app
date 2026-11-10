@@ -104,6 +104,10 @@ Inyección de dependencias y módulos de Gradle.
   **DataStore** (`DataStoreMitigationSettings`, `data.settings`). `AnalyzeReceivedMessage` guarda el registro, **consulta el modo antes
   de actuar** (`MitigationPolicy`: solo el nivel alto actúa) y avisa; quien ejecuta la decisión es un `Mitigator`. La pestaña Ajustes muestra el modo y el estado de cada permiso con lo que queda
   limitado y un acceso a los ajustes del sistema. Detalle en [docs/ajustes-y-modo.md](../docs/ajustes-y-modo.md).
+- **Inicio y estado de la protección (#17):** `ProtectionStatus` (`domain.settings`) dice que la protección está activa solo con el rol, el
+  permiso de SMS y las notificaciones; `HomeRoute` lo lee del sistema cada vez que se vuelve a la app y muestra el resumen de la
+  semana (`weeklySummary`, 7 días del historial). La bienvenida (paso 1) se muestra una vez (`welcome_seen` en el DataStore).
+  Detalle en [docs/inicio-y-estado.md](../docs/inicio-y-estado.md).
 - **Mitigación (#14 a #16, #28):** `MitigationExecutor` (`domain.mitigation`) bloquea al remitente (`BlockedNumberContract`), retira el mensaje
   del buzón conservando su copia en el historial y marca como seguro revirtiendo ambas cosas, con puertos `SenderBlocker` e
   `InboxMessages`. Solo actúa si el modo lo permite y hay registro local; lo que falla se anota como fallido con su causa. Las acciones

@@ -33,6 +33,7 @@ import com.app.smishing.Shell
 import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.data.settings.DataStoreMitigationSettings
+import com.app.smishing.data.settings.DataStoreOnboardingProgress
 import com.app.smishing.domain.mitigation.MitigationDecision
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.data.classification.OnDeviceClassifier
@@ -114,8 +115,18 @@ class SmsRoleInstrumentedTest {
             )
         }
 
+        // La bienvenida (paso 1) se muestra una sola vez: se parte de que aún no se vio.
+        DataStoreOnboardingProgress(context).setWelcomeSeen(false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            // 1b. Lo primero es la bienvenida: no pide nada ni menciona el rol.
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.welcome_title)) > 0 }
+            compose.onNodeWithText(context.getString(R.string.onboarding_step_one_of_three)).assertIsDisplayed()
+            assertEquals(0, count(context.getString(R.string.default_sms_explanation_replace)))
+            compose.onNodeWithText(context.getString(R.string.welcome_next)).performClick()
+            assertTrue("La bienvenida queda como vista", DataStoreOnboardingProgress(context).welcomeSeen())
+
             // 2. Sin rol, la app pide primero el rol: todavía no menciona los permisos.
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.default_sms_explanation_replace)) > 0 }
             compose.onNodeWithText(context.getString(R.string.default_sms_explanation_replace)).assertIsDisplayed()
             assertEquals(0, count(context.getString(R.string.sms_permission_explanation_read)))
 
@@ -128,11 +139,13 @@ class SmsRoleInstrumentedTest {
             // 4. Al volver a la app, ya tiene el rol y los permisos.
             scenario.moveToState(Lifecycle.State.CREATED)
             scenario.moveToState(Lifecycle.State.RESUMED)
-            // Con el rol y los permisos, la app deja el onboarding y muestra los mensajes (#5).
-            val messages = context.getString(R.string.messages_title)
-            compose.waitUntil(TIMEOUT_MS) { count(messages) > 0 }
-            // "Mensajes" es el título y también la pestaña de la barra inferior: basta con que esté.
-            assertTrue(count(messages) >= 1)
+            // Con el rol y los permisos, la app deja el onboarding y muestra Inicio con la protección activa (#17).
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.home_active_title)) > 0 }
+            compose.onNodeWithText(context.getString(R.string.home_active_title)).assertIsDisplayed()
+            assertEquals(0, count(context.getString(R.string.protection_off_title)))
+            // Y desde la barra inferior se llega a los mensajes (#5).
+            openMessagesTab()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_title)) > 1 }
         }
 
         // 5. Con el análisis activo, el clasificador con compuerta analiza el mensaje.
@@ -205,6 +218,7 @@ class SmsRoleInstrumentedTest {
             insertSent(SENDER_D, sentLast, lastAt)
 
             ActivityScenario.launch(MainActivity::class.java).use {
+                openMessagesTab()
                 // La lista: remitente, fecha y el último mensaje de la conversación.
                 compose.waitUntil(TIMEOUT_MS) { count(sender) > 0 }
                 compose.onNodeWithText(sender).assertIsDisplayed()
@@ -312,6 +326,7 @@ class SmsRoleInstrumentedTest {
         try {
             val text = ECHO_TEXT
             ActivityScenario.launch(MainActivity::class.java).use {
+                openMessagesTab()
                 compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.compose_action)) > 0 }
                 compose.onNodeWithText(context.getString(R.string.compose_action)).performClick()
 
@@ -537,6 +552,12 @@ class SmsRoleInstrumentedTest {
             finishOpenActivities()
             deleteSyntheticMessages()
         }
+    }
+
+    /** La app se abre en Inicio (#17): pasa a la pestaña de mensajes. */
+    private fun openMessagesTab() {
+        compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.nav_messages)) > 0 }
+        compose.onNodeWithText(context.getString(R.string.nav_messages)).performClick()
     }
 
     private fun isBlocked(sender: String) = android.provider.BlockedNumberContract.isBlocked(context, "+$sender")
