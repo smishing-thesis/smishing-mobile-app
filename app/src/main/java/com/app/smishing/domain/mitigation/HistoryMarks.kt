@@ -1,0 +1,25 @@
+package com.app.smishing.domain.mitigation
+
+import com.app.smishing.domain.history.AnalysisRecord
+
+/** Lo que el historial dice de las acciones sobre un mensaje (#28). */
+enum class HistoryMark { MarkedSafe, Blocked, Removed, ActionFailed, ActionPending }
+
+/**
+ * Las marcas de un mensaje en la lista del historial, según el **estado vigente** de cada acción.
+ *
+ * - Si la persona lo marcó como seguro (#16), solo eso: lo demás ya se deshizo.
+ * - Una acción **fallida** da `ActionFailed` y nunca `Blocked` ni `Removed`.
+ * - Una acción pedida cuyo resultado aún no se sabe da `ActionPending`.
+ * - Una acción revertida no deja marca.
+ */
+fun historyMarks(record: AnalysisRecord, actions: List<MitigationAction>): List<HistoryMark> {
+    if (record.markedSafeAtMillis != null) return listOf(HistoryMark.MarkedSafe)
+    val latest = actions.latest()
+    return buildList {
+        if (latest[ActionType.BlockSender]?.status == ActionStatus.Completed) add(HistoryMark.Blocked)
+        if (latest[ActionType.RemoveMessage]?.status == ActionStatus.Completed) add(HistoryMark.Removed)
+        if (latest.values.any { it.status == ActionStatus.Failed || it.note == ActionNote.RevertFailed }) add(HistoryMark.ActionFailed)
+        if (latest.values.any { it.status == ActionStatus.Requested }) add(HistoryMark.ActionPending)
+    }
+}

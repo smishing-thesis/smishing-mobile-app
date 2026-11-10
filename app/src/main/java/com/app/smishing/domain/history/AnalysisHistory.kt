@@ -19,6 +19,8 @@ data class AnalysisRecord(
     val receivedAtMillis: Long,
     val analyzedAtMillis: Long,
     val assessment: RiskAssessment,
+    /** Cuándo la persona lo marcó como seguro (#16), o `null` si no lo hizo. */
+    val markedSafeAtMillis: Long? = null,
 ) {
     override fun toString() = "AnalysisRecord(id=$id, messageId=$messageId, level=${assessment.level}, analyzedAtMillis=$analyzedAtMillis)"
 }
@@ -35,6 +37,12 @@ interface AnalysisHistory {
 
     /** El registro del mensaje con ese id en el buzón, o `null` si no se analizó. */
     fun byMessageId(messageId: Long): AnalysisRecord?
+
+    /** Guarda que la persona marcó el mensaje como seguro (#16). */
+    fun markSafe(id: Long, nowMillis: Long)
+
+    /** Cambia el id del mensaje en el buzón: al restaurar un mensaje retirado, el buzón le da uno nuevo (#16). */
+    fun updateMessageId(id: Long, messageId: Long)
 
     /** Avisa cuando el historial cambia (llega un análisis nuevo). Devuelve algo que se cierra para dejar de avisar. */
     fun onChange(listener: () -> Unit): AutoCloseable = AutoCloseable {}

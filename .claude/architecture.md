@@ -98,13 +98,16 @@ Inyección de dependencias y módulos de Gradle.
   resultado y señales (la explicación, con su regla y fragmento), con las versiones del modelo, del preprocesamiento, de las reglas de
   señales y de la política. Guarda el **texto** de los mensajes, sin cifrar, y está **excluida de las copias de seguridad**
   (`data_extraction_rules.xml`, `backup_rules.xml`; `BackupRulesTest` lo fija). La pestaña Historial (`HistoryScreen`) lista los
-  registros y su detalle sale de lo guardado. Falta una política de borrado (#52) y la tabla de acciones de mitigación (#14 a #16).
+  registros y su detalle sale de lo guardado. Falta una política de borrado (#52). Desde la versión 2 guarda también las acciones de mitigación.
   Detalle en [docs/historial.md](../docs/historial.md).
 - **Modo de mitigación y ajustes (#13, #25, #31):** `MitigationMode` (automático, preguntar —por defecto—, desactivado) se guarda en un
   **DataStore** (`DataStoreMitigationSettings`, `data.settings`). `AnalyzeReceivedMessage` guarda el registro, **consulta el modo antes
-  de actuar** (`MitigationPolicy`: solo el nivel alto actúa) y avisa; quien ejecuta la decisión es un `Mitigator`, que hoy solo anota
-  la decisión (bloquear es #14, retirar es #15). La pestaña Ajustes muestra el modo y el estado de cada permiso con lo que queda
+  de actuar** (`MitigationPolicy`: solo el nivel alto actúa) y avisa; quien ejecuta la decisión es un `Mitigator`. La pestaña Ajustes muestra el modo y el estado de cada permiso con lo que queda
   limitado y un acceso a los ajustes del sistema. Detalle en [docs/ajustes-y-modo.md](../docs/ajustes-y-modo.md).
+- **Mitigación (#14 a #16, #28):** `MitigationExecutor` (`domain.mitigation`) bloquea al remitente (`BlockedNumberContract`), retira el mensaje
+  del buzón conservando su copia en el historial y marca como seguro revirtiendo ambas cosas, con puertos `SenderBlocker` e
+  `InboxMessages`. Solo actúa si el modo lo permite y hay registro local; lo que falla se anota como fallido con su causa. Las acciones
+  están en la tabla `mitigation_action` de la base Room (versión 2, con migración). Detalle en [docs/mitigacion.md](../docs/mitigacion.md).
 - **Conversaciones:** la lista de mensajes y la conversación (`ui.messages`) leen el buzón del sistema con
   `TelephonyConversationRepository` (`data.messaging`), agrupando por el `thread_id` que asigna Android; `domain.messaging`
   tiene los datos y la fecha de la lista. Se vuelve a leer cuando el buzón cambia. Hoy se muestra el número y no el

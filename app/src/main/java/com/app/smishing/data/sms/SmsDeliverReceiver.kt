@@ -64,7 +64,7 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 history = RoomAnalysisHistory(HistoryDatabase.get(context)),
                 notifier = AndroidRiskAlertNotifier(context),
                 settings = DataStoreMitigationSettings(context),
-                mitigator = AnalysisPipeline.mitigator(),
+                mitigator = AnalysisPipeline.mitigator(context),
                 // Solo el tipo de error: su mensaje podría traer el contenido.
                 onHistoryError = { Log.e(TAG, "No se pudo guardar el análisis en el historial: ${it.javaClass.simpleName}") },
                 onMitigationError = { Log.e(TAG, "No se pudo aplicar el modo de mitigación: ${it.javaClass.simpleName}") },

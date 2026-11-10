@@ -12,6 +12,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.app.smishing.R
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.mitigation.ActionNote
+import com.app.smishing.domain.mitigation.ActionStatus
+import com.app.smishing.domain.mitigation.ActionType
+import com.app.smishing.domain.mitigation.MitigationAction
 import com.app.smishing.domain.risk.RiskPolicy
 import com.app.smishing.domain.signals.DetectedSignal
 import com.app.smishing.domain.signals.SignalAnalysis
@@ -95,5 +99,29 @@ class HistoryScreenTest {
         compose.setContent { SmishingTheme { HistoryScreen(null, onOpen = {}, zone = zone) } }
         assertEquals(0, count(text(R.string.history_empty)))
         compose.onNodeWithText(text(R.string.history_title)).assertIsDisplayed()
+    }
+
+    // --- Las acciones tomadas (#28) ---
+
+    private fun action(recordId: Long, type: ActionType, status: ActionStatus, note: ActionNote? = null) =
+        MitigationAction(recordId * 10 + type.ordinal, recordId, type, status, note, 1, 1)
+
+    @Test
+    fun eachMessageSaysWhatWasDoneWithItAndAFailureIsNotShownAsDone() {
+        val safe = medium.copy(markedSafeAtMillis = 5)
+        val actions = mapOf(
+            high.id to listOf(
+                action(high.id, ActionType.BlockSender, ActionStatus.Completed),
+                action(high.id, ActionType.RemoveMessage, ActionStatus.Failed, ActionNote.Error),
+            ),
+            safe.id to listOf(action(safe.id, ActionType.BlockSender, ActionStatus.Reverted)),
+        )
+        compose.setContent { SmishingTheme { HistoryScreen(listOf(high, low, safe), onOpen = {}, zone = zone, actions = actions) } }
+
+        compose.onNodeWithText("${text(R.string.history_mark_blocked)} · ${text(R.string.history_mark_failed)}").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.history_mark_safe)).assertIsDisplayed()
+        assertEquals("La retirada fallida no debe figurar como hecha", 0, count(text(R.string.history_mark_removed)))
+        // El mensaje sin acciones no lleva marca: solo la de estado.
+        assertEquals(1, count(text(R.string.history_mark_safe)))
     }
 }

@@ -25,8 +25,8 @@ Tres modos, los del diseño de Ajustes, para un mensaje de **riesgo alto**:
 **antes de cualquier acción** sobre el mensaje, y solo si el nivel es alto. Si no se puede leer, no se actúa (y se avisa igual);
 si la acción falla, se avisa igual. Ambos errores se anotan sin el texto del mensaje.
 
-Quien ejecuta la decisión es un `Mitigator`. **Hoy solo anota la decisión** (`LoggingMitigator`, solo el nombre de la decisión):
-bloquear al remitente es #14 y retirar el mensaje del buzón es #15, que se agregan ahí.
+Quien ejecuta la decisión es un `Mitigator`. Con `Act` bloquea al remitente y retira el mensaje (`ApplyMitigation`, #14 y #15; ver
+[mitigacion.md](mitigacion.md)); con `AskUser` el detalle ofrece los botones y con `DoNothing` no se toca nada.
 
 ## La pantalla
 

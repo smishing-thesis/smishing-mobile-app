@@ -91,6 +91,29 @@
     <string name="detail_recommendation_title">Recomendación</string>
     <string name="detail_recommendation">No abra enlaces ni responda con sus datos. Si tiene dudas, llame a la entidad a un número que ya conozca.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
+    <string name="detail_actions_label">Acciones realizadas</string>
+    <string name="detail_action_block_done">Bloqueamos este número</string>
+    <string name="detail_action_block_already">Este número ya estaba bloqueado antes</string>
+    <string name="detail_action_remove_done">Quitamos el mensaje de su bandeja</string>
+    <string name="detail_action_block_pending">Estamos bloqueando este número</string>
+    <string name="detail_action_remove_pending">Estamos quitando el mensaje de su bandeja</string>
+    <string name="detail_action_block_failed">No pudimos bloquear este número</string>
+    <string name="detail_action_remove_failed">No pudimos quitar el mensaje de su bandeja</string>
+    <string name="detail_failure_not_supported">Para bloquear números, esta aplicación debe ser la de mensajería principal.</string>
+    <string name="detail_failure_not_allowed">El sistema no lo permitió.</string>
+    <string name="detail_failure_no_copy">No se quitó porque no hay una copia guardada del mensaje.</string>
+    <string name="detail_failure_error">Ocurrió un error.</string>
+    <string name="detail_revert_failed_block">No pudimos desbloquear este número</string>
+    <string name="detail_revert_failed_remove">No pudimos devolver el mensaje a su bandeja</string>
+    <string name="detail_button_block">Bloquear número</string>
+    <string name="detail_button_remove">Quitar el mensaje de la bandeja</string>
+    <string name="detail_button_mark_safe">Marcar como seguro</string>
+    <string name="detail_marked_safe_title">Marcado como seguro</string>
+    <string name="detail_marked_safe_text">Usted indicó que confía en este mensaje.</string>
+    <string name="detail_reverted_label">Acciones revertidas</string>
+    <string name="detail_reverted_block">Número desbloqueado</string>
+    <string name="detail_reverted_block_already">El número ya estaba bloqueado antes y se dejó como estaba</string>
+    <string name="detail_reverted_remove">Mensaje restaurado a su bandeja</string>
 
     <!-- Historial (#12). Los textos de la marca de estado no son los del diseño ("Peligroso", "Seguro"): afirman menos. -->
     <string name="history_title">Historial</string>
@@ -98,6 +121,11 @@
     <string name="history_chip_high">Posible estafa</string>
     <string name="history_chip_medium">Sospechoso</string>
     <string name="history_chip_low">Sin señales</string>
+    <string name="history_mark_blocked">Número bloqueado</string>
+    <string name="history_mark_removed">Mensaje quitado</string>
+    <string name="history_mark_failed">Acción fallida</string>
+    <string name="history_mark_pending">Acción en curso</string>
+    <string name="history_mark_safe">Marcado como seguro</string>
     <string name="nav_messages">Mensajes</string>
     <string name="nav_history">Historial</string>
 

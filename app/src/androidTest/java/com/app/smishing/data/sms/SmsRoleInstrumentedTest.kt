@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -31,13 +32,16 @@ import com.app.smishing.PlainLanguage
 import com.app.smishing.Shell
 import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
-import com.app.smishing.data.mitigation.LoggingMitigator
 import com.app.smishing.data.settings.DataStoreMitigationSettings
 import com.app.smishing.domain.mitigation.MitigationDecision
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.data.classification.OnDeviceClassifier
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.domain.mitigation.latest
+import com.app.smishing.domain.mitigation.ActionType
+import com.app.smishing.domain.mitigation.ActionStatus
+import com.app.smishing.data.history.RoomMitigationLog
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.classification.GatedMessageClassifier
 import com.app.smishing.domain.messaging.formatConversationDate
@@ -526,9 +530,166 @@ class SmsRoleInstrumentedTest {
             // La elección sigue guardada fuera de la pantalla.
             assertEquals(MitigationMode.Automatic, DataStoreMitigationSettings(context).mode())
         } finally {
-            AnalysisPipeline.replaceMitigator(LoggingMitigator())
+            AnalysisPipeline.replaceMitigator(null)
             settings.setMode(MitigationMode.Ask)
             manager.cancelAll()
+            database.clearAllTables()
+            finishOpenActivities()
+            deleteSyntheticMessages()
+        }
+    }
+
+    private fun isBlocked(sender: String) = android.provider.BlockedNumberContract.isBlocked(context, "+$sender")
+
+    private fun unblock(sender: String) = android.provider.BlockedNumberContract.unblock(context, "+$sender")
+
+    /**
+     * #14, #15, #16 y #28 de punta a punta, en modo automático: un SMS de riesgo alto bloquea al remitente en el sistema y se retira
+     * del buzón; la alerta abre su detalle aunque el mensaje ya no esté, con las acciones hechas; "Marcar como seguro" desbloquea,
+     * devuelve el mensaje a su conversación, ya leído, y el historial lo dice. Datos sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenTheAutomaticModeBlocksAndRemovesAndMarkingSafeRestoresBoth() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val history = RoomAnalysisHistory(database)
+        val log = RoomMitigationLog(database)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        unblock(SENDER_F)
+        settings.setMode(MitigationMode.Automatic)
+        try {
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            deliver(SENDER_F, risky, secondsAfterSentAt = 1)
+
+            // La alerta sale después de actuar: cuando aparece, ya se bloqueó y se retiró.
+            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            assertTrue("El remitente debía quedar bloqueado en el sistema", isBlocked(SENDER_F))
+            assertEquals("El mensaje debía salir del buzón; acciones: ${log.all()}", 0, inbox(SENDER_F).size)
+            val record = history.all().single()
+            val done = log.actionsOf(record.id).latest()
+            assertEquals(ActionStatus.Completed, done.getValue(ActionType.BlockSender).status)
+            assertEquals(ActionStatus.Completed, done.getValue(ActionType.RemoveMessage).status)
+            assertEquals("La copia local conserva el mensaje", risky, record.body)
+
+            // La alerta abre el detalle desde lo guardado aunque el mensaje ya no esté en el buzón; muestra lo hecho, sin botones de actuar.
+            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
+            compose.onNodeWithText(context.getString(R.string.detail_actions_label).uppercase()).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_action_block_done)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_action_remove_done)).performScrollTo().assertIsDisplayed()
+            assertEquals(0, count(context.getString(R.string.detail_button_block)))
+            assertEquals(0, count(context.getString(R.string.detail_button_remove)))
+
+            // "Marcar como seguro" deshace las dos acciones.
+            compose.onNodeWithText(context.getString(R.string.detail_button_mark_safe)).performScrollTo().performClick()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_marked_safe_title)) > 0 }
+            compose.onNodeWithText(context.getString(R.string.detail_reverted_label).uppercase()).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_reverted_block)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_reverted_remove)).performScrollTo().assertIsDisplayed()
+            assertTrue("El remitente debía quedar desbloqueado", !isBlocked(SENDER_F))
+            val restored = inbox(SENDER_F).single()
+            assertEquals("El mensaje vuelve igual a su conversación", risky, restored.body)
+            assertTrue("Y ya leído", restored.read)
+            val after = log.actionsOf(record.id).latest()
+            assertEquals(ActionStatus.Reverted, after.getValue(ActionType.BlockSender).status)
+            assertEquals(ActionStatus.Reverted, after.getValue(ActionType.RemoveMessage).status)
+            assertTrue(history.byId(record.id)?.markedSafeAtMillis != null)
+
+            // El historial lo dice, y el mensaje reaparece en su conversación (la lista ya no es la de antes).
+            compose.onNodeWithContentDescription(context.getString(R.string.conversation_back)).performClick()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_title)) > 0 }
+            compose.onNodeWithText(context.getString(R.string.nav_history)).performClick()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.history_mark_safe)) > 0 }
+            compose.onNodeWithText(context.getString(R.string.history_mark_safe)).assertIsDisplayed()
+        } finally {
+            manager.cancelAll()
+            settings.setMode(MitigationMode.Ask)
+            unblock(SENDER_F)
+            database.clearAllTables()
+            finishOpenActivities()
+            deleteSyntheticMessages()
+        }
+    }
+
+    /**
+     * #14 y #15 a elección de la persona: en modo "preguntar" no se toca nada hasta que toca los botones del detalle, y cada acción
+     * se refleja en el sistema y en lo que se muestra; en "solo avisarme" no hay botones de actuar ni acciones. Datos sintéticos.
+     */
+    @Test
+    fun thenAskModeActsOnlyWhenThePersonChoosesAndTheOnlyNotifyModeNeverActs() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val history = RoomAnalysisHistory(database)
+        val log = RoomMitigationLog(database)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        unblock(SENDER_F)
+        try {
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+
+            // Preguntar: llega, avisa y no toca nada.
+            settings.setMode(MitigationMode.Ask)
+            deliver(SENDER_F, risky, secondsAfterSentAt = 2)
+            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            assertTrue(!isBlocked(SENDER_F))
+            assertEquals(1, inbox(SENDER_F).size)
+            val record = history.all().single()
+            assertTrue("Sin acciones hasta que la persona decida", log.actionsOf(record.id).isEmpty())
+
+            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
+            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_button_remove)).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_button_mark_safe)).performScrollTo().assertIsDisplayed()
+
+            // Bloquear: se bloquea, se muestra como hecho y el botón desaparece; el otro sigue.
+            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().performClick()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_action_block_done)) > 0 }
+            assertTrue(isBlocked(SENDER_F))
+            assertEquals(1, inbox(SENDER_F).size)
+            assertEquals(0, count(context.getString(R.string.detail_button_block)))
+            assertEquals(1, count(context.getString(R.string.detail_button_remove)))
+
+            // Quitar: sale del buzón y se muestra como hecho; el registro conserva el mensaje.
+            compose.onNodeWithText(context.getString(R.string.detail_button_remove)).performScrollTo().performClick()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_action_remove_done)) > 0 }
+            assertEquals(0, inbox(SENDER_F).size)
+            assertEquals(risky, history.byId(record.id)?.body)
+            assertEquals(0, count(context.getString(R.string.detail_button_remove)))
+            val done = log.actionsOf(record.id).latest()
+            assertEquals(ActionStatus.Completed, done.getValue(ActionType.BlockSender).status)
+            assertEquals(ActionStatus.Completed, done.getValue(ActionType.RemoveMessage).status)
+
+            // Solo avisarme: llega otro, avisa, no se toca y el detalle no ofrece actuar.
+            finishOpenActivities()
+            manager.cancelAll()
+            unblock(SENDER_F)
+            settings.setMode(MitigationMode.Disabled)
+            deliver(SENDER_F, risky, secondsAfterSentAt = 3)
+            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            assertTrue(!isBlocked(SENDER_F))
+            assertEquals(1, inbox(SENDER_F).size)
+            assertEquals("Solo el primer análisis tiene acciones", 2, history.all().size)
+            assertEquals(0, log.actionsOf(history.all().first().id).size)
+
+            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
+            assertEquals(0, count(context.getString(R.string.detail_button_block)))
+            assertEquals(0, count(context.getString(R.string.detail_button_remove)))
+            assertEquals(0, count(context.getString(R.string.detail_actions_label).uppercase()))
+        } finally {
+            manager.cancelAll()
+            settings.setMode(MitigationMode.Ask)
+            unblock(SENDER_F)
             database.clearAllTables()
             finishOpenActivities()
             deleteSyntheticMessages()

@@ -23,6 +23,8 @@ data class AnalyzedMessageEntity(
     val sender: String,
     val body: String,
     val receivedAtMillis: Long,
+    /** Cuándo la persona lo marcó como seguro (#16), o `null`. Se agregó en la versión 2 de la base. */
+    val markedSafeAtMillis: Long? = null,
 )
 
 @Entity(
@@ -77,6 +79,35 @@ data class DetectedSignalEntity(
     @ColumnInfo(name = "ruleId") val ruleId: String,
     /** La parte del mensaje que la motivó. */
     val fragment: String,
+)
+
+/**
+ * Una acción de mitigación sobre un mensaje analizado (#28): bloquear al remitente o retirar el mensaje, con su estado. Se agregó
+ * en la versión 2 de la base. Borrar el mensaje analizado borra en cascada sus acciones.
+ */
+@Entity(
+    tableName = "mitigation_action",
+    foreignKeys = [
+        ForeignKey(
+            entity = AnalyzedMessageEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["analyzedMessageId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("analyzedMessageId")],
+)
+data class MitigationActionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val analyzedMessageId: Long,
+    /** `block` o `remove` (el id estable del tipo). */
+    val type: String,
+    /** `requested`, `completed`, `failed` o `reverted`. */
+    val status: String,
+    /** El motivo que acompaña al estado (id estable), o `null`. */
+    val note: String?,
+    val requestedAtMillis: Long,
+    val updatedAtMillis: Long,
 )
 
 /** Un resultado con sus señales. */

@@ -47,6 +47,16 @@ import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.ui.alerts.MessageDetailScreen
+import com.app.smishing.ui.alerts.Protection
+import com.app.smishing.ui.alerts.DetailActions
+import com.app.smishing.domain.risk.RiskLevel
+import com.app.smishing.domain.mitigation.latest
+import com.app.smishing.domain.mitigation.MitigationMode
+import com.app.smishing.domain.mitigation.MitigationLog
+import com.app.smishing.domain.mitigation.MitigationExecutor
+import com.app.smishing.domain.mitigation.MitigationAction
+import com.app.smishing.domain.mitigation.ActionType
+import com.app.smishing.data.mitigation.AndroidMitigation
 import com.app.smishing.ui.alerts.MessageDetailState
 import com.app.smishing.data.sms.AndroidSmsSender
 import com.app.smishing.domain.messaging.Conversation
@@ -76,6 +86,8 @@ fun MessagesRoute(
     assessor: RiskAssessor = rememberAssessor(),
     history: AnalysisHistory = rememberHistory(),
     mitigationSettings: MitigationSettings = rememberMitigationSettings(),
+    mitigation: MitigationExecutor = rememberMitigationExecutor(),
+    actionLog: MitigationLog = rememberActionLog(),
     permissionStatuses: PermissionStatusReader = rememberPermissionStatuses(),
     /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
     openMessageId: Long? = null,
@@ -132,6 +144,11 @@ fun MessagesRoute(
         val subscription = history.onChange { historyVersion++ }
         onDispose { subscription.close() }
     }
+    // Las acciones tomadas (#28) cambian aparte del historial: se vuelve a leer también cuando cambian.
+    DisposableEffect(actionLog) {
+        val subscription = actionLog.onChange { historyVersion++ }
+        onDispose { subscription.close() }
+    }
 
     // El detalle de un mensaje (#10): se abre al tocar una alerta y se cierra con "atrás".
     var detailMessageId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -162,36 +179,46 @@ fun MessagesRoute(
     Column(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f)) {
             when {
-                detailId != null -> {
-                    var detail by remember(detailId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+                detailId != null || recordId != null -> {
+                    // Un solo detalle para los dos caminos: el de una alerta (por el id del mensaje) y el del historial (por el id del
+                    // registro). Una vez encontrado el registro se sigue por su id, porque restaurar un mensaje le cambia el del buzón.
+                    var detail by remember(detailId, recordId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+                    var current by remember(detailId, recordId) { mutableStateOf<AnalysisRecord?>(null) }
+                    var resolvedId by remember(detailId, recordId) { mutableStateOf(recordId) }
+                    var busy by remember(detailId, recordId) { mutableStateOf(false) }
                     // Se muestra lo guardado al recibir el mensaje (#12): es lo que motivó la alerta. Si no hay registro (un mensaje
                     // anterior al historial), se evalúa el mensaje, que da lo mismo porque la evaluación es determinista.
-                    LaunchedEffect(detailId) {
-                        detail = withContext(Dispatchers.IO) {
-                            val record = history.byMessageId(detailId)
-                            val message = repository.message(detailId)
-                            when {
-                                // El registro solo vale si es de este mensaje: si el almacenamiento de SMS del sistema se borró,
-                                // sus ids empiezan de nuevo y un mensaje nuevo podría tener el id de un registro viejo.
-                                record != null && (message == null || message.body == record.body) ->
-                                    MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment))
-                                message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body))
-                                else -> MessageDetailState.Missing
-                            }
+                    LaunchedEffect(detailId, recordId, historyVersion) {
+                        val (state, record) = withContext(Dispatchers.IO) {
+                            loadDetail(detailId, resolvedId, history, repository, assessor, actionLog, mitigationSettings)
+                        }
+                        detail = state
+                        current = record
+                        if (record != null) resolvedId = record.id
+                    }
+                    fun act(work: (AnalysisRecord) -> Unit) {
+                        val record = current
+                        if (record == null || busy) return
+                        busy = true
+                        scope.launch {
+                            withContext(Dispatchers.IO) { work(record) }
+                            busy = false
+                            historyVersion++
                         }
                     }
-                    MessageDetailScreen(state = detail, onBack = { detailMessageId = null }, modifier = Modifier)
-                }
-                recordId != null -> {
-                    var detail by remember(recordId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
-                    LaunchedEffect(recordId) {
-                        detail = withContext(Dispatchers.IO) {
-                            val record = history.byId(recordId)
-                            if (record == null) MessageDetailState.Missing
-                            else MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment))
-                        }
-                    }
-                    MessageDetailScreen(state = detail, onBack = { historyRecordId = null }, modifier = Modifier)
+                    MessageDetailScreen(
+                        state = detail,
+                        onBack = {
+                            detailMessageId = null
+                            historyRecordId = null
+                        },
+                        modifier = Modifier,
+                        actions = DetailActions(
+                            onBlock = { act { mitigation.perform(it, ActionType.BlockSender) } },
+                            onRemove = { act { mitigation.perform(it, ActionType.RemoveMessage) } },
+                            onMarkSafe = { act { mitigation.markSafe(it) } },
+                        ),
+                    )
                 }
                 composing -> NewMessageScreen(
                     recipient = recipient,
@@ -222,7 +249,9 @@ fun MessagesRoute(
         tab == 1 && threadId == null -> {
                     var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
                     LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
-                    HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, modifier = Modifier)
+                    var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
+                    LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
+                    HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, actions = actions, modifier = Modifier)
                 }
                 threadId == null -> {
                     var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
@@ -273,6 +302,45 @@ fun MessagesRoute(
             )
         }
     }
+}
+
+/** Arma el detalle de un mensaje: lo guardado (o, si no hay registro, el mensaje evaluado) con las acciones tomadas. */
+private fun loadDetail(
+    messageId: Long?,
+    recordId: Long?,
+    history: AnalysisHistory,
+    repository: ConversationRepository,
+    assessor: RiskAssessor,
+    actionLog: MitigationLog,
+    settings: MitigationSettings,
+): Pair<MessageDetailState, AnalysisRecord?> {
+    val message = messageId?.let { repository.message(it) }
+    // El registro solo vale si es de este mensaje: si el almacenamiento de SMS del sistema se borró, sus ids empiezan de nuevo y un
+    // mensaje nuevo podría tener el id de un registro viejo.
+    val record = recordId?.let { history.byId(it) }
+        ?: messageId?.let { history.byMessageId(it) }?.takeIf { message == null || message.body == it.body }
+    return when {
+        record != null -> {
+            val level = record.assessment.level
+            val canAct = level == RiskLevel.High && runCatching { settings.mode() != MitigationMode.Disabled }.getOrDefault(false)
+            val protection = Protection(record.markedSafeAtMillis != null, actionLog.actionsOf(record.id).latest(), canAct)
+            MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment), protection) to record
+        }
+        message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body)) to null
+        else -> MessageDetailState.Missing to null
+    }
+}
+
+@Composable
+private fun rememberMitigationExecutor(): MitigationExecutor {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { AndroidMitigation.executor(context) }
+}
+
+@Composable
+private fun rememberActionLog(): MitigationLog {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { AndroidMitigation.log(context) }
 }
 
 @Composable
