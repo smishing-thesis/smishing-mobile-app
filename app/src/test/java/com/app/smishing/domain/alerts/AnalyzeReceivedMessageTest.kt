@@ -41,6 +41,8 @@ class AnalyzeReceivedMessageTest {
         override fun all() = saved.reversed()
         override fun byId(id: Long) = saved.getOrNull(id.toInt() - 1)
         override fun byMessageId(messageId: Long) = saved.lastOrNull { it.messageId == messageId }
+        override fun markSafe(id: Long, nowMillis: Long) = Unit
+        override fun updateMessageId(id: Long, messageId: Long) = Unit
     }
 
     private val flagged = ClassificationResult.Classified(0.97f, true, 0.9, "1.0.0", "1.1.0")

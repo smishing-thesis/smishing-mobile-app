@@ -18,7 +18,10 @@ Una base **Room sobre SQLite** (`history.db`), como define la arquitectura. Tres
 | `analysis_result` (1:1) | el **resultado**: puntaje, umbral y decisión del modelo; el **nivel** de riesgo y la regla de la política que lo decidió; las **versiones** del modelo, del preprocesamiento, de las reglas de señales y de la política; los respaldos que contaron; la fecha del análisis |
 | `detected_signal` (1:N) | la **explicación**: cada señal con su tipo, la regla que la detectó y la parte del mensaje que la motivó |
 
-Borrar un mensaje borra en cascada su resultado y sus señales. El id del mensaje en el buzón **no** es una clave foránea: el registro
+Desde la **versión 2** de la base (#28) hay además la tabla `mitigation_action` (las acciones tomadas, ver [mitigacion.md](mitigacion.md)) y
+la columna `markedSafeAtMillis` del mensaje; la migración conserva lo guardado en la versión 1.
+
+Borrar un mensaje borra en cascada su resultado, sus señales y sus acciones. El id del mensaje en el buzón **no** es una clave foránea: el registro
 sigue existiendo aunque el mensaje se borre del buzón.
 
 **La explicación se guarda como datos, no como texto.** Lo que se lee en el detalle ("Le mete prisa para que actúe sin pensar", el

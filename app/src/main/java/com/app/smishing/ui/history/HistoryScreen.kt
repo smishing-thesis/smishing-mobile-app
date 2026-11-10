@@ -15,6 +15,9 @@ import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.formatHistoryDate
+import com.app.smishing.domain.mitigation.HistoryMark
+import com.app.smishing.domain.mitigation.MitigationAction
+import com.app.smishing.domain.mitigation.historyMarks
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.ui.designsystem.components.HistoryRow
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
@@ -31,7 +34,7 @@ import java.time.ZoneId
  * marca de estado. Tocar uno abre su detalle, armado desde lo guardado. [records] es `null` mientras se leen.
  *
  * La marca dice "Posible estafa", "Sospechoso" o "Sin señales" y no "Peligroso" o "Seguro" del diseño, para no presentar la
- * sospecha como certeza (#11). Todavía no tiene la búsqueda ni las acciones tomadas (#13 a #16).
+ * sospecha como certeza (#11). Cada mensaje dice lo que se hizo con él (#28); la búsqueda no está.
  */
 @Composable
 fun HistoryScreen(
@@ -39,6 +42,8 @@ fun HistoryScreen(
     onOpen: (AnalysisRecord) -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
+    /** Las acciones tomadas por registro (#28), para marcar cada mensaje con lo que se hizo. */
+    actions: Map<Long, List<MitigationAction>> = emptyMap(),
 ) {
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         SmishingTopBar(title = stringResource(R.string.history_title), style = TopBarStyle.Primary)
@@ -58,12 +63,26 @@ fun HistoryScreen(
                         date = formatHistoryDate(record.analyzedAtMillis, zone),
                         snippet = record.body,
                         onClick = { onOpen(record) },
+                        actions = marksText(historyMarks(record, actions[record.id].orEmpty())),
                         chip = { StatusChip(statusOf(record.assessment.level), stringResource(chipText(record.assessment.level))) },
                     )
                 }
             }
         }
     }
+}
+
+/** Las marcas de acciones en palabras, separadas con « · »; `null` si no hay ninguna. */
+@Composable
+private fun marksText(marks: List<HistoryMark>): String? =
+    marks.takeIf { it.isNotEmpty() }?.map { stringResource(markText(it)) }?.joinToString(" · ")
+
+private fun markText(mark: HistoryMark) = when (mark) {
+    HistoryMark.MarkedSafe -> R.string.history_mark_safe
+    HistoryMark.Blocked -> R.string.history_mark_blocked
+    HistoryMark.Removed -> R.string.history_mark_removed
+    HistoryMark.ActionFailed -> R.string.history_mark_failed
+    HistoryMark.ActionPending -> R.string.history_mark_pending
 }
 
 private fun statusOf(level: RiskLevel) = when (level) {

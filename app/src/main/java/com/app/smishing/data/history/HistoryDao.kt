@@ -39,6 +39,24 @@ abstract class HistoryDao {
     @Query("SELECT * FROM analyzed_message WHERE messageId = :messageId ORDER BY id DESC LIMIT 1")
     abstract fun byMessageId(messageId: Long): MessageWithResult?
 
+    @Query("UPDATE analyzed_message SET markedSafeAtMillis = :nowMillis WHERE id = :id")
+    abstract fun markSafe(id: Long, nowMillis: Long)
+
+    @Query("UPDATE analyzed_message SET messageId = :messageId WHERE id = :id")
+    abstract fun updateMessageId(id: Long, messageId: Long)
+
+    @Insert
+    abstract fun insertAction(action: MitigationActionEntity): Long
+
+    @Query("UPDATE mitigation_action SET status = :status, note = :note, updatedAtMillis = :nowMillis WHERE id = :id")
+    abstract fun updateAction(id: Long, status: String, note: String?, nowMillis: Long)
+
+    @Query("SELECT * FROM mitigation_action WHERE analyzedMessageId = :recordId ORDER BY id")
+    abstract fun actionsOf(recordId: Long): List<MitigationActionEntity>
+
+    @Query("SELECT * FROM mitigation_action ORDER BY id")
+    abstract fun allActions(): List<MitigationActionEntity>
+
     @Query("DELETE FROM analyzed_message WHERE id = :id")
     abstract fun delete(id: Long)
 

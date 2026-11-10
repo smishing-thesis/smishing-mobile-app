@@ -43,6 +43,9 @@ android {
         getByName("androidTest") {
             java.srcDir("src/sharedTest/java")
             assets.srcDir("src/sharedTest/assets")
+            // Los esquemas exportados de Room: la prueba de migración arma la base de la versión 1 con su SQL exacto.
+            // (No se usa MigrationTestHelper: room-testing exige kotlinx-serialization 1.8 y la app resuelve la 1.7.3.)
+            assets.srcDir("$projectDir/schemas")
         }
     }
 }

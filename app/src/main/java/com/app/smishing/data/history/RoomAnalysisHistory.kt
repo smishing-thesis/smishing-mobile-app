@@ -35,6 +35,7 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
             sender = record.sender,
             body = record.body,
             receivedAtMillis = record.receivedAtMillis,
+            markedSafeAtMillis = record.markedSafeAtMillis,
         )
         val result = AnalysisResultEntity(
             analyzedMessageId = 0, // lo completa el DAO al guardar el mensaje
@@ -55,6 +56,10 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
         }
         return dao.insertAll(message, result, signals)
     }
+
+    override fun markSafe(id: Long, nowMillis: Long) = dao.markSafe(id, nowMillis)
+
+    override fun updateMessageId(id: Long, messageId: Long) = dao.updateMessageId(id, messageId)
 
     override fun all(): List<AnalysisRecord> = dao.all().map(::toRecord)
 
@@ -89,6 +94,7 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
             receivedAtMillis = row.message.receivedAtMillis,
             analyzedAtMillis = result.analyzedAtMillis,
             assessment = assessment,
+            markedSafeAtMillis = row.message.markedSafeAtMillis,
         )
     }
 }

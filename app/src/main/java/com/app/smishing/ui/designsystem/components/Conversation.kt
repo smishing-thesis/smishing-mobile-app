@@ -147,6 +147,8 @@ fun HistoryRow(
     onClick: () -> Unit,
     chip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    /** Lo que se hizo con el mensaje (por ejemplo, "Número bloqueado"), o `null` si no se hizo nada (#28). */
+    actions: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -176,6 +178,7 @@ fun HistoryRow(
                 )
                 chip()
             }
+            if (actions != null) Text(actions, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
         }
         HorizontalDivider(color = SmishingPalette.Border)
     }
