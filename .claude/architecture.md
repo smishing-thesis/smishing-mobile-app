@@ -93,6 +93,10 @@ Inyección de dependencias y módulos de Gradle.
   es; el detalle nombra cada señal con la parte del mensaje que la motivó, dice lo que se sabe y lo que no, y nunca muestra el puntaje
   ni porcentajes. `PlainLanguage` y `ExplanationWordingTest` lo comprueban sobre todas las cadenas; que se entienda lo evalúa #23.
   Detalle en [docs/explicacion-de-la-alerta.md](../docs/explicacion-de-la-alerta.md).
+- **Avisos y no leídos (#49, #50):** `AnalyzeReceivedMessage` avisa de cada SMS que no es de riesgo alto (el de riesgo alto solo muestra su alerta),
+  con `IncomingMessageNotifier`/`AndroidMessageNotifier` (canal "Mensajes"; en la pantalla de bloqueo solo "Mensaje nuevo"). Abrir una
+  conversación marca como leídos sus mensajes recibidos (`ConversationRepository.markRead`) y descarta sus avisos; la lista muestra un
+  contador de no leídos. Detalle en [docs/avisos-y-no-leidos.md](../docs/avisos-y-no-leidos.md).
 - **Historial (#12):** `AnalyzeReceivedMessage` (`domain.alerts`) evalúa cada SMS recibido, **guarda su análisis antes de avisar** y
   avisa si el nivel es alto. El historial es una base **Room** (`HistoryDatabase`, `data.history`) con tres tablas: mensaje analizado,
   resultado y señales (la explicación, con su regla y fragmento), con las versiones del modelo, del preprocesamiento, de las reglas de

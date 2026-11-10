@@ -47,4 +47,35 @@ class ConversationsTest {
             assertFalse("+10000000001" in text)
         }
     }
+
+    // --- Lo no leído (#50) ---
+
+    private fun unreadRow(thread: Long, at: Long, unread: Boolean) = SmsRow(thread, "+10000000001", "texto", at, unread)
+
+    @Test
+    fun theUnreadCountCoversTheWholeConversationNotOnlyTheLastMessage() {
+        val rows = sequenceOf(
+            unreadRow(1, 30, unread = true),
+            unreadRow(1, 20, unread = false),
+            unreadRow(1, 10, unread = true),
+            unreadRow(2, 5, unread = false),
+        )
+        val byThread = latestPerConversation(rows).associateBy { it.threadId }
+        assertEquals(2, byThread.getValue(1).unreadCount)
+        assertEquals(0, byThread.getValue(2).unreadCount)
+    }
+
+    @Test
+    fun aConversationWithNothingUnreadHasAZeroCountAndTheOrderIsKept() {
+        val result = latestPerConversation(sequenceOf(unreadRow(3, 30, false), unreadRow(1, 20, true), unreadRow(2, 10, false)))
+        assertEquals(listOf(3L, 1L, 2L), result.map { it.threadId })
+        assertEquals(listOf(0, 1, 0), result.map { it.unreadCount })
+    }
+
+    @Test
+    fun theStringFormOfAConversationNeverShowsTheTextOrTheSender() {
+        val text = latestPerConversation(sequenceOf(unreadRow(1, 10, true))).single().toString()
+        assertEquals(false, "texto" in text)
+        assertEquals(false, "+10000000001" in text)
+    }
 }

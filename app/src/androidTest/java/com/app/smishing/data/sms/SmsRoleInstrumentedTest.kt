@@ -11,8 +11,10 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -82,6 +84,20 @@ class SmsRoleInstrumentedTest {
 
     @get:Rule
     val compose = createEmptyComposeRule()
+
+    @get:Rule
+    val testName = org.junit.rules.TestName()
+
+    /**
+     * Desde Android 13 el permiso de notificaciones no viene concedido. Las pruebas que miran notificaciones parten de concedido;
+     * la que prueba la negativa (`roleThenNotificationsFollowTheAndroid13Permission`) parte de la instalación limpia.
+     */
+    @org.junit.Before
+    fun allowNotificationsFromAndroid13() {
+        if (android.os.Build.VERSION.SDK_INT >= 33 && testName.methodName != NOTIFICATION_PERMISSION_TEST && testName.methodName != "roleFirstThenPermissionsThenAnalysis") {
+            Shell.run("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
+        }
+    }
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val roles = AndroidSmsRoleRepository(context)
@@ -319,6 +335,7 @@ class SmsRoleInstrumentedTest {
      */
     @Test
     fun thenAMessageIsSentToTheChosenRecipientAndAppearsInItsConversation() {
+        assumeTrue("El emulador entrega a sí mismo lo enviado a su número solo en el primero (5554); en $emulatorNumber no se probó", emulatorNumber == EMULATOR_NUMBER)
         if (roles.state() != SmsRoleState.Held) grantRole()
         assertEquals(SmsRoleState.Held, roles.state())
         assertEquals("Con el rol, Android debía conceder también el permiso de enviar", true, hasSendPermission())
@@ -331,13 +348,13 @@ class SmsRoleInstrumentedTest {
                 compose.onNodeWithText(context.getString(R.string.compose_action)).performClick()
 
                 compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.new_message_title)) > 0 }
-                compose.onNodeWithText(context.getString(R.string.new_message_recipient_hint)).performTextInput(EMULATOR_NUMBER)
+                compose.onNodeWithText(context.getString(R.string.new_message_recipient_hint)).performTextInput(emulatorNumber)
                 compose.onNodeWithText(context.getString(R.string.new_message_body_hint)).performTextInput(text)
                 compose.onNodeWithText(context.getString(R.string.new_message_send)).performClick()
 
                 // Aparece en su conversación, a la derecha, con el número elegido en la barra.
                 compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.conversation_subtitle)) > 0 && count(text) > 0 }
-                compose.onNodeWithText(EMULATOR_NUMBER).assertIsDisplayed()
+                compose.onNodeWithText(emulatorNumber).assertIsDisplayed()
                 compose.onNode(
                     hasText(text).and(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.message_sent))),
                 ).assertIsDisplayed()
@@ -369,6 +386,16 @@ class SmsRoleInstrumentedTest {
         }
     }
 
+    /**
+     * El número del emulador donde corre la prueba: los emuladores son 555-521-5554, 5556…, según su puerto. Se lee del sistema; si no
+     * se puede (en Android 10 no sale), se usa el del primero, 5554.
+     */
+    private val emulatorNumber: String by lazy {
+        val digits = Regex("'([^']*)'").findAll(Shell.run("service call iphonesubinfo 15"))
+            .joinToString("") { it.groupValues[1].replace(".", "") }.filter { it.isDigit() }
+        if (digits.length >= 4) digits.takeLast(4) else EMULATOR_NUMBER
+    }
+
     private fun hasSendPermission() =
         context.checkSelfPermission(android.Manifest.permission.SEND_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
@@ -392,7 +419,7 @@ class SmsRoleInstrumentedTest {
         )!!.use { it.count }
 
     private fun deleteEmulatorMessages() {
-        context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.ADDRESS} LIKE ?", arrayOf("%$EMULATOR_NUMBER%"))
+        context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.ADDRESS} LIKE ?", arrayOf("%$emulatorNumber%"))
         context.contentResolver.delete(Uri.parse("content://sms"), "${Telephony.Sms.BODY} = ?", arrayOf(ECHO_TEXT))
     }
 
@@ -417,9 +444,10 @@ class SmsRoleInstrumentedTest {
             deliver(SENDER_F, risky)
 
             // Las dos entregas se procesan en orden: cuando aparece la alerta, la primera ya se evaluó.
-            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
-            val alerts = manager.activeNotifications.filter { it.packageName == context.packageName }
-            assertEquals("Solo el de riesgo alto debía avisar", 1, alerts.size)
+            waitUntil { riskAlerts(manager).isNotEmpty() && messageNotifications(manager).isNotEmpty() }
+            val alerts = riskAlerts(manager)
+            assertEquals("Solo el de riesgo alto debía dar alerta de riesgo", 1, alerts.size)
+            assertEquals("El otro avisa como un mensaje cualquiera (#49)", 1, messageNotifications(manager).size)
             val notification = alerts.single().notification
 
             // Indica el riesgo, con el remitente y un motivo, y no revela el texto del mensaje.
@@ -440,7 +468,7 @@ class SmsRoleInstrumentedTest {
             assertTrue(SENDER_F !in publicText)
 
             // Tocarla abre el detalle: el riesgo, el mensaje tal cual y por qué se avisó.
-            notification.contentIntent.send()
+            tap(alerts.single())
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
             compose.onNodeWithText(risky).assertIsDisplayed()
@@ -468,7 +496,7 @@ class SmsRoleInstrumentedTest {
             compose.onNodeWithText(risky).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
             compose.onNodeWithText(risky).performClick()
             Thread.sleep(1_500)
-            val resumed = Shell.run("dumpsys activity activities").lines().first { "mResumedActivity" in it }
+            val resumed = Shell.run("dumpsys activity activities").lines().first { "ResumedActivity" in it }
             assertTrue("Debía seguir en la app y no abrir un navegador: $resumed", context.packageName in resumed)
             compose.onNodeWithText(context.getString(R.string.detail_title)).assertIsDisplayed()
         } finally {
@@ -498,7 +526,7 @@ class SmsRoleInstrumentedTest {
         database.clearAllTables()
         manager.cancelAll()
         deleteSyntheticMessages()
-        fun alerts() = manager.activeNotifications.count { it.packageName == context.packageName }
+        fun alerts() = riskAlerts(manager).size
         fun choose(mode: MitigationMode, title: Int) {
             compose.onNodeWithText(context.getString(title)).performClick()
             waitUntil { settings.mode() == mode }
@@ -554,6 +582,197 @@ class SmsRoleInstrumentedTest {
         }
     }
 
+    /**
+     * Toca un aviso, como lo hace la persona. Desde Android 14, `PendingIntent.send` desde una prueba (que no está en primer plano) no
+     * abre la actividad si no se permite de forma explícita.
+     */
+    private fun tap(notification: android.service.notification.StatusBarNotification) {
+        val options = if (android.os.Build.VERSION.SDK_INT >= 34) {
+            android.app.ActivityOptions.makeBasic()
+                .setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                .toBundle()
+        } else {
+            null
+        }
+        notification.notification.contentIntent.send(context, 0, null, null, null, null, options)
+    }
+
+    private fun ourNotifications(manager: android.app.NotificationManager) =
+        manager.activeNotifications.filter { it.packageName == context.packageName }
+
+    /** Los avisos de mensaje (#49) llevan la etiqueta "message"; las alertas de riesgo no llevan etiqueta. */
+    private fun messageNotifications(manager: android.app.NotificationManager) = ourNotifications(manager).filter { it.tag == "message" }
+
+    private fun riskAlerts(manager: android.app.NotificationManager) = ourNotifications(manager).filter { it.tag == null }
+
+    /**
+     * #49 y #50 de punta a punta: cada SMS que no es de riesgo alto avisa con su remitente y el inicio del texto (y en la pantalla de
+     * bloqueo, solo "Mensaje nuevo"); el de riesgo alto muestra solo su alerta. Los mensajes llegan sin leer y la lista lo dice; tocar
+     * el aviso abre la conversación, que marca los mensajes como leídos y descarta su aviso, y lo mismo pasa con la alerta al abrir la
+     * conversación del mensaje de riesgo alto. Datos sintéticos, que se borran al terminar.
+     */
+    @Test
+    fun thenEachMessageIsNotifiedAndOpeningItsConversationReadsItAndClearsItsNotification() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteBulkMessages()
+        settings.setMode(MitigationMode.Ask) // el de riesgo alto no se toca
+        try {
+            val harmless = "Te quiero mucho, cuidate"
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            deliver(UNREAD_HARMLESS, harmless)
+            deliver(UNREAD_RISKY, risky)
+
+            waitUntil { messageNotifications(manager).size == 1 && riskAlerts(manager).size == 1 }
+            Thread.sleep(500) // un instante por si sobrara un segundo aviso del de riesgo alto
+
+            // El de riesgo alto muestra solo su alerta: no hay un aviso de mensaje para él.
+            assertEquals("Un aviso de mensaje, el del que no es de riesgo alto", 1, messageNotifications(manager).size)
+            assertEquals("Una alerta de riesgo, la del de riesgo alto", 1, riskAlerts(manager).size)
+            val notice = messageNotifications(manager).single()
+            val extras = notice.notification.extras
+            assertEquals("+$UNREAD_HARMLESS", extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString())
+            assertEquals(harmless, extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString())
+            assertEquals("messages", notice.notification.channelId)
+            // En la pantalla de bloqueo, solo dice que hay un mensaje nuevo: ni remitente ni texto.
+            assertEquals(android.app.Notification.VISIBILITY_PRIVATE, notice.notification.visibility)
+            val publicTitle = notice.notification.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString()
+            assertEquals(context.getString(R.string.message_notification_public), publicTitle)
+            assertTrue(UNREAD_HARMLESS !in publicTitle && harmless !in publicTitle)
+
+            // Los dos llegaron sin leer.
+            assertEquals(false, inbox(UNREAD_HARMLESS).single().read)
+            assertEquals(false, inbox(UNREAD_RISKY).single().read)
+
+            // Sin `use`: tocar el aviso abre la app con otra intención y el escenario no podría cerrarla; se cierra en `finally`.
+            ActivityScenario.launch(MainActivity::class.java).let {
+                openMessagesTab()
+                // La lista distingue las conversaciones con mensajes sin leer, con su cuenta. Se compara con lo que dice el buzón y no con un
+                // número fijo: otras pruebas pudieron dejar mensajes sin leer en el emulador.
+                fun unreadOf(sender: String) =
+                    TelephonyConversationRepository(context).conversations().first { it.address == "+$sender" }.unreadCount
+                fun hasCounter(sender: String): Boolean {
+                    val n = unreadOf(sender)
+                    return n > 0 && compose.onAllNodes(
+                        hasText("+$sender") and hasContentDescription(context.getString(R.string.messages_unread_description, n)),
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }
+                assertTrue("El mensaje debía llegar sin leer", unreadOf(UNREAD_HARMLESS) >= 1 && unreadOf(UNREAD_RISKY) >= 1)
+                compose.waitUntil(TIMEOUT_MS) { hasCounter(UNREAD_HARMLESS) && hasCounter(UNREAD_RISKY) }
+
+                // Tocar el aviso abre la conversación del mensaje; el mensaje queda leído y su aviso desaparece.
+                tap(notice)
+                compose.waitUntil(TIMEOUT_MS) { count(harmless) > 0 }
+                waitUntil { inbox(UNREAD_HARMLESS).single().read }
+                waitUntil { messageNotifications(manager).isEmpty() }
+                assertEquals("La alerta del otro mensaje no se toca", 1, riskAlerts(manager).size)
+
+                // Al volver a la lista, solo queda un contador: el del mensaje de riesgo alto, que todavía no se abrió.
+                compose.onNodeWithContentDescription(context.getString(R.string.conversation_back)).performClick()
+                compose.waitUntil(TIMEOUT_MS) { hasCounter(UNREAD_RISKY) && !hasCounter(UNREAD_HARMLESS) }
+
+                // Abrir la conversación del de riesgo alto lo lee y descarta también su alerta.
+                compose.onNodeWithText("+$UNREAD_RISKY").performClick()
+                compose.waitUntil(TIMEOUT_MS) { count(risky) > 0 }
+                waitUntil { inbox(UNREAD_RISKY).single().read }
+                waitUntil { riskAlerts(manager).isEmpty() }
+                compose.onNodeWithContentDescription(context.getString(R.string.conversation_back)).performClick()
+                compose.waitUntil(TIMEOUT_MS) { !hasCounter(UNREAD_RISKY) && !hasCounter(UNREAD_HARMLESS) }
+            }
+        } finally {
+            manager.cancelAll()
+            settings.setMode(MitigationMode.Ask)
+            database.clearAllTables()
+            finishOpenActivities()
+            deleteBulkMessages()
+        }
+    }
+
+    /**
+     * Un mensaje corto, que el modelo no evalúa, también avisa (#49): no se queda en silencio por no tener análisis. Y uno enviado por
+     * la persona no cuenta como sin leer (#50). Datos sintéticos.
+     */
+    @Test
+    fun thenAShortMessageIsAlsoNotifiedAndASentOneIsNeverUnread() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val database = HistoryDatabase.get(context)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteBulkMessages()
+        try {
+            deliver(UNREAD_SHORT, "Hola ya") // demasiado corto: no se evalúa
+            waitUntil { messageNotifications(manager).size == 1 }
+            assertTrue("Sin análisis no hay alerta de riesgo", riskAlerts(manager).isEmpty())
+            assertEquals("Hola ya", messageNotifications(manager).single().notification.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString())
+            assertTrue("Y no entra en el historial", HistoryDatabase.get(context).dao().messageCount() == 0)
+
+            insertSent(UNREAD_SENT, "Un mensaje que envié yo", System.currentTimeMillis())
+            val unread = TelephonyConversationRepository(context).conversations().associate { it.address to it.unreadCount }
+            assertEquals(1, unread["+$UNREAD_SHORT"])
+            val rows = context.contentResolver.query(
+                Telephony.Sms.CONTENT_URI, arrayOf(Telephony.Sms.THREAD_ID, Telephony.Sms.TYPE, Telephony.Sms.READ),
+                "${Telephony.Sms.ADDRESS} = ?", arrayOf("+$UNREAD_SENT"), null,
+            )!!.use { c -> generateSequence { if (c.moveToNext()) "hilo=${c.getLong(0)} tipo=${c.getInt(1)} leido=${c.getInt(2)}" else null }.toList() }
+            assertEquals("Lo enviado no queda sin leer; filas: $rows", 0, unread["+$UNREAD_SENT"])
+        } finally {
+            manager.cancelAll()
+            database.clearAllTables()
+            deleteBulkMessages()
+        }
+    }
+
+    /**
+     * Desde Android 13 hace falta el permiso de notificaciones (#49, #10): sin él no se muestra ningún aviso ni alerta, y al concederlo
+     * se muestran. Solo corre en Android 13 o superior y con la instalación limpia (el permiso sin conceder). Datos sintéticos.
+     */
+    @Test
+    fun roleThenNotificationsFollowTheAndroid13Permission() {
+        assumeTrue("Solo Android 13 o superior", android.os.Build.VERSION.SDK_INT >= 33)
+        assumeTrue(
+            "El permiso ya estaba concedido: desinstala la app para repetir esta prueba",
+            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED,
+        )
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        val database = HistoryDatabase.get(context)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        try {
+            val harmless = "Te quiero mucho, cuidate"
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+
+            // Sin el permiso: los mensajes se reciben y se analizan, pero no hay ninguna notificación.
+            deliver(SENDER_F, harmless)
+            deliver(SENDER_E, risky)
+            waitUntil { database.dao().messageCount() == 2 }
+            Thread.sleep(800)
+            assertTrue(
+                "Sin el permiso no debe haber notificaciones: ${ourNotifications(manager).map { "${it.tag}/${it.id}/${it.notification.channelId}/enabled=${androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()}" }}",
+                ourNotifications(manager).isEmpty(),
+            )
+            assertEquals("El mensaje llega igual", 1, inbox(SENDER_F).size)
+
+            // Con el permiso concedido, los avisos y la alerta se muestran.
+            Shell.run("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
+            deliver(SENDER_F, harmless, secondsAfterSentAt = 5)
+            deliver(SENDER_E, risky, secondsAfterSentAt = 5)
+            waitUntil { messageNotifications(manager).size == 1 && riskAlerts(manager).size == 1 }
+        } finally {
+            manager.cancelAll()
+            database.clearAllTables()
+            deleteSyntheticMessages()
+        }
+    }
+
     /** La app se abre en Inicio (#17): pasa a la pestaña de mensajes. */
     private fun openMessagesTab() {
         compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.nav_messages)) > 0 }
@@ -588,7 +807,7 @@ class SmsRoleInstrumentedTest {
             deliver(SENDER_F, risky, secondsAfterSentAt = 1)
 
             // La alerta sale después de actuar: cuando aparece, ya se bloqueó y se retiró.
-            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            waitUntil { riskAlerts(manager).isNotEmpty() }
             assertTrue("El remitente debía quedar bloqueado en el sistema", isBlocked(SENDER_F))
             assertEquals("El mensaje debía salir del buzón; acciones: ${log.all()}", 0, inbox(SENDER_F).size)
             val record = history.all().single()
@@ -598,7 +817,7 @@ class SmsRoleInstrumentedTest {
             assertEquals("La copia local conserva el mensaje", risky, record.body)
 
             // La alerta abre el detalle desde lo guardado aunque el mensaje ya no esté en el buzón; muestra lo hecho, sin botones de actuar.
-            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            tap(riskAlerts(manager).single())
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_actions_label).uppercase()).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_action_block_done)).performScrollTo().assertIsDisplayed()
@@ -660,13 +879,13 @@ class SmsRoleInstrumentedTest {
             // Preguntar: llega, avisa y no toca nada.
             settings.setMode(MitigationMode.Ask)
             deliver(SENDER_F, risky, secondsAfterSentAt = 2)
-            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            waitUntil { riskAlerts(manager).isNotEmpty() }
             assertTrue(!isBlocked(SENDER_F))
             assertEquals(1, inbox(SENDER_F).size)
             val record = history.all().single()
             assertTrue("Sin acciones hasta que la persona decida", log.actionsOf(record.id).isEmpty())
 
-            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            tap(riskAlerts(manager).single())
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_button_remove)).performScrollTo().assertIsDisplayed()
@@ -696,13 +915,13 @@ class SmsRoleInstrumentedTest {
             unblock(SENDER_F)
             settings.setMode(MitigationMode.Disabled)
             deliver(SENDER_F, risky, secondsAfterSentAt = 3)
-            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            waitUntil { riskAlerts(manager).isNotEmpty() }
             assertTrue(!isBlocked(SENDER_F))
             assertEquals(1, inbox(SENDER_F).size)
             assertEquals("Solo el primer análisis tiene acciones", 2, history.all().size)
             assertEquals(0, log.actionsOf(history.all().first().id).size)
 
-            manager.activeNotifications.single { it.packageName == context.packageName }.notification.contentIntent.send()
+            tap(riskAlerts(manager).single())
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             assertEquals(0, count(context.getString(R.string.detail_button_block)))
             assertEquals(0, count(context.getString(R.string.detail_button_remove)))
@@ -761,7 +980,7 @@ class SmsRoleInstrumentedTest {
             deliver(SENDER_F, risky, secondsAfterSentAt = 1)
 
             // Recibido: está en el buzón. Clasificado: queda su análisis. Alertado: aparece la alerta.
-            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            waitUntil { riskAlerts(manager).isNotEmpty() }
             assertEquals("El mensaje debía llegar al buzón sin red", risky, inbox(SENDER_F).single().body)
             val record = history.all().single()
             assertEquals(RiskLevel.High, record.assessment.level)
@@ -1023,5 +1242,12 @@ class SmsRoleInstrumentedTest {
         const val BULK_PREFIX = "+999"
         const val TIMEOUT_MS = 10_000L
         const val ROUNDS = 3
+        // Remitentes propios de las pruebas de lo no leído (+999…): ver deleteBulkMessages.
+        const val UNREAD_HARMLESS = "99900000002"
+        const val UNREAD_RISKY = "99900000003"
+        const val UNREAD_SHORT = "99900000004"
+        const val UNREAD_SENT = "99900000005"
+        const val NOTIFICATION_PERMISSION_TEST = "roleThenNotificationsFollowTheAndroid13Permission"
+
     }
 }

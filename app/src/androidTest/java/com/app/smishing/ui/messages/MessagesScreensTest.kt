@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onNodeWithText
@@ -67,6 +68,35 @@ class MessagesScreensTest {
         compose.onNodeWithText(context.getString(R.string.messages_yesterday)).assertIsDisplayed()
         compose.onNodeWithText("14:20").assertIsDisplayed()
         compose.onNodeWithText("Marzo 12").assertIsDisplayed()
+    }
+
+    @Test
+    fun conversationsWithUnreadMessagesShowACounterAndTheOthersDoNot() {
+        val withUnread = listOf(
+            Conversation(1, "987 654 321", "Estimado cliente, su tarjeta ha sido suspendida.", at(11, 7, 9, 0), unreadCount = 3),
+            Conversation(2, "Mamá", "Ya llegué a casa, la cena está lista", at(11, 8, 14, 20), unreadCount = 1),
+            Conversation(3, "Carlos", "Nos vemos el lunes en la oficina", at(3, 12)),
+        )
+        compose.setContent {
+            SmishingTheme { ConversationListScreen(withUnread, now, onOpen = {}, onCompose = {}, zone = zone) }
+        }
+        // El contador dice cuántos, también para un lector de pantalla.
+        compose.onNodeWithContentDescription(context.getString(R.string.messages_unread_description, 3)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(context.getString(R.string.messages_unread_description, 1)).assertIsDisplayed()
+        // La conversación leída no lleva contador: solo hay dos en toda la lista.
+        val counters = (1..9).sumOf { n -> compose.onAllNodesWithContentDescription(context.getString(R.string.messages_unread_description, n)).fetchSemanticsNodes().size }
+        assertEquals(2, counters)
+        compose.onNodeWithText("Carlos").assertIsDisplayed()
+    }
+
+    @Test
+    fun theCounterNeverAppearsWhenThereIsNothingUnread() {
+        compose.setContent {
+            SmishingTheme { ConversationListScreen(conversations, now, onOpen = {}, onCompose = {}, zone = zone) }
+        }
+        for (n in 1..9) {
+            assertEquals(0, compose.onAllNodesWithContentDescription(context.getString(R.string.messages_unread_description, n)).fetchSemanticsNodes().size)
+        }
     }
 
     @Test

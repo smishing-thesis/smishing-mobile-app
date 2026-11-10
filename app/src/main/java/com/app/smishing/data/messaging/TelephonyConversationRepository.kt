@@ -1,5 +1,6 @@
 package com.app.smishing.data.messaging
 
+import android.content.ContentValues
 import android.content.Context
 import android.provider.Telephony
 import com.app.smishing.domain.messaging.Conversation
@@ -21,7 +22,7 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
     override fun conversations(): List<Conversation> =
         resolver.query(
             Telephony.Sms.CONTENT_URI,
-            arrayOf(Telephony.Sms.THREAD_ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE),
+            arrayOf(Telephony.Sms.THREAD_ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.READ, Telephony.Sms.TYPE),
             NOT_A_DRAFT,
             null,
             "${Telephony.Sms.DATE} DESC",
@@ -29,7 +30,11 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
             latestPerConversation(
                 generateSequence {
                     if (!cursor.moveToNext()) null
-                    else SmsRow(cursor.getLong(0), cursor.getString(1).orEmpty(), cursor.getString(2).orEmpty(), cursor.getLong(3))
+                    else SmsRow(
+                        cursor.getLong(0), cursor.getString(1).orEmpty(), cursor.getString(2).orEmpty(), cursor.getLong(3),
+                        // Sin leer solo cuenta lo recibido: lo enviado por la persona no queda "sin leer".
+                        unread = cursor.getInt(4) == 0 && cursor.getInt(5) == Telephony.Sms.MESSAGE_TYPE_INBOX,
+                    )
                 },
             )
         }.orEmpty()
@@ -73,6 +78,28 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
                 direction = if (cursor.getInt(5) == Telephony.Sms.MESSAGE_TYPE_INBOX) MessageDirection.Incoming else MessageDirection.Outgoing,
             )
         }
+
+    override fun markRead(threadId: Long): List<Long> {
+        val unread = resolver.query(
+            Telephony.Sms.Inbox.CONTENT_URI,
+            arrayOf(Telephony.Sms._ID),
+            "${Telephony.Sms.THREAD_ID} = ? AND ${Telephony.Sms.READ} = 0",
+            arrayOf(threadId.toString()),
+            null,
+        )?.use { cursor -> generateSequence { if (cursor.moveToNext()) cursor.getLong(0) else null }.toList() }.orEmpty()
+        if (unread.isEmpty()) return emptyList()
+        val values = ContentValues().apply {
+            put(Telephony.Sms.READ, 1)
+            put(Telephony.Sms.SEEN, 1)
+        }
+        resolver.update(
+            Telephony.Sms.Inbox.CONTENT_URI,
+            values,
+            "${Telephony.Sms.THREAD_ID} = ? AND ${Telephony.Sms.READ} = 0",
+            arrayOf(threadId.toString()),
+        )
+        return unread
+    }
 
     private companion object {
         const val NOT_A_DRAFT = "${Telephony.Sms.TYPE} != ${Telephony.Sms.MESSAGE_TYPE_DRAFT}"

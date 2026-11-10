@@ -76,11 +76,14 @@ enum class AnalysisOutcome {
  *    [mitigator]; con "solo avisarme", o con un nivel que no es alto, no se toca el mensaje. Si no se puede leer el modo, no se
  *    actúa ([onMitigationError] lo anota).
  * 3. **Avisa**, pase lo que pase con lo anterior.
+ * 4. **Un mensaje que no es de riesgo alto** (de riesgo medio o bajo, o que no se evaluó, o cuyo análisis falló) se avisa como un SMS
+ *    cualquiera (#49). El de riesgo alto solo muestra la alerta.
  */
 class AnalyzeReceivedMessage(
     private val assessor: RiskAssessor,
     private val history: AnalysisHistory,
     private val notifier: RiskAlertNotifier,
+    private val messageNotifier: IncomingMessageNotifier,
     private val settings: MitigationSettings,
     private val mitigator: Mitigator,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -88,9 +91,30 @@ class AnalyzeReceivedMessage(
     private val onMitigationError: (Throwable) -> Unit = {},
 ) {
 
-    fun onReceived(messageId: Long, message: IncomingSms): AnalysisOutcome =
+    fun onReceived(messageId: Long, message: IncomingSms): AnalysisOutcome {
+        val outcome = try {
+            analyze(messageId, message)
+        } catch (e: Throwable) {
+            // Si el análisis falla (por ejemplo, la biblioteca nativa del modelo), el mensaje no puede quedarse sin aviso.
+            notifyMessage(messageId, message)
+            throw e
+        }
+        // El de riesgo alto ya mostró su alerta: no se le suma una segunda notificación (#49).
+        if (outcome != AnalysisOutcome.Alerted) notifyMessage(messageId, message)
+        return outcome
+    }
+
+    private fun notifyMessage(messageId: Long, message: IncomingSms) {
+        try {
+            messageNotifier.notify(messageId, message)
+        } catch (e: Exception) {
+            // Avisar es lo último y no debe tumbar nada más.
+        }
+    }
+
+    private fun analyze(messageId: Long, message: IncomingSms): AnalysisOutcome =
         when (val result = assessor.assess(message.body)) {
-            // Muy corto o análisis suspendido: sin nivel, no se guarda ni se actúa ni se avisa (política de entrada del modelo).
+            // Muy corto o análisis suspendido: sin nivel, no se guarda ni se actúa ni se avisa del riesgo (política de entrada del modelo).
             is RiskResult.NotAssessed -> AnalysisOutcome.NotAssessed
             is RiskResult.Assessed -> {
                 val now = clock()

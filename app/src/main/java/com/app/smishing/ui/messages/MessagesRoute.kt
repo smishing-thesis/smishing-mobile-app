@@ -60,6 +60,7 @@ import com.app.smishing.domain.mitigation.MitigationLog
 import com.app.smishing.domain.mitigation.MitigationExecutor
 import com.app.smishing.domain.mitigation.MitigationAction
 import com.app.smishing.domain.mitigation.ActionType
+import com.app.smishing.data.alerts.AndroidMessageNotifier
 import com.app.smishing.data.mitigation.AndroidMitigation
 import com.app.smishing.ui.alerts.MessageDetailState
 import com.app.smishing.data.sms.AndroidSmsSender
@@ -98,6 +99,9 @@ fun MessagesRoute(
     /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
     openMessageId: Long? = null,
     onMessageOpened: () -> Unit = {},
+    /** El mensaje cuya conversación hay que abrir (por tocar el aviso de un SMS, #49), o `null`. */
+    openConversationOfMessageId: Long? = null,
+    onConversationOpened: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -164,6 +168,24 @@ fun MessagesRoute(
             historyRecordId = null
             composing = false
             onMessageOpened()
+        }
+    }
+
+    // La conversación de un mensaje (#49): se abre al tocar el aviso de un SMS. Si el mensaje ya no está, se queda en la lista de mensajes.
+    LaunchedEffect(openConversationOfMessageId) {
+        if (openConversationOfMessageId != null) {
+            val message = withContext(Dispatchers.IO) { repository.message(openConversationOfMessageId) }
+            detailMessageId = null
+            historyRecordId = null
+            composing = false
+            tab = 1
+            if (message != null) {
+                openThreadId = message.threadId
+                openAddress = message.address
+            } else {
+                openThreadId = null
+            }
+            onConversationOpened()
         }
     }
 
@@ -285,7 +307,17 @@ fun MessagesRoute(
                 }
                 else -> {
                     var messages by remember(threadId) { mutableStateOf<List<ConversationMessage>?>(null) }
-                    LaunchedEffect(threadId, version) { messages = withContext(Dispatchers.IO) { repository.messages(threadId) } }
+                    LaunchedEffect(threadId, version) {
+                        messages = withContext(Dispatchers.IO) { repository.messages(threadId) }
+                        // Abrir la conversación es leerla (#50): se marcan como leídos los recibidos y se descartan sus avisos. También
+                        // los que llegan con la conversación abierta. Marcar cambia el buzón y vuelve a pasar por aquí, sin más que marcar.
+                        // Marcar y descartar van juntos dentro del mismo bloque: marcar cambia el buzón, eso reinicia este efecto y, si
+                        // el descarte estuviera afuera, el reinicio lo cancelaría antes de ejecutarse y el aviso quedaría ahí.
+                        withContext(Dispatchers.IO) {
+                            val read = repository.markRead(threadId)
+                            if (read.isNotEmpty()) AndroidMessageNotifier.dismiss(context, read)
+                        }
+                    }
                     ConversationScreen(
                         address = openAddress,
                         messages = messages,

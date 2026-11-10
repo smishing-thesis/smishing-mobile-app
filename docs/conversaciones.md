@@ -54,7 +54,8 @@ porque el color y el lado no lo transmiten. El botón de volver tiene su descrip
   Posible estafa", "Ver riesgo": #10 y #12), el botón "Escribir", la barra para redactar y "Nuevo mensaje" (#6, ya
   hechos), la búsqueda y el menú de la conversación, y la navegación inferior (sus otras pestañas todavía no existen). Hoy, tras el
   onboarding, la lista de mensajes es la pantalla principal.
-- **Abrir una conversación no la marca como leída**: no está en la historia. Los mensajes recibidos quedan sin leer.
+- **Abrir una conversación marca como leídos sus mensajes recibidos** y la lista muestra un contador de los que siguen sin leer (#50; ver
+  [avisos-y-no-leidos.md](avisos-y-no-leidos.md)).
 
 ## Cómo verificar
 
