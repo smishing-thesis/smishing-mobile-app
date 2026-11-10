@@ -2,6 +2,7 @@
     <string name="app_name">Smishing Detector</string>
 
     <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
+    <string name="onboarding_step_one_of_three">PASO 1 DE 3</string>
     <string name="onboarding_step_two_of_three">PASO 2 DE 3</string>
     <string name="onboarding_skip">Omitir por ahora</string>
     <string name="default_sms_title">Aplicación principal</string>
@@ -28,7 +29,7 @@
 
     <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
     <string name="protection_off_title">Protección apagada</string>
-    <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
+    <string name="protection_off_message">Falta algo para que la protección funcione. Revise lo que se indica abajo.</string>
     <string name="protection_activate">Activar protección</string>
 
     <!-- Conversaciones (#5) -->
@@ -126,10 +127,24 @@
     <string name="history_mark_failed">Acción fallida</string>
     <string name="history_mark_pending">Acción en curso</string>
     <string name="history_mark_safe">Marcado como seguro</string>
+    <string name="nav_home">Inicio</string>
     <string name="nav_messages">Mensajes</string>
     <string name="nav_history">Historial</string>
 
     <!-- Ajustes (#13, #25, #31). Los textos de los modos son los del diseño; el título de la sección y los textos de los permisos no. -->
+    <string name="welcome_title">¡Bienvenido!</string>
+    <string name="welcome_body_one">Esta aplicación revisa sus mensajes de texto cuando llegan, para ayudarle a detectar estafas.</string>
+    <string name="welcome_body_two">Le avisaremos si un mensaje tiene señales de estafa. El análisis se hace en su teléfono, sin internet.</string>
+    <string name="welcome_next">Siguiente</string>
+    <string name="home_status_active">Activo</string>
+    <string name="home_status_inactive">Inactivo</string>
+    <string name="home_active_title">Protección activa</string>
+    <string name="home_active_message">La aplicación está revisando sus mensajes en este momento.</string>
+    <string name="home_requirements_title">Lo que necesita la protección</string>
+    <string name="home_summary_title">Resumen de la semana</string>
+    <string name="home_summary_reviewed">Mensajes revisados:</string>
+    <string name="home_summary_scams">Con posible estafa:</string>
+    <string name="home_summary_note">Últimos 7 días, de lo que se revisó en este teléfono.</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_mode_title">Cuando llegue un mensaje con posible estafa</string>
     <string name="settings_mode_automatic_title">Protegerme automáticamente</string>

@@ -47,6 +47,10 @@ import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.ui.alerts.MessageDetailScreen
+import androidx.compose.material.icons.outlined.Home
+import com.app.smishing.domain.settings.AppPermission
+import com.app.smishing.ui.home.HomeRoute
+import com.app.smishing.ui.settings.SystemSettingsIntents
 import com.app.smishing.ui.alerts.Protection
 import com.app.smishing.ui.alerts.DetailActions
 import com.app.smishing.domain.risk.RiskLevel
@@ -74,7 +78,7 @@ import kotlinx.coroutines.withContext
  * (#6). Lee y envía fuera del hilo principal y vuelve a leer cuando el buzón cambia (porque llega un SMS o cambia el
  * estado de uno enviado), así que no hace falta reabrir la app. "Atrás" vuelve a la lista.
  *
- * La barra inferior tiene tres pestañas: mensajes, historial (#12) y ajustes (#13, #25).
+ * La barra inferior tiene cuatro pestañas: inicio (#17), mensajes, historial (#12) y ajustes (#13, #25). Se abre en Inicio.
  *
  * Si no se puede enviar por falta del permiso de enviar, lo pide y la persona toca Enviar otra vez.
  */
@@ -89,6 +93,8 @@ fun MessagesRoute(
     mitigation: MitigationExecutor = rememberMitigationExecutor(),
     actionLog: MitigationLog = rememberActionLog(),
     permissionStatuses: PermissionStatusReader = rememberPermissionStatuses(),
+    /** Lo que hace "Activar protección" de Inicio cuando la app ya tiene el rol y los permisos (solo pueden faltar las notificaciones). */
+    onActivateProtection: () -> Unit = rememberOpenNotificationSettings(),
     /** El mensaje cuyo detalle hay que abrir (por tocar una alerta), o `null`. */
     openMessageId: Long? = null,
     onMessageOpened: () -> Unit = {},
@@ -241,18 +247,24 @@ fun MessagesRoute(
                     error = sendError,
                     modifier = Modifier,
                 )
-                tab == 2 && threadId == null -> SettingsRoute(
+                tab == 3 && threadId == null -> SettingsRoute(
             settings = mitigationSettings,
             permissions = permissionStatuses,
             modifier = Modifier,
         )
-        tab == 1 && threadId == null -> {
+        tab == 2 && threadId == null -> {
                     var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
                     LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
                     var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
                     LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
                     HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, actions = actions, modifier = Modifier)
                 }
+                tab == 0 && threadId == null -> HomeRoute(
+                    permissions = permissionStatuses,
+                    history = history,
+                    onActivate = onActivateProtection,
+                    modifier = Modifier,
+                )
                 threadId == null -> {
                     var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
                     LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
@@ -293,6 +305,7 @@ fun MessagesRoute(
         if (showBar) {
             SmishingBottomBar(
                 items = listOf(
+                    NavItem(stringResource(R.string.nav_home), Icons.Outlined.Home),
                     NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat),
                     NavItem(stringResource(R.string.nav_history), SmishingIcons.History),
                     NavItem(stringResource(R.string.nav_settings), Icons.Outlined.Settings),
@@ -328,6 +341,15 @@ private fun loadDetail(
         }
         message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body)) to null
         else -> MessageDetailState.Missing to null
+    }
+}
+
+/** Abre los ajustes de notificaciones de la app: lo único que puede faltar cuando ya se tienen el rol y los permisos de SMS. */
+@Composable
+private fun rememberOpenNotificationSettings(): () -> Unit {
+    val context = LocalContext.current
+    return remember(context) {
+        { context.startActivity(SystemSettingsIntents.forPermission(context, AppPermission.Notifications)) }
     }
 }
 
