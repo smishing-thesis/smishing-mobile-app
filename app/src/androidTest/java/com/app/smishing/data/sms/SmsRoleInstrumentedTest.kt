@@ -123,7 +123,7 @@ class SmsRoleInstrumentedTest {
             compose.onNodeWithText(context.getString(R.string.onboarding_step_one_of_three)).assertIsDisplayed()
             assertEquals(0, count(context.getString(R.string.default_sms_explanation_replace)))
             compose.onNodeWithText(context.getString(R.string.welcome_next)).performClick()
-            assertTrue("La bienvenida queda como vista", DataStoreOnboardingProgress(context).welcomeSeen())
+            waitUntil { DataStoreOnboardingProgress(context).welcomeSeen() } // se guarda en segundo plano: queda como vista
 
             // 2. Sin rol, la app pide primero el rol: todavía no menciona los permisos.
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.default_sms_explanation_replace)) > 0 }
@@ -717,6 +717,141 @@ class SmsRoleInstrumentedTest {
         }
     }
 
+    /**
+     * #20: con el Wi-Fi y los datos móviles apagados, un SMS se recibe, se clasifica y se alerta igual. Se comprueba que de verdad no
+     * hay red (no basta con apagarla), y que la app ni siquiera declara el permiso de internet. Datos sintéticos.
+     */
+    @Test
+    fun thenWithoutAnyConnectionAMessageIsReceivedClassifiedAndAlerted() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val history = RoomAnalysisHistory(database)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        val connectivity = context.getSystemService(android.net.ConnectivityManager::class.java)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        settings.setMode(MitigationMode.Disabled) // aquí solo se prueba recibir, clasificar y alertar
+        try {
+            // La app no tiene cómo usar la red: no declara el permiso de internet.
+            val requested = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
+                .requestedPermissions.orEmpty().toList()
+            assertTrue("La app no debe declarar INTERNET: $requested", "android.permission.INTERNET" !in requested)
+
+            Shell.run("svc wifi disable")
+            Shell.run("svc data disable")
+            // Apagarlas no es instantáneo, y mientras una cae la otra puede tomar el relevo un momento: se espera a que no haya
+            // ninguna red activa durante tres segundos seguidos.
+            val deadline = System.currentTimeMillis() + 30_000
+            var quietSince = 0L
+            while (System.currentTimeMillis() < deadline) {
+                if (connectivity.activeNetwork == null) {
+                    if (quietSince == 0L) quietSince = System.currentTimeMillis()
+                    if (System.currentTimeMillis() - quietSince >= 3_000) break
+                } else {
+                    quietSince = 0L
+                }
+                Thread.sleep(200)
+            }
+            assertTrue("Debía no haber ninguna red activa", connectivity.activeNetwork == null && quietSince != 0L)
+
+            val risky = "BBVA: Su tarjeta sera suspendida hoy. Actualice sus datos en http://bbva-pe.top"
+            deliver(SENDER_F, risky, secondsAfterSentAt = 1)
+
+            // Recibido: está en el buzón. Clasificado: queda su análisis. Alertado: aparece la alerta.
+            waitUntil { manager.activeNotifications.any { it.packageName == context.packageName } }
+            assertEquals("El mensaje debía llegar al buzón sin red", risky, inbox(SENDER_F).single().body)
+            val record = history.all().single()
+            assertEquals(RiskLevel.High, record.assessment.level)
+            assertTrue(record.assessment.model.isSmishing)
+            assertTrue("Debía seguir sin red", connectivity.activeNetwork == null)
+        } finally {
+            Shell.run("svc wifi enable")
+            Shell.run("svc data enable")
+            manager.cancelAll()
+            settings.setMode(MitigationMode.Ask)
+            database.clearAllTables()
+            deleteSyntheticMessages()
+        }
+    }
+
+    /**
+     * #21: la demora desde que llega el SMS hasta que su nivel de riesgo queda guardado, con los mensajes controlados, y su P95
+     * frente al objetivo de menos de un segundo. Cada mensaje entra por el receptor real (guardar en el buzón, analizar, guardar el
+     * resultado). Se escribe un reporte sin los mensajes. **El resultado vale para el dispositivo donde se corre**: un emulador no
+     * representa un teléfono de gama baja; para eso, correr esta misma prueba en el teléfono (ver docs/demora-y-sin-internet.md).
+     */
+    @Test
+    fun thenTheLatencyFromReceptionToTheRiskLevelIsMeasured() {
+        if (roles.state() != SmsRoleState.Held) grantRole()
+        assertEquals(SmsRoleState.Held, roles.state())
+        val settings = DataStoreMitigationSettings(context)
+        val database = HistoryDatabase.get(context)
+        val manager = context.getSystemService(android.app.NotificationManager::class.java)
+        val assessor = AnalysisPipeline.assessor(context)
+        val csv = InstrumentationRegistry.getInstrumentation().context.assets.open("controlled_messages.csv").bufferedReader().use { it.readText() }
+        // Solo los que el modelo evalúa: los demasiado cortos no dejan análisis y no hay cuándo medir.
+        val messages = com.app.smishing.ControlledMessages.parse(csv).map { it.message }
+            .filter { assessor.assess(it) is com.app.smishing.domain.risk.RiskResult.Assessed }
+        assertTrue("Debía haber una muestra grande: ${messages.size}", messages.size >= 40)
+        database.clearAllTables()
+        manager.cancelAll()
+        deleteSyntheticMessages()
+        settings.setMode(MitigationMode.Disabled) // no se bloquea ni se retira nada mientras se mide
+        val endToEnd = mutableListOf<Double>()
+        val analysisOnly = mutableListOf<Double>()
+        try {
+            var counter = 0
+            repeat(ROUNDS) {
+                for (text in messages) {
+                    // Un remitente distinto cada vez: lo repetido (mismo remitente, hora y texto) se descarta como duplicado.
+                    val sender = "999%08d".format(10_000_000 + counter++)
+                    val before = database.dao().messageCount()
+                    val start = System.nanoTime()
+                    deliver(sender, *SmsPdu.parts(text).toTypedArray())
+                    val deadline = start + 10_000_000_000L
+                    while (database.dao().messageCount() == before && System.nanoTime() < deadline) Thread.sleep(0, 300_000)
+                    assertTrue("El análisis no quedó guardado", database.dao().messageCount() > before)
+                    endToEnd += (System.nanoTime() - start) / 1e6
+
+                    val t0 = System.nanoTime()
+                    assessor.assess(text)
+                    analysisOnly += (System.nanoTime() - t0) / 1e6
+                }
+            }
+            manager.cancelAll()
+
+            fun percentile(values: List<Double>, p: Double): Double = values.sorted()[Math.ceil(p * values.size).toInt().coerceAtLeast(1) - 1]
+            fun stats(values: List<Double>) = JSONObject()
+                .put("count", values.size)
+                .put("p50Ms", percentile(values, 0.50))
+                .put("p95Ms", percentile(values, 0.95))
+                .put("p99Ms", percentile(values, 0.99))
+                .put("maxMs", values.max())
+                .put("firstMs", values.first())
+            val report = JSONObject()
+                .put("issue", 21)
+                .put("device", DeviceReport.deviceInfo())
+                .put("targetP95Ms", 1000)
+                .put("messagesPerRound", messages.size)
+                .put("rounds", ROUNDS)
+                .put("receptionToRiskLevel", stats(endToEnd))
+                .put("riskAssessmentOnly", stats(analysisOnly))
+                .put("note", "Reception to risk level saved, through the real receiver. The first delivery is not a cold start: the model was loaded by earlier tests in the same process. Poll resolution is about 1 ms.")
+            DeviceReport.write(context, "latencia-api${android.os.Build.VERSION.SDK_INT}.json", report, "Latency")
+
+            val p95 = percentile(endToEnd, 0.95)
+            assertTrue("P95 de la recepción al nivel de riesgo: $p95 ms, el objetivo es menos de 1000 ms", p95 < 1000.0)
+        } finally {
+            manager.cancelAll()
+            settings.setMode(MitigationMode.Ask)
+            database.clearAllTables()
+            deleteBulkMessages()
+        }
+    }
+
     /** Todos los textos que muestra la pantalla ahora, en el árbol sin fusionar. */
     private fun visibleTexts(): List<String> {
         fun walk(node: androidx.compose.ui.semantics.SemanticsNode): List<String> =
@@ -887,5 +1022,6 @@ class SmsRoleInstrumentedTest {
         const val ECHO_TEXT = "Prueba de envío desde la app."
         const val BULK_PREFIX = "+999"
         const val TIMEOUT_MS = 10_000L
+        const val ROUNDS = 3
     }
 }

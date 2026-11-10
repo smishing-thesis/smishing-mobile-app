@@ -3,8 +3,10 @@ package com.app.smishing.data.sms
 import java.io.ByteArrayOutputStream
 
 /**
- * Arma el PDU de un SMS-DELIVER (3GPP TS 23.040) con texto en el alfabeto GSM de 7 bits, para entregarlo al receptor
- * tal como lo haría el sistema. Solo admite letras, números, espacio y `.,:-/`, que en GSM 7 valen lo mismo que en ASCII.
+ * Arma el PDU de un SMS-DELIVER (3GPP TS 23.040), para entregarlo al receptor tal como lo haría el sistema. Si el texto solo trae
+ * letras, números, espacio y `.,:-/` va en el alfabeto GSM de 7 bits (donde valen lo mismo que en ASCII); con cualquier otro
+ * carácter (tildes, signos, saltos de línea, emojis) va en UCS-2, que cabe hasta 70 unidades por mensaje: un texto más largo se
+ * parte en varios mensajes con [parts].
  */
 object SmsPdu {
 
@@ -13,7 +15,8 @@ object SmsPdu {
 
     fun deliver(senderDigits: String, text: String, secondsAfterSentAt: Int = 0): ByteArray {
         require(senderDigits.all(Char::isDigit))
-        require(text.all { it.isLetterOrDigit() && it.code < 128 || it in " .,:-/" }) { "Carácter fuera del subconjunto de la prueba" }
+        val gsm7 = text.all { it.isLetterOrDigit() && it.code < 128 || it in " .,:-/" }
+        require(gsm7 || text.length <= UCS2_MAX_UNITS) { "Un texto en UCS-2 admite ${UCS2_MAX_UNITS} unidades: usar parts()" }
         val out = ByteArrayOutputStream()
         out.write(0x00) // sin centro de mensajes en el PDU
         out.write(0x04) // SMS-DELIVER, sin más mensajes por venir
@@ -21,12 +24,33 @@ object SmsPdu {
         out.write(0x91) // formato internacional
         out.write(semiOctets(senderDigits))
         out.write(0x00) // PID
-        out.write(0x00) // DCS: alfabeto GSM de 7 bits
+        out.write(if (gsm7) 0x00 else 0x08) // DCS: alfabeto GSM de 7 bits, o UCS-2
         out.write(timestamp(secondsAfterSentAt))
-        out.write(text.length)
-        out.write(packSeptets(text))
+        if (gsm7) {
+            out.write(text.length)
+            out.write(packSeptets(text))
+        } else {
+            val bytes = text.toByteArray(Charsets.UTF_16BE)
+            out.write(bytes.size)
+            out.write(bytes)
+        }
         return out.toByteArray()
     }
+
+    /** Parte un texto en trozos que caben en un mensaje, sin cortar un par suplente (un emoji) por la mitad. */
+    fun parts(text: String): List<String> {
+        val result = mutableListOf<String>()
+        var start = 0
+        while (start < text.length) {
+            var end = minOf(start + UCS2_MAX_UNITS, text.length)
+            if (end < text.length && Character.isHighSurrogate(text[end - 1])) end--
+            result += text.substring(start, end)
+            start = end
+        }
+        return result
+    }
+
+    private const val UCS2_MAX_UNITS = 60
 
     private fun semiOctets(digits: String): ByteArray {
         val padded = if (digits.length % 2 == 1) digits + "F" else digits
