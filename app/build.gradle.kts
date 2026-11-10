@@ -20,6 +20,14 @@ android {
     }
 
     buildTypes {
+        // APK de pruebas internas (#32): como el de producción (sin depuración), pero firmado con la clave de depuración para poder
+        // instalarlo en un teléfono. No es para distribuir: eso es el App Bundle firmado de #24. Sin minificar, por ahora.
+        create("qa") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            versionNameSuffix = "-qa"
+            matchingFallbacks += "release"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

@@ -15,6 +15,15 @@ análisis si se revocan. Última verificación: 2026-11-08.
 El estado de estos permisos y de las notificaciones se ve, con lo que queda limitado si faltan, en la pestaña Ajustes (#25; ver
 [ajustes-y-modo.md](ajustes-y-modo.md)).
 
+## Permisos que llegan de bibliotecas
+
+El manifiesto fusionado trae, además de los de la tabla, permisos que **declara una biblioteca** (la de LiteRT: su soporte de paquetes de
+modelos y de la NPU) y que la app **no usa**: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`,
+`RECEIVE_BOOT_COMPLETED` y `ACCESS_NETWORK_STATE`. **Ninguno es `INTERNET`**, así que la app no puede abrir conexiones (ver
+[demora-y-sin-internet.md](demora-y-sin-internet.md)). No se quitaron con `tools:node="remove"` porque no se sabe qué ruta de la
+biblioteca los usaría y no hay forma de probar todas; queda como decisión pendiente, porque la regla del proyecto es no pedir más
+permisos de los que una historia justifique.
+
 No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
 hecha), ni `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
 motivo en esta tabla.
