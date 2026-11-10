@@ -37,8 +37,9 @@ adb install -r app\build\outputs\apk\qa\app-qa.apk
 
 El historial **guarda el texto de los mensajes sin cifrar y no se puede borrar** (#52 está pendiente). Para el registro de la prueba y
 para no dejar datos personales, usar **mensajes sintéticos** (inventados) y no copiar texto de mensajes reales a ningún reporte.
-Tampoco se reciben **MMS** mientras la app sea la de mensajería predeterminada (#48), y los mensajes que no son de riesgo alto **no
-generan notificación** (#49): no la uses como única app de mensajes todavía.
+Tampoco se reciben **MMS** mientras la app sea la de mensajería predeterminada (#48), y todavía no se pueden borrar mensajes ni
+conversaciones (#51) ni se muestra el nombre del contacto (#53): no la uses como única app de mensajes todavía. Cada SMS ya avisa y se
+marca como leído al abrir su conversación (#49, #50; ver [avisos-y-no-leidos.md](avisos-y-no-leidos.md)).
 
 ## Protocolo
 
@@ -52,8 +53,9 @@ Mensajes de ejemplo para enviar desde otro teléfono (inventados, con un enlace 
 |---|---|---|
 | 1 | Primera apertura | Bienvenida (paso 1), luego el rol (paso 2). Tras aceptar, Inicio con "Protección activa" |
 | 2 | Llega el mensaje de riesgo alto | Aparece la alerta con el remitente y un motivo, **sin el texto**; tocarla abre el detalle sin abrir el enlace |
-| 3 | Llega el mensaje sin señales | Queda en Mensajes y en el Historial; no hay alerta |
-| 4 | Llega el mensaje demasiado corto | Queda en Mensajes; **no** entra en el Historial |
+| 3 | Llega el mensaje sin señales | Aviso del mensaje (remitente y texto; en la pantalla de bloqueo solo "Mensaje nuevo"); queda en Mensajes y en el Historial; no hay alerta de riesgo |
+| 4 | Llega el mensaje demasiado corto | Aviso del mensaje; queda en Mensajes; **no** entra en el Historial |
+| 4b | Tocar el aviso de un mensaje | Abre su conversación; el mensaje queda leído y el aviso desaparece; en la lista ya no tiene contador |
 | 5 | Ajustes → "Preguntarme antes de actuar", y llega el de riesgo alto | El detalle ofrece "Bloquear número" y "Quitar el mensaje de la bandeja"; nada se toca antes |
 | 6 | Ajustes → "Protegerme automáticamente", y llega el de riesgo alto | El número queda bloqueado y el mensaje sale de la bandeja; el detalle lo dice |
 | 7 | En el detalle, "Marcar como seguro" | Se desbloquea, el mensaje vuelve a su conversación leído, y el Historial dice "Marcado como seguro" |

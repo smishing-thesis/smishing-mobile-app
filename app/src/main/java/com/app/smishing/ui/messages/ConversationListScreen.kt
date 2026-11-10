@@ -32,8 +32,8 @@ private val SpanishLocale = Locale.forLanguageTag("es")
  * La lista de mensajes (#5): una fila por conversación, con el remitente, la fecha y el inicio del último mensaje.
  * [conversations] es `null` mientras se leen del buzón.
  *
- * El botón "Escribir" abre una conversación nueva (#6). Todavía no tiene la búsqueda, la advertencia de estafa (#10) ni la
- * navegación inferior.
+ * El botón "Escribir" abre una conversación nueva (#6). Las conversaciones con mensajes sin leer se distinguen con negrita y un
+ * contador (#50). Todavía no tiene la búsqueda ni la advertencia de estafa en la lista.
  */
 @Composable
 fun ConversationListScreen(
@@ -64,6 +64,8 @@ fun ConversationListScreen(
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { onOpen(conversation) },
+                            unreadCount = conversation.unreadCount,
+                            unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )
                     }
                 }

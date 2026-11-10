@@ -4,6 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +39,8 @@ import com.app.smishing.ui.designsystem.theme.Status
 
 /**
  * Fila de la lista de conversaciones: remitente, hora, inicio del mensaje y, si hace falta, una advertencia
- * ([warning]) como "Cuidado: Posible estafa".
+ * ([warning]) como "Cuidado: Posible estafa". Con [unreadCount] mayor que cero (#50) el remitente y el inicio del mensaje van en
+ * negrita y aparece un contador; [unreadDescription] es lo que lee un lector de pantalla del contador ("2 sin leer").
  */
 @Composable
 fun ConversationRow(
@@ -44,7 +50,10 @@ fun ConversationRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     warning: String? = null,
+    unreadCount: Int = 0,
+    unreadDescription: String = "",
 ) {
+    val unread = unreadCount > 0
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -58,13 +67,27 @@ fun ConversationRow(
                 Text(sender, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
                 Text(time, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
             }
-            Text(
-                snippet,
-                style = SmishingTypography.BodyMedium,
-                color = SmishingPalette.TextSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Sm)) {
+                Text(
+                    snippet,
+                    style = if (unread) SmishingTypography.BodyMediumBold else SmishingTypography.BodyMedium,
+                    color = if (unread) SmishingPalette.TextPrimary else SmishingPalette.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (unread) {
+                    Box(
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
+                            .background(SmishingPalette.Primary, CircleShape)
+                            .clearAndSetSemantics { contentDescription = unreadDescription }, // el contador se lee como "2 sin leer", no como "2"
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(unreadCount.toString(), style = SmishingTypography.NoteBold, color = Color.White, modifier = Modifier.padding(horizontal = 6.dp))
+                    }
+                }
+            }
             if (warning != null) {
                 val colors = SmishingPalette.statusColors(Status.Suspicious)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.X2s)) {

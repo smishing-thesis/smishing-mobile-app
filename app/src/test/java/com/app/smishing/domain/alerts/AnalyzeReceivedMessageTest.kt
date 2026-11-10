@@ -60,6 +60,7 @@ class AnalyzeReceivedMessageTest {
     }
 
     private val alerts = mutableListOf<RiskAlert>()
+    private val messageNotices = mutableListOf<Pair<Long, IncomingSms>>()
     private val history = FakeHistory()
     private val settings = FakeSettings()
     private val applied = mutableListOf<Pair<MitigationDecision, AnalysisRecord>>()
@@ -80,6 +81,7 @@ class AnalyzeReceivedMessageTest {
         assessor = RiskAssessor(FakeClassifier(classification), FakeDetector(*types)),
         history = history,
         notifier = { alerts += it },
+        messageNotifier = { id, sms -> messageNotices += id to sms },
         settings = settings,
         mitigator = mitigator,
         clock = { 5_000L },
@@ -159,6 +161,7 @@ class AnalyzeReceivedMessageTest {
             assessor = RiskAssessor(FakeClassifier(flagged), FakeDetector(SignalType.Urgency)),
             history = recording,
             notifier = { order += "avisar" },
+            messageNotifier = { _, _ -> order += "aviso de mensaje" },
             settings = settings,
             mitigator = mitigator,
         ).onReceived(1, message)
@@ -244,6 +247,7 @@ class AnalyzeReceivedMessageTest {
             assessor = RiskAssessor(FakeClassifier(flagged), FakeDetector(SignalType.Urgency)),
             history = recording,
             notifier = { order += "avisar" },
+            messageNotifier = { _, _ -> order += "aviso de mensaje" },
             settings = reading,
             mitigator = { _, _ -> order += "actuar" },
         ).onReceived(1, message)
@@ -280,5 +284,86 @@ class AnalyzeReceivedMessageTest {
             analyze(ClassificationResult.NotClassified(ClassificationResult.NotClassified.Reason.entries.first()), SignalType.Urgency)
         }
         assertTrue(applied.isEmpty())
+    }
+
+    // --- El aviso de cada mensaje (#49) ---
+
+    @Test
+    fun aHighRiskMessageShowsOnlyItsRiskAlertAndNoSecondNotification() {
+        assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency))
+        assertEquals(1, alerts.size)
+        assertTrue("El de riesgo alto no debe sumar un aviso de mensaje", messageNotices.isEmpty())
+    }
+
+    @Test
+    fun aMessageThatIsNotHighRiskIsNotifiedAsAnyOtherMessageAndRaisesNoAlert() {
+        analyze(flagged, SignalType.Link) // medio
+        analyze(notFlagged) // bajo
+        assertTrue("Medio y bajo no deben dar alerta", alerts.isEmpty())
+        assertEquals(listOf(42L to message, 42L to message), messageNotices)
+    }
+
+    @Test
+    fun aMessageTheModelDidNotEvaluateIsStillNotified() {
+        for (reason in ClassificationResult.NotClassified.Reason.entries) {
+            assertEquals(AnalysisOutcome.NotAssessed, analyze(ClassificationResult.NotClassified(reason), SignalType.Urgency))
+        }
+        assertEquals("Un mensaje corto o con el análisis suspendido igual avisa", ClassificationResult.NotClassified.Reason.entries.size, messageNotices.size)
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test
+    fun ifTheAnalysisFailsTheMessageIsStillNotifiedAndTheFailureIsNotHidden() {
+        val failing = object : MessageClassifier {
+            override fun classify(message: String): ClassificationResult = throw IllegalStateException("la biblioteca nativa falló")
+        }
+        val useCase = AnalyzeReceivedMessage(
+            assessor = RiskAssessor(failing, FakeDetector()),
+            history = history,
+            notifier = { alerts += it },
+            messageNotifier = { id, sms -> messageNotices += id to sms },
+            settings = settings,
+            mitigator = mitigator,
+        )
+        var thrown: Throwable? = null
+        try {
+            useCase.onReceived(42, message)
+        } catch (e: IllegalStateException) {
+            thrown = e
+        }
+        assertTrue("El fallo debe seguir llegando a quien llamó", thrown != null)
+        assertEquals("Aun así hay aviso del mensaje", listOf(42L to message), messageNotices)
+        assertTrue(alerts.isEmpty())
+    }
+
+    @Test
+    fun ifTheMessageNotificationFailsTheOutcomeIsNotAffected() {
+        val useCase = AnalyzeReceivedMessage(
+            assessor = RiskAssessor(FakeClassifier(notFlagged), FakeDetector()),
+            history = history,
+            notifier = { alerts += it },
+            messageNotifier = { _, _ -> throw IllegalStateException("sin canal") },
+            settings = settings,
+            mitigator = mitigator,
+        )
+        assertEquals(AnalysisOutcome.Recorded, useCase.onReceived(42, message))
+        assertEquals(1, history.saved.size)
+    }
+
+    @Test
+    fun theMessageNotificationComesAfterTheRecordIsSaved() {
+        val order = mutableListOf<String>()
+        val recording = object : AnalysisHistory by history {
+            override fun save(record: AnalysisRecord): Long { order += "guardar"; return history.save(record) }
+        }
+        AnalyzeReceivedMessage(
+            assessor = RiskAssessor(FakeClassifier(notFlagged), FakeDetector()),
+            history = recording,
+            notifier = { order += "alerta" },
+            messageNotifier = { _, _ -> order += "aviso de mensaje" },
+            settings = settings,
+            mitigator = mitigator,
+        ).onReceived(1, message)
+        assertEquals(listOf("guardar", "aviso de mensaje"), order)
     }
 }

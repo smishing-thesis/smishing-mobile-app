@@ -66,6 +66,9 @@ class MainActivity : ComponentActivity() {
     /** El mensaje cuyo detalle pidió abrir una alerta (#10), hasta que la pantalla de mensajes lo abre. */
     private var pendingMessageId by mutableStateOf<Long?>(null)
 
+    /** El mensaje cuya conversación pidió abrir el aviso de un SMS (#49), hasta que la pantalla de mensajes la abre. */
+    private var pendingConversationMessageId by mutableStateOf<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         roles = AndroidSmsRoleRepository(this)
@@ -75,6 +78,7 @@ class MainActivity : ComponentActivity() {
         history = RoomAnalysisHistory(HistoryDatabase.get(this))
         refresh()
         pendingMessageId = messageIdOf(intent)
+        pendingConversationMessageId = conversationMessageIdOf(intent)
 
         setContent {
             SmishingTheme {
@@ -126,7 +130,12 @@ class MainActivity : ComponentActivity() {
                     // Con el rol y los permisos, la app muestra los mensajes (#5).
                     else -> {
                         RequestNotificationPermission()
-                        MessagesRoute(openMessageId = pendingMessageId, onMessageOpened = { pendingMessageId = null })
+                        MessagesRoute(
+                            openMessageId = pendingMessageId,
+                            onMessageOpened = { pendingMessageId = null },
+                            openConversationOfMessageId = pendingConversationMessageId,
+                            onConversationOpened = { pendingConversationMessageId = null },
+                        )
                     }
                 }
             }
@@ -138,6 +147,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         messageIdOf(intent)?.let { pendingMessageId = it }
+        conversationMessageIdOf(intent)?.let { pendingConversationMessageId = it }
     }
 
     // La persona puede quitar el rol o un permiso en los ajustes del sistema: se vuelve a comprobar al volver a la app.
@@ -154,9 +164,24 @@ class MainActivity : ComponentActivity() {
     private fun messageIdOf(intent: Intent?): Long? =
         intent?.getLongExtra(EXTRA_MESSAGE_ID, NO_MESSAGE)?.takeIf { it != NO_MESSAGE }
 
+    private fun conversationMessageIdOf(intent: Intent?): Long? =
+        intent?.getLongExtra(EXTRA_CONVERSATION_MESSAGE_ID, NO_MESSAGE)?.takeIf { it != NO_MESSAGE }
+
     companion object {
         private const val EXTRA_MESSAGE_ID = "com.app.smishing.extra.MESSAGE_ID"
+        private const val EXTRA_CONVERSATION_MESSAGE_ID = "com.app.smishing.extra.CONVERSATION_MESSAGE_ID"
+        private const val ACTION_OPEN_CONVERSATION = "com.app.smishing.action.OPEN_CONVERSATION"
         private const val NO_MESSAGE = -1L
+
+        /**
+         * La intención que abre la conversación de un mensaje: la de tocar el aviso de un SMS (#49). Solo lleva el id del mensaje,
+         * nunca el texto. Lleva su propia acción para que no se confunda con la del detalle de una alerta.
+         */
+        fun conversationIntent(context: Context, messageId: Long): Intent =
+            Intent(context, MainActivity::class.java)
+                .setAction(ACTION_OPEN_CONVERSATION)
+                .putExtra(EXTRA_CONVERSATION_MESSAGE_ID, messageId)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
         /** La intención que abre el detalle de un mensaje: la de tocar una alerta. Solo lleva el id, nunca el texto. */
         fun detailIntent(context: Context, messageId: Long): Intent =

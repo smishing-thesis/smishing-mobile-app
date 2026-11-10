@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
+import com.app.smishing.data.alerts.AndroidMessageNotifier
 import com.app.smishing.data.alerts.AndroidRiskAlertNotifier
 import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.history.HistoryDatabase
@@ -63,6 +64,7 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 assessor = AnalysisPipeline.assessor(context),
                 history = RoomAnalysisHistory(HistoryDatabase.get(context)),
                 notifier = AndroidRiskAlertNotifier(context),
+                messageNotifier = AndroidMessageNotifier(context),
                 settings = DataStoreMitigationSettings(context),
                 mitigator = AnalysisPipeline.mitigator(context),
                 // Solo el tipo de error: su mensaje podría traer el contenido.

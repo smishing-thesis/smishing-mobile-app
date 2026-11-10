@@ -61,6 +61,10 @@
     <string name="alert_channel_name">Alertas de estafa</string>
     <string name="alert_channel_description">Avisa cuando un mensaje recibido parece una estafa.</string>
     <string name="alert_title">Posible estafa detectada</string>
+    <string name="message_channel_name">Mensajes</string>
+    <string name="message_channel_description">Avisa de cada mensaje de texto que llega.</string>
+    <string name="message_notification_public">Mensaje nuevo</string>
+    <string name="messages_unread_description">%1$d sin leer</string>
     <string name="alert_public_text">Abra la aplicación para ver el detalle.</string>
     <string name="alert_view_details">Ver detalles</string>
     <!-- Motivo corto de la notificación (#10, #11): describe lo que dice el mensaje, no afirma lo que es. -->
