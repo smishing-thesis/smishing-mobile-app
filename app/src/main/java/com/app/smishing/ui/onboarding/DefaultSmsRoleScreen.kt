@@ -23,8 +23,8 @@ fun DefaultSmsRoleScreen(
 ) {
     OnboardingStepLayout(
         stepIndex = 1,
-        stepCount = 3,
-        stepLabel = stringResource(R.string.onboarding_step_two_of_three),
+        stepCount = 2,
+        stepLabel = stringResource(R.string.onboarding_step_two_of_two),
         title = stringResource(R.string.default_sms_title),
         modifier = modifier,
         primaryLabel = if (state == SmsRoleState.NotHeld) stringResource(R.string.default_sms_action) else null,

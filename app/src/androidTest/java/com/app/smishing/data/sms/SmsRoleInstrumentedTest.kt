@@ -137,7 +137,7 @@ class SmsRoleInstrumentedTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             // 1b. Lo primero es la bienvenida: no pide nada ni menciona el rol.
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.welcome_title)) > 0 }
-            compose.onNodeWithText(context.getString(R.string.onboarding_step_one_of_three)).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.onboarding_step_one_of_two)).assertIsDisplayed()
             assertEquals(0, count(context.getString(R.string.default_sms_explanation_replace)))
             compose.onNodeWithText(context.getString(R.string.welcome_next)).performClick()
             waitUntil { DataStoreOnboardingProgress(context).welcomeSeen() } // se guarda en segundo plano: queda como vista

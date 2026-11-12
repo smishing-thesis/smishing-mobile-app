@@ -2,8 +2,8 @@
     <string name="app_name">Smishing Detector</string>
 
     <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
-    <string name="onboarding_step_one_of_three">PASO 1 DE 3</string>
-    <string name="onboarding_step_two_of_three">PASO 2 DE 3</string>
+    <string name="onboarding_step_one_of_two">PASO 1 DE 2</string>
+    <string name="onboarding_step_two_of_two">PASO 2 DE 2</string>
     <string name="onboarding_skip">Omitir por ahora</string>
     <string name="default_sms_title">Aplicación principal</string>
     <string name="default_sms_explanation_replace">Para poder filtrar las estafas, esta aplicación necesita reemplazar a su aplicación de mensajería actual.</string>
@@ -13,7 +13,6 @@
     <string name="default_sms_unavailable">Su teléfono no permite elegir esta aplicación como su aplicación de mensajería principal.</string>
 
     <!-- Onboarding, paso 3: permiso de lectura (#3) -->
-    <string name="onboarding_step_three_of_three">PASO 3 DE 3</string>
     <string name="onboarding_skip_short">Omitir</string>
     <string name="sms_permission_title">Permiso de lectura</string>
     <string name="sms_permission_explanation_read">Necesitamos su permiso para leer los mensajes de texto que recibe.</string>

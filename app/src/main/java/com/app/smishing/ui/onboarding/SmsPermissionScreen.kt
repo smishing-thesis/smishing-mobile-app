@@ -11,7 +11,7 @@ import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 
 /**
- * Paso 3 del onboarding: pide el permiso para leer los mensajes, después del rol de SMS. [blocked] es verdadero cuando
+ * Pantalla de recuperación (antes, el paso 3 del onboarding): pide el permiso para leer los mensajes, después del rol de SMS. [blocked] es verdadero cuando
  * Android ya no muestra la solicitud (se rechazó dos veces): entonces el botón lleva a los ajustes de la app.
  */
 @Composable
@@ -25,9 +25,10 @@ fun SmsPermissionScreen(
 ) {
     val granted = state == SmsPermissionState.Granted
     OnboardingStepLayout(
-        stepIndex = 2,
-        stepCount = 3,
-        stepLabel = stringResource(R.string.onboarding_step_three_of_three),
+        // Sin "PASO N DE M": el rol concede este permiso solo, y esta pantalla aparece solo si la persona lo quitó después.
+        stepIndex = null,
+        stepCount = null,
+        stepLabel = null,
         title = stringResource(R.string.sms_permission_title),
         modifier = modifier,
         primaryLabel = when {

@@ -43,14 +43,15 @@ fun StepIndicator(stepIndex: Int, stepCount: Int, modifier: Modifier = Modifier)
 }
 
 /**
- * Pantalla de un paso del onboarding: puntos y "PASO N DE M" arriba, título, contenido propio, la acción principal
+ * Pantalla de un paso del onboarding: puntos y "PASO N DE M" arriba (sin ellos si no se dan: es la pantalla de recuperación que
+ * aparece solo si falta el permiso de lectura), título, contenido propio, la acción principal
  * y, si hace falta, una acción para omitir. Los textos los da quien la usa.
  */
 @Composable
 fun OnboardingStepLayout(
-    stepIndex: Int,
-    stepCount: Int,
-    stepLabel: String,
+    stepIndex: Int?,
+    stepCount: Int?,
+    stepLabel: String?,
     title: String,
     modifier: Modifier = Modifier,
     primaryLabel: String? = null,
@@ -66,13 +67,15 @@ fun OnboardingStepLayout(
             .verticalScroll(rememberScrollState())
             .padding(Spacing.Xl),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = stepLabel },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
-        ) {
-            StepIndicator(stepIndex, stepCount)
-            Text(stepLabel, style = SmishingTypography.Micro, color = SmishingPalette.TextSecondary, textAlign = TextAlign.Center)
+        if (stepIndex != null && stepCount != null && stepLabel != null) {
+            Column(
+                modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = stepLabel },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
+            ) {
+                StepIndicator(stepIndex, stepCount)
+                Text(stepLabel, style = SmishingTypography.Micro, color = SmishingPalette.TextSecondary, textAlign = TextAlign.Center)
+            }
         }
         Column(
             modifier = Modifier.padding(top = Spacing.X2l),
