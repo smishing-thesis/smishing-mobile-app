@@ -12,6 +12,9 @@ class GatedMessageClassifier(
     private val gate: AnalysisGate,
 ) : MessageClassifier {
 
+    // La compuerta decide si se analiza ahora; esto solo dice si el texto es evaluable.
+    override fun accepts(message: String): Boolean = delegate.accepts(message)
+
     override fun classify(message: String): ClassificationResult = when (gate.status()) {
         is AnalysisStatus.Suspended ->
             ClassificationResult.NotClassified(ClassificationResult.NotClassified.Reason.ANALYSIS_SUSPENDED)

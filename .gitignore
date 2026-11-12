@@ -22,3 +22,7 @@ keystore.properties
 
 # Figma design screenshots: local working files only, not versioned
 /designs/
+
+# Mensajes reales para el demo (#65): nunca van al repositorio
+/demo-data/
+**/demo-messages.csv

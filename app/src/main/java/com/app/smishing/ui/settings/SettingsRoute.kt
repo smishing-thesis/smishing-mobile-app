@@ -72,6 +72,7 @@ fun SettingsRoute(
         permissions = statuses,
         onOpenSystemSettings = { permission -> context.startActivity(SystemSettingsIntents.forPermission(context, permission)) },
         modifier = modifier,
+        extra = { DemoSection() },
     )
 }
 

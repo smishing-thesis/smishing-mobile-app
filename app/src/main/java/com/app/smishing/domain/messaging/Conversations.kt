@@ -11,6 +11,8 @@ data class Conversation(
     val snippet: String,
     val lastMessageAtMillis: Long,
     val unreadCount: Int = 0,
+    /** El id en el buzón del último mensaje (el que muestra la fila), para buscar su riesgo (#60). */
+    val lastMessageId: Long = 0,
 ) {
     override fun toString() = "Conversation(threadId=$threadId, lastMessageAtMillis=$lastMessageAtMillis, unreadCount=$unreadCount)"
 }
@@ -33,7 +35,7 @@ data class ConversationMessage(
  * Una fila del buzón, tal como la entrega el sistema, para armar la lista de conversaciones. [unread] es un mensaje **recibido**
  * que todavía no se leyó.
  */
-data class SmsRow(val threadId: Long, val address: String, val body: String, val atMillis: Long, val unread: Boolean = false)
+data class SmsRow(val threadId: Long, val address: String, val body: String, val atMillis: Long, val unread: Boolean = false, val id: Long = 0)
 
 /**
  * Queda con el último mensaje de cada conversación, de la más reciente a la más antigua, y cuenta los recibidos sin leer de **toda**
@@ -43,7 +45,7 @@ fun latestPerConversation(rowsNewestFirst: Sequence<SmsRow>): List<Conversation>
     val latest = LinkedHashMap<Long, Conversation>()
     val unread = HashMap<Long, Int>()
     for (row in rowsNewestFirst) {
-        latest.getOrPut(row.threadId) { Conversation(row.threadId, row.address, row.body, row.atMillis) }
+        latest.getOrPut(row.threadId) { Conversation(row.threadId, row.address, row.body, row.atMillis, lastMessageId = row.id) }
         if (row.unread) unread.merge(row.threadId, 1, Int::plus)
     }
     return latest.values.map { it.copy(unreadCount = unread[it.threadId] ?: 0) }

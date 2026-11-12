@@ -26,6 +26,13 @@ Revisar el tablero antes de empezar: el estado y la prioridad reales están all�
    o probarse con un servidor simulado.
 7. **Cierre:** #24, #32, #35, #22, #23.
 
+## Objetivo: un demo en el emulador (decidido el 2026-11-11)
+
+Las fases que siguen apuntan a un **demo de las funcionalidades completas en el emulador de Android**. El teléfono real queda para el final de
+todo: #32 (protocolo en un dispositivo), #21 (demora en el teléfono objetivo), subir `targetSdk` y firmar el App Bundle (#24). **#48 (MMS) quedó
+fuera de alcance**: la app no recibe MMS. Orden para el demo: #60 y #59, un modo de demostración con mensajes sintéticos, #51, #52, #53, #29 y el
+aporte opcional (#18, #19, #26, #27) contra un servidor simulado.
+
 ## Alcance de la primera fase (prueba manual)
 
 Se implementa esto y luego se detiene el desarrollo para probar todo en un teléfono; de lo que salga se crean más issues.

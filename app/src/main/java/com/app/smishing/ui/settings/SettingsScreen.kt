@@ -45,6 +45,8 @@ fun SettingsScreen(
     permissions: List<PermissionStatus>,
     onOpenSystemSettings: (AppPermission) -> Unit,
     modifier: Modifier = Modifier,
+    /** Al final de la pantalla: en depuración, las herramientas de demostración (#65); en `qa` y `release`, nada. */
+    extra: @Composable () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         SmishingTopBar(title = stringResource(R.string.settings_title), style = TopBarStyle.Primary)
@@ -88,6 +90,7 @@ fun SettingsScreen(
                     )
                 }
             }
+            extra()
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -456,27 +457,22 @@ class SmsRoleInstrumentedTest {
             assertEquals("El otro avisa como un mensaje cualquiera (#49)", 1, messageNotifications(manager).size)
             val notification = alerts.single().notification
 
-            // Indica el riesgo, con el remitente y un motivo, y no revela el texto del mensaje.
+            // Indica el riesgo, con el remitente y el texto del mensaje.
             val extras = notification.extras
             assertEquals(context.getString(R.string.alert_title), extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString())
-            assertEquals(
-                "+$SENDER_F — ${context.getString(R.string.alert_reason_urgency)}",
-                extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString(),
-            )
-            // `Bundle.get` está deprecado, pero es la única forma de leer cualquier extra sin conocer su tipo.
-            @Suppress("DEPRECATION")
-            val visible = extras.keySet().mapNotNull { extras.get(it)?.toString() }.joinToString(" ")
-            for (secret in listOf("bbva-pe.top", "Actualice", "tarjeta")) {
-                assertTrue("La notificación no debía mostrar «$secret»", secret !in visible)
-            }
-            // En la pantalla de bloqueo, la versión pública no dice ni el remitente ni el motivo.
+            assertEquals("+$SENDER_F — $risky", extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString())
+            // En la pantalla de bloqueo, la versión pública no dice ni el remitente ni el texto.
             assertEquals(android.app.Notification.VISIBILITY_PRIVATE, notification.visibility)
             val publicText = notification.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString()
             assertEquals(context.getString(R.string.alert_public_text), publicText)
-            assertTrue(SENDER_F !in publicText)
+            assertTrue(SENDER_F !in publicText && "bbva-pe.top" !in publicText)
 
-            // Tocarla abre el detalle: el riesgo, el mensaje tal cual y por qué se avisó.
+            // Tocarla abre la conversación, con el aviso de riesgo; de ahí, "Ver riesgo" abre el detalle: el riesgo, el mensaje tal
+            // cual y por qué se avisó.
             tap(alerts.single())
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_notice_action)) > 0 && count(risky) > 0 }
+            // La conversación tiene dos avisos (el otro mensaje es de riesgo medio); el riesgoso llegó después, así que es el último.
+            compose.onAllNodesWithText(context.getString(R.string.messages_notice_action)).onLast().performClick()
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_banner_high)).assertIsDisplayed()
             compose.onNodeWithText(risky).assertIsDisplayed()

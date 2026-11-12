@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,8 +38,9 @@ import com.app.smishing.ui.designsystem.theme.Status
 
 /**
  * Fila de la lista de conversaciones: remitente, hora, inicio del mensaje y, si hace falta, una advertencia
- * ([warning]) como "Cuidado: Posible estafa". Con [unreadCount] mayor que cero (#50) el remitente y el inicio del mensaje van en
- * negrita y aparece un contador; [unreadDescription] es lo que lee un lector de pantalla del contador ("2 sin leer").
+ * ([warning]) como "Cuidado: Posible estafa". El remitente va siempre en negrita y el inicio del
+ * mensaje siempre en texto normal. Con [unreadCount] mayor que cero (#50) aparece un contador azul, que es lo único que marca la
+ * conversación como no leída; [unreadDescription] es lo que lee un lector de pantalla del contador ("2 sin leer").
  */
 @Composable
 fun ConversationRow(
@@ -50,6 +50,8 @@ fun ConversationRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     warning: String? = null,
+    /** El estado de la advertencia, que fija su color: rojo si es peligroso, ámbar si es sospechoso. */
+    warningStatus: Status = Status.Suspicious,
     unreadCount: Int = 0,
     unreadDescription: String = "",
 ) {
@@ -70,8 +72,8 @@ fun ConversationRow(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Sm)) {
                 Text(
                     snippet,
-                    style = if (unread) SmishingTypography.BodyMediumBold else SmishingTypography.BodyMedium,
-                    color = if (unread) SmishingPalette.TextPrimary else SmishingPalette.TextSecondary,
+                    style = SmishingTypography.BodyMedium,
+                    color = SmishingPalette.TextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -89,9 +91,9 @@ fun ConversationRow(
                 }
             }
             if (warning != null) {
-                val colors = SmishingPalette.statusColors(Status.Suspicious)
+                val colors = SmishingPalette.statusColors(warningStatus)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
-                    Icon(Icons.Outlined.Warning, contentDescription = null, tint = colors.onContainer, modifier = Modifier.size(16.dp))
+                    Icon(statusIcon(warningStatus), contentDescription = null, tint = colors.onContainer, modifier = Modifier.size(16.dp))
                     Text(warning, style = SmishingTypography.NoteBold, color = colors.onContainer)
                 }
             }

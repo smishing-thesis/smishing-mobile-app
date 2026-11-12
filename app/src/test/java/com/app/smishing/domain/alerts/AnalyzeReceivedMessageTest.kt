@@ -92,9 +92,9 @@ class AnalyzeReceivedMessageTest {
     // --- La alerta (#10) ---
 
     @Test
-    fun aHighRiskMessageAlertsWithItsIdSenderAndReason() {
+    fun aHighRiskMessageAlertsWithItsIdSenderTextAndReason() {
         assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency, SignalType.Link))
-        assertEquals(listOf(RiskAlert(42, "+10000000001", AlertReason.Urgency)), alerts)
+        assertEquals(listOf(RiskAlert(42, "+10000000001", message.body, AlertReason.Urgency)), alerts)
     }
 
     @Test

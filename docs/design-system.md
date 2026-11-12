@@ -47,6 +47,7 @@ constancia de que los colores originales no lo cumplen.
 | `PrimaryButton`, `SecondaryButton`, `LinkButton` | acción principal, secundaria y de baja prioridad ("Omitir por ahora") |
 | `StatusChip` | etiqueta Peligro, Sospechoso o Seguro, con icono además del color |
 | `ProtectionCard`, `SummaryCard`, `SummaryRow` | estado de la protección (activa o apagada) y resumen de la semana |
+| `RiskNotice` | aviso de una línea sobre un mensaje, rojo o ámbar según el riesgo, con "Ver riesgo" (#60) |
 | `AlertBanner`, `StatusBanner` | aviso rojo con acción ("Ver riesgo") y encabezado de estado ("Mensaje Peligroso") |
 | `SmishingTopBar`, `SearchAction`, `SmishingBottomBar`, `SmishingExtendedFab` | barras superior (azul o blanca) e inferior, y el botón "Escribir" |
 | `ConversationRow`, `MessageBubble`, `MessageInputBar`, `SmishingTextField` | lista de conversaciones, burbujas, redacción y campos de texto |

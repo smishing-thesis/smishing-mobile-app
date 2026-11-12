@@ -22,7 +22,7 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
     override fun conversations(): List<Conversation> =
         resolver.query(
             Telephony.Sms.CONTENT_URI,
-            arrayOf(Telephony.Sms.THREAD_ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.READ, Telephony.Sms.TYPE),
+            arrayOf(Telephony.Sms.THREAD_ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE, Telephony.Sms.READ, Telephony.Sms.TYPE, Telephony.Sms._ID),
             NOT_A_DRAFT,
             null,
             "${Telephony.Sms.DATE} DESC",
@@ -34,6 +34,7 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
                         cursor.getLong(0), cursor.getString(1).orEmpty(), cursor.getString(2).orEmpty(), cursor.getLong(3),
                         // Sin leer solo cuenta lo recibido: lo enviado por la persona no queda "sin leer".
                         unread = cursor.getInt(4) == 0 && cursor.getInt(5) == Telephony.Sms.MESSAGE_TYPE_INBOX,
+                        id = cursor.getLong(6),
                     )
                 },
             )

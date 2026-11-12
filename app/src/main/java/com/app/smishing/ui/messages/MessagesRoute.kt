@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -41,6 +42,11 @@ import com.app.smishing.ui.designsystem.components.NavItem
 import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.history.AnalyzeStoredMessage
+import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.alerts.AnalysisOutcome
+import com.app.smishing.domain.history.isAnalyzed
+import kotlinx.coroutines.CancellationException
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.data.history.RoomAnalysisHistory
 import com.app.smishing.data.history.HistoryDatabase
@@ -150,6 +156,19 @@ fun MessagesRoute(
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var historyRecordId by rememberSaveable { mutableStateOf<Long?>(null) }
     var historyVersion by remember { mutableIntStateOf(0) }
+    // El riesgo guardado de cada mensaje (#60), con una sola lectura; se vuelve a leer cuando el historial o las acciones cambian.
+    // La lista de conversaciones y su desplazamiento viven aquí, no dentro de la lista: al abrir una conversación la lista sale de la
+    // pantalla y, si guardara su propio estado, al volver empezaría de nuevo arriba y vacía.
+    var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
+    val conversationListState = rememberLazyListState()
+    // `null` mientras se lee: así un mensaje no aparece "sin analizar" por un instante.
+    var loadedRisks by remember { mutableStateOf<Map<Long, MessageRisk>?>(null) }
+    LaunchedEffect(historyVersion) { loadedRisks = withContext(Dispatchers.IO) { history.risks() } }
+    val risks = loadedRisks.orEmpty()
+    // Lo que pasó al tocar "Analizar" en cada mensaje, para responderle a la persona (#59): evita guardar dos veces el mismo análisis,
+    // avisa si falló y dice que no hubo señales, porque un mensaje de riesgo bajo no lleva aviso.
+    var attempts by remember { mutableStateOf<Map<Long, StoredAnalysis>>(emptyMap()) }
+    val analyzer = remember(assessor, history) { AnalyzeStoredMessage(assessor, history) }
     DisposableEffect(history) {
         val subscription = history.onChange { historyVersion++ }
         onDispose { subscription.close() }
@@ -293,7 +312,6 @@ fun MessagesRoute(
                     modifier = Modifier,
                 )
                 threadId == null -> {
-                    var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
                     LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
                     ConversationListScreen(
                         conversations = conversations,
@@ -308,6 +326,8 @@ fun MessagesRoute(
                             composing = true
                         },
                         modifier = Modifier,
+                        risks = risks,
+                        listState = conversationListState,
                     )
                 }
                 else -> {
@@ -335,6 +355,35 @@ fun MessagesRoute(
                         onSend = { send(openAddress, draft) { draft = "" } },
                         error = sendError,
                         modifier = Modifier,
+                        risks = risks,
+                        onSeeRisk = { historyRecordId = it },
+                        analysis = { m ->
+                            val attempt = attempts[m.id]
+                            when {
+                                loadedRisks == null -> StoredAnalysis.None
+                                attempt == StoredAnalysis.Analyzing -> StoredAnalysis.Analyzing
+                                isAnalyzed(risks, m.id, m.body) ->
+                                    // Analizado y sin señales: siempre lo dice. Uno marcado como seguro por la persona tuvo riesgo, así que no.
+                                    if (risks[m.id]?.level == RiskLevel.Low) StoredAnalysis.NoRisk else StoredAnalysis.None
+                                attempt == StoredAnalysis.Failed -> StoredAnalysis.Failed
+                                assessor.canAssess(m.body) -> StoredAnalysis.CanAnalyze
+                                else -> StoredAnalysis.None
+                            }
+                        },
+                        onAnalyze = { m ->
+                            attempts = attempts + (m.id to StoredAnalysis.Analyzing)
+                            scope.launch(Dispatchers.IO) {
+                                val recorded = try {
+                                    analyzer.analyze(m.id, openAddress, m.body, m.atMillis) == AnalysisOutcome.Recorded
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (_: Exception) {
+                                    false // sin registrar el motivo: el mensaje es privado y la excepción podría traerlo
+                                }
+                                attempts = if (recorded) attempts - m.id else attempts + (m.id to StoredAnalysis.Failed)
+                                if (recorded) historyVersion++
+                            }
+                        },
                     )
                 }
             }

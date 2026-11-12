@@ -6,14 +6,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
+import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.Conversation
+import com.app.smishing.domain.risk.RiskLevel
+import com.app.smishing.ui.designsystem.theme.Status
 import com.app.smishing.domain.messaging.formatConversationDate
 import com.app.smishing.ui.designsystem.components.ConversationRow
 import com.app.smishing.ui.designsystem.components.SmishingExtendedFab
@@ -43,6 +49,10 @@ fun ConversationListScreen(
     onCompose: () -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
+    /** El riesgo guardado de cada mensaje (#60): la fila avisa si su último mensaje es de riesgo alto o medio. */
+    risks: Map<Long, MessageRisk> = emptyMap(),
+    /** El desplazamiento de la lista. Lo guarda quien la usa, para volver al mismo lugar al regresar de una conversación. */
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
     Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
@@ -57,13 +67,20 @@ fun ConversationListScreen(
                         color = SmishingPalette.TextSecondary,
                     )
                 }
-                else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(conversations, key = { it.threadId }) { conversation ->
+                        val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
                             sender = conversation.address,
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { onOpen(conversation) },
+                            warning = when (notice) {
+                                RiskLevel.High -> stringResource(R.string.messages_warning_high)
+                                RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                                else -> null
+                            },
+                            warningStatus = if (notice == RiskLevel.High) Status.Danger else Status.Suspicious,
                             unreadCount = conversation.unreadCount,
                             unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )

@@ -38,6 +38,9 @@ interface AnalysisHistory {
     /** El registro del mensaje con ese id en el buzón, o `null` si no se analizó. */
     fun byMessageId(messageId: Long): AnalysisRecord?
 
+    /** El riesgo de cada mensaje analizado, por su id en el buzón (el registro más reciente de cada uno). Una sola lectura (#60). */
+    fun risks(): Map<Long, MessageRisk> = emptyMap()
+
     /** Guarda que la persona marcó el mensaje como seguro (#16). */
     fun markSafe(id: Long, nowMillis: Long)
 
