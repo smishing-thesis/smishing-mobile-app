@@ -13,8 +13,9 @@ principal: hasta aquí solo avisaban los mensajes de riesgo alto, y los recibido
 | El modelo no lo evaluó (muy corto, o análisis suspendido) | un aviso de mensaje |
 | El análisis falló (por ejemplo, la biblioteca nativa del modelo) | un aviso de mensaje, y el fallo no se oculta: sigue llegando a quien llamó |
 
-- **El aviso** va en su propio canal, "Mensajes", con importancia normal (la alerta de riesgo tiene el suyo, alto). Muestra el remitente
-  y el texto del mensaje. **En la pantalla de bloqueo solo dice "Mensaje nuevo"**: ni remitente ni texto.
+- **El aviso** va en su propio canal, "Mensajes", con **importancia alta** (como la alerta de riesgo): sale como ventana emergente. Antes era normal y solo aparecía en la
+  bandeja (cambiado el 2026-11-11, a pedido). Un canal ya creado conserva su importancia: en una instalación existente hay que reinstalar
+  la app o subirla en los ajustes del sistema. Muestra el remitente y el texto del mensaje. **En la pantalla de bloqueo solo dice "Mensaje nuevo"**: ni remitente ni texto.
 - **Tocarlo abre la conversación** del mensaje (no el detalle del análisis). Si el mensaje ya no está, se queda en la lista.
 - **Un aviso por mensaje**, con la etiqueta `message` y el id del mensaje, para que no choque con la alerta de riesgo (que usa solo el id).
 - Se avisa **después** de guardar el análisis, y un fallo al avisar no cambia el resultado del análisis.
@@ -26,8 +27,8 @@ principal: hasta aquí solo avisaban los mensajes de riesgo alto, y los recibido
 
 - Los mensajes **llegan sin leer** (ya era así) y **abrir su conversación los marca como leídos** en el buzón del sistema (`READ` y
   `SEEN`). Solo se marcan los **recibidos**; lo que envió la persona nunca cuenta como sin leer.
-- **La lista distingue** las conversaciones con mensajes sin leer: el inicio del mensaje va en negrita y aparece un contador azul con
-  cuántos recibidos siguen sin leer **en toda la conversación** (no solo el último). Un lector de pantalla lo lee como "3 sin leer".
+- **La lista distingue** las conversaciones con mensajes sin leer: aparece un contador azul con cuántos recibidos siguen sin leer **en toda la conversación** (no solo el último). El contador es lo único que las marca: el remitente va siempre en negrita y el
+  inicio del mensaje siempre en texto normal. Un lector de pantalla lo lee como "3 sin leer".
 - **Al leer se descartan los avisos**: el del mensaje y, si era de riesgo alto, su alerta de riesgo. También funciona con un mensaje que
   llega con la conversación abierta.
 - Abrir el **detalle** de una alerta o del historial **no** marca el mensaje como leído: solo abrir su conversación.

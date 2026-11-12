@@ -45,7 +45,7 @@ class AndroidMessageNotifier(private val context: Context) : IncomingMessageNoti
             .setContentText(message.body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
             .setContentIntent(open)
@@ -59,7 +59,7 @@ class AndroidMessageNotifier(private val context: Context) : IncomingMessageNoti
     }
 
     private fun createChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, context.getString(R.string.message_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+        val channel = NotificationChannel(CHANNEL_ID, context.getString(R.string.message_channel_name), NotificationManager.IMPORTANCE_HIGH)
             .apply { description = context.getString(R.string.message_channel_description) }
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }

@@ -20,10 +20,10 @@ import com.app.smishing.domain.sms.IncomingSms
 enum class AlertReason { Urgency, Impersonation, DataRequest }
 
 /**
- * Lo que dice una alerta: de qué mensaje es, quién lo envía y por qué se avisa. **No lleva el texto del mensaje**: la
- * notificación no debe revelarlo en la pantalla de bloqueo. El remitente tampoco sale en `toString`.
+ * Lo que dice una alerta: de qué mensaje es, quién lo envía, su texto y por qué se avisa. La notificación muestra el remitente y el
+ * texto, y **no los revela en la pantalla de bloqueo** (versión pública). Ni el remitente ni el texto salen en `toString`.
  */
-data class RiskAlert(val messageId: Long, val sender: String, val reason: AlertReason) {
+data class RiskAlert(val messageId: Long, val sender: String, val body: String, val reason: AlertReason) {
     override fun toString() = "RiskAlert(messageId=$messageId, reason=$reason)"
 }
 
@@ -128,7 +128,7 @@ class AnalyzeReceivedMessage(
                 val reason = AlertPolicy.reasonFor(result.assessment)
                 if (reason == null) AnalysisOutcome.Recorded
                 else {
-                    notifier.notify(RiskAlert(messageId, message.sender, reason))
+                    notifier.notify(RiskAlert(messageId, message.sender, message.body, reason))
                     AnalysisOutcome.Alerted
                 }
             }

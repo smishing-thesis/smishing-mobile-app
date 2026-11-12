@@ -11,12 +11,13 @@ del mensaje **sin activar enlaces**. Última verificación: 2026-11-08.
 
 1. Cuando llega un SMS, el receptor lo **guarda primero** (#4) y después lo **evalúa**: modelo, señales y política de riesgo, con la
    compuerta del rol y los permisos (#3).
-2. Si el nivel es **alto**, muestra una notificación "**Posible estafa detectada**", con el remitente y **un motivo**: "Le pide
-   actuar con urgencia", "Finge ser de una entidad" o "Le pide sus datos o claves" (el primero que corresponda, en ese orden).
-3. Tocar la notificación, o **Ver detalles**, abre **Detalle del análisis** en la app: el nivel, el mensaje original y por qué se
-   avisó.
-4. En el detalle **el mensaje es texto plano**: ningún enlace de su texto se activa ni se puede tocar. Tampoco la notificación
-   lleva el texto del mensaje.
+2. Si el nivel es **alto**, muestra una notificación "**Posible estafa detectada**", con el remitente y **el texto del mensaje**
+   (se corta con "…" y se ve completo al expandirla). El motivo ("Le pide actuar con urgencia", "Finge ser de una entidad" o "Le pide
+   sus datos o claves", el primero que corresponda) se ve en el detalle.
+3. Tocar la notificación abre la **conversación** del mensaje, donde el aviso "Parece una estafa" lleva a "Ver riesgo". **Ver detalles**
+   abre directo **Detalle del análisis** en la app: el nivel, el mensaje original y por qué se avisó.
+4. En el detalle **el mensaje es texto plano**: ningún enlace de su texto se activa ni se puede tocar. En la notificación tampoco
+   se puede tocar un enlace: tocarla abre el detalle.
 
 **Cuándo avisa.** Solo con nivel **alto** (el modelo lo marca y al menos una señal lo respalda). Fue una decisión de diseño:
 en el conjunto controlado, alertar con *medio o alto* cubría 29 de 30 mensajes de smishing pero alertaba en 6 de 47 legítimos
@@ -24,11 +25,13 @@ en el conjunto controlado, alertar con *medio o alto* cubría 29 de 30 mensajes 
 
 ## Qué se decidió sobre el contenido de la notificación
 
-El diseño tiene dos versiones de la notificación. Se usó la de **remitente y motivo** (con "Ver detalles"), porque **no muestra el
-texto del mensaje** y por eso no lo filtra en la pantalla de bloqueo. La otra versión mostraba el inicio del texto.
+El diseño tiene dos versiones de la notificación: una con **remitente y motivo** y otra con **remitente y el inicio del texto**. Primero
+se usó la de remitente y motivo, para no mostrar el texto del mensaje. **Se cambió (2026-11-11) a la del texto**, a pedido: con el texto
+se reconoce de qué mensaje se trata sin abrir la app, y es igual a las notificaciones de mensajes normales (#49).
 
 - La notificación es **privada** en la pantalla de bloqueo: ahí solo dice "Posible estafa detectada / Abra la aplicación para ver
-  el detalle", **sin remitente ni motivo** (versión pública).
+  el detalle", **sin remitente ni texto** (versión pública). Con el teléfono desbloqueado sí se ve el texto.
+- El motivo ya no está en la notificación; sigue en el detalle.
 - No se registra el remitente, el motivo ni el texto en logs.
 
 ## Cómo se abre el detalle
@@ -85,8 +88,8 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
   **el texto del mensaje no tiene acción de toque**; el medio solo por el modelo, el bajo, el no analizado, el mensaje que ya no está y volver.
 - `SmsRoleInstrumentedTest.thenARiskyMessageAlertsAndTheAlertOpensItsDetailWithoutActivatingLinks` (dispositivo): **la prueba
   funcional**. Entrega al receptor un SMS que el modelo marca como medio y otro de riesgo alto con enlace. Comprueba que **solo el de
-  riesgo alto avisa**; que la notificación indica el riesgo con el remitente y el motivo, **sin el texto del mensaje** y con versión
-  pública sin remitente; que tocarla abre el detalle con el nivel, el mensaje y los motivos; y que **tocar el enlace del mensaje no abre
+  riesgo alto avisa**; que la notificación indica el riesgo con el remitente y el texto del mensaje y con versión pública sin
+  remitente ni texto; que tocarla abre la conversación y de ahí "Ver riesgo" el detalle con el nivel, el mensaje y los motivos; y que **tocar el enlace del mensaje no abre
   nada**: la app sigue al frente y no se lanza un navegador.
 
 ## Resultado (2026-11-08)

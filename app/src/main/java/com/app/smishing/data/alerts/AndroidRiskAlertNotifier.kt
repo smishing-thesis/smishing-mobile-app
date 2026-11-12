@@ -17,14 +17,15 @@ import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.Status
 
 /**
- * Muestra la alerta como una notificación (#10): "Posible estafa detectada", con el remitente y un motivo.
+ * Muestra la alerta como una notificación (#10): "Posible estafa detectada", con el remitente y el texto del mensaje.
  *
- * - **No lleva el texto del mensaje**, así que no lo revela ni en la pantalla de bloqueo. En la pantalla de bloqueo solo
- *   dice que hay una alerta, sin remitente ni motivo (versión pública).
- * - Tocarla, o "Ver detalles", abre el detalle del mensaje en la app. Ahí el mensaje es texto plano: ningún enlace se activa.
+ * - **Lleva el texto del mensaje** (al expandirla se ve completo), como las notificaciones de mensajes (#49). En la pantalla de
+ *   bloqueo solo dice que hay una alerta, sin remitente ni texto (versión pública). El motivo se ve en el detalle.
+ * - Tocarla abre la **conversación** del mensaje, donde el aviso "Parece una estafa" lleva a "Ver riesgo". "Ver detalles" abre directo el
+ *   detalle del análisis. En los dos el mensaje es texto plano: ningún enlace se activa.
  * - Sin el permiso de notificaciones (Android 13 o superior) o con ellas desactivadas, no se muestra y solo se anota.
  *
- * No se registra el remitente ni el motivo.
+ * No se registra el remitente, el texto ni el motivo.
  */
 class AndroidRiskAlertNotifier(private val context: Context) : RiskAlertNotifier {
 
@@ -38,10 +39,17 @@ class AndroidRiskAlertNotifier(private val context: Context) : RiskAlertNotifier
         val open = PendingIntent.getActivity(
             context,
             alert.messageId.toInt(),
+            MainActivity.conversationIntent(context, alert.messageId),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val details = PendingIntent.getActivity(
+            context,
+            alert.messageId.toInt(),
             MainActivity.detailIntent(context, alert.messageId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val title = context.getString(R.string.alert_title)
+        val summary = "${alert.sender} — ${alert.body}"
         val red = SmishingPalette.statusColors(Status.Danger).onContainer.toArgb()
         val publicVersion = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
@@ -52,13 +60,14 @@ class AndroidRiskAlertNotifier(private val context: Context) : RiskAlertNotifier
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText("${alert.sender} — ${context.getString(reasonText(alert.reason))}")
+            .setContentText(summary)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
             .setColor(red)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
             .setContentIntent(open)
-            .addAction(0, context.getString(R.string.alert_view_details), open)
+            .addAction(0, context.getString(R.string.alert_view_details), details)
             .setAutoCancel(true)
             .build()
         try {
