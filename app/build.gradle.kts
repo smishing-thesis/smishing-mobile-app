@@ -1,13 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.app.smishing"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.app.smishing"
@@ -44,16 +43,16 @@ android {
     // En la JVM, los assets de main (preprocessing_config.json) se leen como recursos.
     sourceSets {
         getByName("test") {
-            java.srcDir("src/sharedTest/java")
-            resources.srcDir("src/sharedTest/assets")
-            resources.srcDir("src/main/assets")
+            kotlin.directories.add("src/sharedTest/java")
+            resources.directories.add("src/sharedTest/assets")
+            resources.directories.add("src/main/assets")
         }
         getByName("androidTest") {
-            java.srcDir("src/sharedTest/java")
-            assets.srcDir("src/sharedTest/assets")
+            kotlin.directories.add("src/sharedTest/java")
+            assets.directories.add("src/sharedTest/assets")
             // Los esquemas exportados de Room: la prueba de migración arma la base de la versión 1 con su SQL exacto.
             // (No se usa MigrationTestHelper: room-testing exige kotlinx-serialization 1.8 y la app resuelve la 1.7.3.)
-            assets.srcDir("$projectDir/schemas")
+            assets.directories.add("schemas")
         }
     }
 }
@@ -67,7 +66,6 @@ kotlin {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.litert)
     implementation(libs.androidx.room.runtime)
@@ -86,7 +84,6 @@ dependencies {
     // En la JVM, org.json de android.jar es un stub; en el dispositivo se usa el real.
     testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
