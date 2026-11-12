@@ -46,7 +46,7 @@ class SmsDeliverReceiver : BroadcastReceiver() {
                 val message = result.message
                 val messageId = result.messageId
                 if (result.outcome == ReceiveOutcome.Stored && message != null && messageId != null) {
-                    alertIfRisky(appContext, messageId, message)
+                    analyzeIncoming(appContext, messageId, message)
                 }
             } catch (e: RuntimeException) {
                 // Solo el tipo de error: su mensaje podría traer el contenido.
@@ -57,29 +57,34 @@ class SmsDeliverReceiver : BroadcastReceiver() {
         }
     }
 
-    /** Evalúa el mensaje ya guardado y avisa si es riesgoso. Un fallo del análisis no debe tocar el mensaje guardado. */
-    private fun alertIfRisky(context: Context, messageId: Long, message: IncomingSms) {
-        try {
-            val outcome = AnalyzeReceivedMessage(
-                assessor = AnalysisPipeline.assessor(context),
-                history = RoomAnalysisHistory(HistoryDatabase.get(context)),
-                notifier = AndroidRiskAlertNotifier(context),
-                messageNotifier = AndroidMessageNotifier(context),
-                settings = DataStoreMitigationSettings(context),
-                mitigator = AnalysisPipeline.mitigator(context),
-                // Solo el tipo de error: su mensaje podría traer el contenido.
-                onHistoryError = { Log.e(TAG, "No se pudo guardar el análisis en el historial: ${it.javaClass.simpleName}") },
-                onMitigationError = { Log.e(TAG, "No se pudo aplicar el modo de mitigación: ${it.javaClass.simpleName}") },
-            ).onReceived(messageId, message)
-            Log.i(TAG, "Análisis del SMS entrante: $outcome")
-        } catch (e: Throwable) {
-            // Solo el tipo de error. También se atrapan los `Error` (por ejemplo, la biblioteca nativa del modelo).
-            Log.e(TAG, "No se pudo analizar el SMS entrante: ${e.javaClass.simpleName}")
-        }
-    }
-
     private companion object {
-        const val TAG = "SmsDeliverReceiver"
         val EXECUTOR = Executors.newSingleThreadExecutor()
+    }
+}
+
+private const val TAG = "SmsDeliverReceiver"
+
+/**
+ * Evalúa un mensaje ya guardado en el buzón y avisa o actúa según el nivel y el modo de mitigación. Un fallo del análisis no debe
+ * tocar el mensaje guardado. Lo usa el receptor y, en la variante de depuración, el cargador de demostración (#65), para que un
+ * mensaje de demo pase por el mismo flujo que uno real.
+ */
+internal fun analyzeIncoming(context: Context, messageId: Long, message: IncomingSms) {
+    try {
+        val outcome = AnalyzeReceivedMessage(
+            assessor = AnalysisPipeline.assessor(context),
+            history = RoomAnalysisHistory(HistoryDatabase.get(context)),
+            notifier = AndroidRiskAlertNotifier(context),
+            messageNotifier = AndroidMessageNotifier(context),
+            settings = DataStoreMitigationSettings(context),
+            mitigator = AnalysisPipeline.mitigator(context),
+            // Solo el tipo de error: su mensaje podría traer el contenido.
+            onHistoryError = { Log.e(TAG, "No se pudo guardar el análisis en el historial: ${it.javaClass.simpleName}") },
+            onMitigationError = { Log.e(TAG, "No se pudo aplicar el modo de mitigación: ${it.javaClass.simpleName}") },
+        ).onReceived(messageId, message)
+        Log.i(TAG, "Análisis del SMS entrante: $outcome")
+    } catch (e: Throwable) {
+        // Solo el tipo de error. También se atrapan los `Error` (por ejemplo, la biblioteca nativa del modelo).
+        Log.e(TAG, "No se pudo analizar el SMS entrante: ${e.javaClass.simpleName}")
     }
 }
