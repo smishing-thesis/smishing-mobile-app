@@ -318,8 +318,8 @@ private fun OnboardingSection() {
     Box(Modifier.fillMaxWidth().height(560.dp).padding(horizontal = Spacing.Md).border(1.dp, SmishingPalette.Border)) {
         OnboardingStepLayout(
             stepIndex = 1,
-            stepCount = 3,
-            stepLabel = "PASO 2 DE 3",
+            stepCount = 2,
+            stepLabel = "PASO 2 DE 2",
             title = "Aplicación principal",
             primaryLabel = "Usar como aplicación por defecto",
             onPrimary = {},

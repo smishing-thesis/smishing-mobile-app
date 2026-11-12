@@ -68,7 +68,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 
 - `ConversationsTest` y `ConversationDateTest` (JVM, 10 pruebas): una conversación por hilo con su último mensaje, la más
   reciente primero, y la regla de la fecha (hoy, ayer, este año, otro año, año nuevo y zona horaria).
-- `MessagesScreensTest` (dispositivo, 6): las dos pantallas con datos sintéticos: remitente, fecha y fragmento; tocar abre; la
+- `MessagesScreensTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 6): las dos pantallas con datos sintéticos: remitente, fecha y fragmento; tocar abre; la
   lista vacía y la carga; recibidos a la izquierda y enviados a la derecha, en orden; el botón de volver.
 - `SmsRoleInstrumentedTest.thenTheConversationsShowReceivedAndSentMessages` (dispositivo): **la prueba funcional**. Con el
   rol, inserta mensajes enviados en el buzón del sistema, entrega uno recibido al receptor, abre la app y comprueba: la

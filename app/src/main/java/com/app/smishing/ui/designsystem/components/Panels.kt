@@ -77,9 +77,12 @@ fun ActionDoneRow(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Panel gris con un título en mayúsculas y un texto, como "Recomendación". */
+/**
+ * Panel gris con un título y un texto. El título va en mayúsculas, como "Recomendación"; con [uppercaseTitle] en `false` va en negrita y
+ * tal cual, como "¿Prefiere decidir antes de actuar?" en el diseño de "acciones revertidas".
+ */
 @Composable
-fun InfoPanel(title: String, text: String, modifier: Modifier = Modifier) {
+fun InfoPanel(title: String, text: String, modifier: Modifier = Modifier, uppercaseTitle: Boolean = true) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -88,7 +91,11 @@ fun InfoPanel(title: String, text: String, modifier: Modifier = Modifier) {
             .padding(Spacing.Md),
         verticalArrangement = Arrangement.spacedBy(Spacing.X2s),
     ) {
-        Text(title.uppercase(), style = SmishingTypography.NoteBold, color = SmishingPalette.TextSecondary)
+        if (uppercaseTitle) {
+            Text(title.uppercase(), style = SmishingTypography.NoteBold, color = SmishingPalette.TextSecondary)
+        } else {
+            Text(title, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
+        }
         Text(text, style = SmishingTypography.Note, color = SmishingPalette.TextPrimary)
     }
 }

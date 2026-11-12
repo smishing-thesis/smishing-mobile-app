@@ -56,8 +56,8 @@ No se agregó ningún permiso.
 
 - JVM (193 en total al cerrar esta parte): `MitigationExecutorTest` (permitido o no, registro local, estados, causas, ya bloqueado,
   reintento, revertir y lo que no se puede revertir) y `HistoryMarksTest`.
-- Dispositivo: `HistoryMigrationTest`, `RoomMitigationLogInstrumentedTest`, `MessageDetailActionsTest` (acciones, fallos con su causa,
-  botones según el modo, marcado como seguro, reglas de lenguaje), la marca en `HistoryScreenTest` y, de punta a punta con SMS reales
+- Dispositivo: `HistoryMigrationTest`, `RoomMitigationLogInstrumentedTest`, `MessageDetailActionsTest` (quitada: ver [pruebas.md](pruebas.md)) (acciones, fallos con su causa,
+  botones según el modo, marcado como seguro, reglas de lenguaje), la marca en `HistoryScreenTest` (quitada: ver [pruebas.md](pruebas.md)) y, de punta a punta con SMS reales
   entregados y el sistema de bloqueo real, `SmsRoleInstrumentedTest`: modo automático (se bloquea y se retira, la alerta abre el detalle
   desde lo guardado, marcar como seguro desbloquea y restaura leído, el historial lo dice) y modo preguntar / solo avisarme.
 - Suites completas al cerrar: JVM 193 pruebas, 0 fallos (1 omitida por diseño); emulador (API 29) 157 pruebas, 0 fallos, 2 omitidas (los

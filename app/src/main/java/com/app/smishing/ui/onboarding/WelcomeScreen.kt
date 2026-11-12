@@ -17,8 +17,8 @@ import com.app.smishing.ui.designsystem.theme.SmishingTypography
 fun WelcomeScreen(onNext: () -> Unit, modifier: Modifier = Modifier) {
     OnboardingStepLayout(
         stepIndex = 0,
-        stepCount = 3,
-        stepLabel = stringResource(R.string.onboarding_step_one_of_three),
+        stepCount = 2,
+        stepLabel = stringResource(R.string.onboarding_step_one_of_two),
         title = stringResource(R.string.welcome_title),
         modifier = modifier,
         primaryLabel = stringResource(R.string.welcome_next),

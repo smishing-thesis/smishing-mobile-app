@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.sms.SmsRoleState
 import com.app.smishing.ui.designsystem.components.OnboardingStepLayout
-import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 
@@ -24,8 +23,8 @@ fun DefaultSmsRoleScreen(
 ) {
     OnboardingStepLayout(
         stepIndex = 1,
-        stepCount = 3,
-        stepLabel = stringResource(R.string.onboarding_step_two_of_three),
+        stepCount = 2,
+        stepLabel = stringResource(R.string.onboarding_step_two_of_two),
         title = stringResource(R.string.default_sms_title),
         modifier = modifier,
         primaryLabel = if (state == SmsRoleState.NotHeld) stringResource(R.string.default_sms_action) else null,
@@ -34,13 +33,9 @@ fun DefaultSmsRoleScreen(
         onSkip = if (state == SmsRoleState.Held) null else onSkip,
     ) {
         when (state) {
-            SmsRoleState.NotHeld -> {
+            SmsRoleState.NotHeld, SmsRoleState.Held -> {
                 Body(stringResource(R.string.default_sms_explanation_replace))
                 Body(stringResource(R.string.default_sms_explanation_safe))
-            }
-            SmsRoleState.Held -> {
-                PermissionRow(stringResource(R.string.default_sms_held), granted = true)
-                Body(stringResource(R.string.default_sms_held_message))
             }
             SmsRoleState.Unavailable -> Body(stringResource(R.string.default_sms_unavailable))
         }

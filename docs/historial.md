@@ -86,7 +86,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
   (resultado, nivel, regla, puntaje, umbral, las cuatro versiones, señales con su fragmento y respaldos); las versiones están en la
   tabla misma; los tres niveles; orden; búsqueda por id del buzón; el borrado en cascada; **lo guardado sobrevive a cerrar y volver a
   abrir la base**; el guardado es todo o nada; y el aviso de cambios.
-- `HistoryScreenTest` (dispositivo, 5): remitente, fecha, inicio y marca de cada registro; las marcas no usan "Peligroso" ni "Seguro";
+- `HistoryScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 5): remitente, fecha, inicio y marca de cada registro; las marcas no usan "Peligroso" ni "Seguro";
   tocar abre; el vacío y la carga.
 - `SmsRoleInstrumentedTest.thenTheHistoryKeepsEachAnalysisLocallyAndItSurvivesDeletingTheMessage` (dispositivo): **la prueba
   funcional**, con el modelo real. Entran por el receptor un SMS riesgoso, uno que el modelo marca como medio y uno demasiado corto.

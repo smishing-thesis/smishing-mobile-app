@@ -19,6 +19,7 @@ import com.app.smishing.R
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
+import com.app.smishing.domain.settings.ProtectionStatus
 import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.RadioOption
@@ -33,7 +34,6 @@ import com.app.smishing.ui.designsystem.theme.Spacing
  * "Ajustes" (#13, #25, #31), con el diseño: el modo de mitigación y el estado de cada permiso.
  *
  * - Cada permiso se muestra concedido o no; si no, dice **qué función queda limitada** y ofrece abrir los ajustes del sistema.
- * - Si la app no es la de mensajería principal, avisa que no podrá actuar sobre los mensajes, sea cual sea el modo.
  * - [mode] es `null` mientras se lee.
  *
  * Todavía no tiene "Compartir reportes de estafas" (el aporte al corpus es de la fase 2: #18, #26 y #27), por eso #31 sigue abierto.
@@ -46,7 +46,6 @@ fun SettingsScreen(
     onOpenSystemSettings: (AppPermission) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val roleHeld = permissions.firstOrNull { it.permission == AppPermission.DefaultSmsApp }?.granted != false
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         SmishingTopBar(title = stringResource(R.string.settings_title), style = TopBarStyle.Primary)
         Column(
@@ -62,19 +61,14 @@ fun SettingsScreen(
                     onSelect = { onModeChange(option) },
                 )
             }
-            if (!roleHeld) {
-                Text(
-                    stringResource(R.string.settings_mode_note_role),
-                    style = SmishingTypography.Note,
-                    color = SmishingPalette.TextSecondary,
-                )
-            }
 
             HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
             SectionLabel(stringResource(R.string.settings_permissions_title))
             val granted = stringResource(R.string.settings_state_granted)
             val denied = stringResource(R.string.settings_state_denied)
-            for (status in permissions) {
+            // El mockup muestra la aplicación de mensajería y el permiso de lectura; se suman las notificaciones porque también son un
+            // requisito de la protección. Enviar mensajes no se muestra: no afecta a la detección.
+            for (status in permissions.filter { it.permission in ProtectionStatus.REQUIRED }) {
                 PermissionRow(
                     label = stringResource(labelOf(status.permission)),
                     granted = status.granted,
@@ -113,13 +107,14 @@ private fun descriptionOf(mode: MitigationMode) = when (mode) {
 private fun labelOf(permission: AppPermission) = when (permission) {
     AppPermission.DefaultSmsApp -> R.string.settings_permission_default_sms
     AppPermission.ReadSms -> R.string.settings_permission_read_sms
-    AppPermission.SendSms -> R.string.settings_permission_send_sms
+    // Enviar mensajes no se muestra (no es un requisito de la protección ni está en el mockup).
+    AppPermission.SendSms -> R.string.settings_permission_default_sms
     AppPermission.Notifications -> R.string.settings_permission_notifications
 }
 
 private fun limitedOf(permission: AppPermission) = when (permission) {
     AppPermission.DefaultSmsApp -> R.string.settings_limited_default_sms
     AppPermission.ReadSms -> R.string.settings_limited_read_sms
-    AppPermission.SendSms -> R.string.settings_limited_send_sms
+    AppPermission.SendSms -> R.string.settings_limited_default_sms
     AppPermission.Notifications -> R.string.settings_limited_notifications
 }

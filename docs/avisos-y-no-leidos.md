@@ -54,7 +54,7 @@ No se agregó ningún permiso.
 - JVM (214 en total): `AnalyzeReceivedMessageTest` (el de riesgo alto no suma aviso; medio y bajo avisan; lo no evaluado avisa; si el
   análisis falla igual avisa y el fallo no se oculta; un fallo al avisar no cambia el resultado; el aviso va después de guardar) y
   `ConversationsTest` (el contador cubre toda la conversación y no solo el último mensaje).
-- Dispositivo: `MessagesScreensTest` (la lista con y sin contador) y, de punta a punta con SMS reales entregados,
+- Dispositivo: `MessagesScreensTest` (quitada: ver [pruebas.md](pruebas.md)) (la lista con y sin contador) y, de punta a punta con SMS reales entregados,
   `SmsRoleInstrumentedTest`: `thenEachMessageIsNotifiedAndOpeningItsConversationReadsItAndClearsItsNotification` (un aviso para el que no es
   de riesgo alto y solo la alerta para el que sí; contenido del aviso y versión de pantalla de bloqueo; llegan sin leer; la lista lo dice;
   tocar el aviso abre la conversación, lee el mensaje y descarta su aviso; abrir la del de riesgo alto descarta su alerta),
