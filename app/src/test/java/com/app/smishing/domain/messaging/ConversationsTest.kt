@@ -78,4 +78,10 @@ class ConversationsTest {
         assertEquals(false, "texto" in text)
         assertEquals(false, "+10000000001" in text)
     }
+
+    @Test
+    fun aConversationKeepsTheIdOfItsLastMessageToLookUpItsRisk() {
+        val rows = sequenceOf(SmsRow(1, "+10000000001", "nuevo", 30, id = 21), SmsRow(1, "+10000000001", "viejo", 10, id = 20))
+        assertEquals(21L, latestPerConversation(rows).single().lastMessageId)
+    }
 }

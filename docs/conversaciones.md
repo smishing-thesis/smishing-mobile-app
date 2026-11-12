@@ -54,6 +54,12 @@ porque el color y el lado no lo transmiten. El botón de volver tiene su descrip
   Posible estafa", "Ver riesgo": #10 y #12), el botón "Escribir", la barra para redactar y "Nuevo mensaje" (#6, ya
   hechos), la búsqueda y el menú de la conversación, y la navegación inferior (sus otras pestañas todavía no existen). Hoy, tras el
   onboarding, la lista de mensajes es la pantalla principal.
+- **El riesgo se ve en la lista y en la conversación (#60).** La fila de una conversación cuyo último mensaje es de riesgo alto o medio
+  dice "Cuidado: Posible estafa" o "Cuidado: Sospechoso", y en la conversación cada mensaje recibido de riesgo alto o medio lleva arriba
+  un aviso con "Ver riesgo", que abre el detalle de su análisis (con "atrás" se vuelve a la conversación). **No hay marca para riesgo bajo**
+  (que no haya marca no debe leerse como "es legítimo"), ni para un mensaje que la persona marcó como seguro, ni para uno sin análisis
+  (los anteriores a la app, los muy cortos): hasta #59 no dicen que no se analizaron. Sale del historial, con una sola lectura, y solo
+  vale si el texto del mensaje coincide con el guardado.
 - **Abrir una conversación marca como leídos sus mensajes recibidos** y la lista muestra un contador de los que siguen sin leer (#50; ver
   [avisos-y-no-leidos.md](avisos-y-no-leidos.md)).
 

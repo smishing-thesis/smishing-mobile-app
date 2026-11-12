@@ -41,6 +41,7 @@ import com.app.smishing.ui.designsystem.components.NavItem
 import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.data.history.RoomAnalysisHistory
 import com.app.smishing.data.history.HistoryDatabase
@@ -150,6 +151,9 @@ fun MessagesRoute(
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var historyRecordId by rememberSaveable { mutableStateOf<Long?>(null) }
     var historyVersion by remember { mutableIntStateOf(0) }
+    // El riesgo guardado de cada mensaje (#60), con una sola lectura; se vuelve a leer cuando el historial o las acciones cambian.
+    var risks by remember { mutableStateOf<Map<Long, MessageRisk>>(emptyMap()) }
+    LaunchedEffect(historyVersion) { risks = withContext(Dispatchers.IO) { history.risks() } }
     DisposableEffect(history) {
         val subscription = history.onChange { historyVersion++ }
         onDispose { subscription.close() }
@@ -308,6 +312,7 @@ fun MessagesRoute(
                             composing = true
                         },
                         modifier = Modifier,
+                        risks = risks,
                     )
                 }
                 else -> {
@@ -335,6 +340,8 @@ fun MessagesRoute(
                         onSend = { send(openAddress, draft) { draft = "" } },
                         error = sendError,
                         modifier = Modifier,
+                        risks = risks,
+                        onSeeRisk = { historyRecordId = it },
                     )
                 }
             }

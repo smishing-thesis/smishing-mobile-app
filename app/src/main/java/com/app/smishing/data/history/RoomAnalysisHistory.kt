@@ -4,6 +4,7 @@ import androidx.room.InvalidationTracker
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.risk.RiskAssessment
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.risk.RiskRule
@@ -56,6 +57,12 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
         }
         return dao.insertAll(message, result, signals)
     }
+
+    override fun risks(): Map<Long, MessageRisk> =
+        // Ordenadas por registro: si un mismo mensaje tiene más de uno, queda el más reciente.
+        dao.risks().associate {
+            it.messageId to MessageRisk(it.messageId, it.recordId, RiskLevel.valueOf(it.level), it.markedSafeAt != null, it.body)
+        }
 
     override fun markSafe(id: Long, nowMillis: Long) = dao.markSafe(id, nowMillis)
 

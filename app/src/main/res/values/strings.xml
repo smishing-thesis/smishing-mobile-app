@@ -34,6 +34,12 @@
     <string name="conversation_back">Volver a mensajes</string>
     <string name="message_received">Recibido</string>
     <string name="message_sent">Enviado</string>
+    <string name="messages_warning_high">Cuidado: Posible estafa</string>
+    <string name="messages_warning_medium">Cuidado: Sospechoso</string>
+    <string name="messages_notice_high">Este mensaje parece una estafa</string>
+    <string name="messages_notice_medium">Este mensaje parece sospechoso</string>
+    <string name="messages_notice_text">No abra el enlace ni comparta datos.</string>
+    <string name="messages_notice_action">Ver riesgo</string>
     <!-- Este texto no está en el diseño: revisar con quien lo diseñó. -->
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 

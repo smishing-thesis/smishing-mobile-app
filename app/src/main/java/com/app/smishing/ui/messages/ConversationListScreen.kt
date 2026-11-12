@@ -13,7 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
+import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.Conversation
+import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.messaging.formatConversationDate
 import com.app.smishing.ui.designsystem.components.ConversationRow
 import com.app.smishing.ui.designsystem.components.SmishingExtendedFab
@@ -43,6 +46,8 @@ fun ConversationListScreen(
     onCompose: () -> Unit,
     modifier: Modifier = Modifier,
     zone: ZoneId = ZoneId.systemDefault(),
+    /** El riesgo guardado de cada mensaje (#60): la fila avisa si su último mensaje es de riesgo alto o medio. */
+    risks: Map<Long, MessageRisk> = emptyMap(),
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
     Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
@@ -64,6 +69,11 @@ fun ConversationListScreen(
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { onOpen(conversation) },
+                            warning = when (riskNotice(risks, conversation.lastMessageId, conversation.snippet)) {
+                                RiskLevel.High -> stringResource(R.string.messages_warning_high)
+                                RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                                else -> null
+                            },
                             unreadCount = conversation.unreadCount,
                             unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )

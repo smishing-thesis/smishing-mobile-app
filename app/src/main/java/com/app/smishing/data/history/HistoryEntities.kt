@@ -110,6 +110,15 @@ data class MitigationActionEntity(
     val updatedAtMillis: Long,
 )
 
+/** Una fila de la consulta de riesgos (#60). */
+data class RiskRow(
+    val messageId: Long,
+    val recordId: Long,
+    val level: String,
+    val markedSafeAt: Long?,
+    val body: String,
+)
+
 /** Un resultado con sus señales. */
 data class ResultWithSignals(
     @Embedded val result: AnalysisResultEntity,

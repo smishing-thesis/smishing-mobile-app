@@ -57,6 +57,13 @@ abstract class HistoryDao {
     @Query("SELECT * FROM mitigation_action ORDER BY id")
     abstract fun allActions(): List<MitigationActionEntity>
 
+    /** El riesgo de cada mensaje, sin señales ni explicación: una sola lectura para marcar la lista de mensajes (#60). */
+    @Query(
+        "SELECT m.messageId AS messageId, m.id AS recordId, r.riskLevel AS level, m.markedSafeAtMillis AS markedSafeAt, m.body AS body " +
+            "FROM analyzed_message m JOIN analysis_result r ON r.analyzedMessageId = m.id ORDER BY m.id",
+    )
+    abstract fun risks(): List<RiskRow>
+
     @Query("DELETE FROM analyzed_message WHERE id = :id")
     abstract fun delete(id: Long)
 

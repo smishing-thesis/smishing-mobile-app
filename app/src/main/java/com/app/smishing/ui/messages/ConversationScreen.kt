@@ -21,7 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.app.smishing.R
+import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.ConversationMessage
+import com.app.smishing.domain.risk.RiskLevel
+import com.app.smishing.ui.designsystem.components.AlertBanner
 import com.app.smishing.domain.messaging.MessageDirection
 import com.app.smishing.domain.messaging.SendOutcome
 import com.app.smishing.ui.designsystem.components.MessageBubble
@@ -39,7 +43,7 @@ import com.app.smishing.ui.designsystem.theme.Status
  * mientras se leen del buzón.
  *
  * Un mensaje enviado que no salió muestra "No se pudo enviar". [error] es el motivo por el que el último intento no se envió.
- * Todavía no tiene el menú ni el aviso de riesgo (#10).
+ * Un mensaje recibido de riesgo alto o medio lleva arriba un aviso con "Ver riesgo" (#60). Todavía no tiene el menú.
  */
 @Composable
 fun ConversationScreen(
@@ -51,6 +55,10 @@ fun ConversationScreen(
     onSend: () -> Unit,
     error: SendOutcome?,
     modifier: Modifier = Modifier,
+    /** El riesgo guardado de cada mensaje (#60): un mensaje de riesgo alto o medio lleva un aviso con "Ver riesgo". */
+    risks: Map<Long, MessageRisk> = emptyMap(),
+    /** Abre el detalle del análisis del registro con ese id. */
+    onSeeRisk: (recordId: Long) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val count = messages?.size ?: 0
@@ -76,6 +84,16 @@ fun ConversationScreen(
             items(messages.orEmpty(), key = { it.id }) { message ->
                 val outgoing = message.direction == MessageDirection.Outgoing
                 Column(horizontalAlignment = if (outgoing) Alignment.End else Alignment.Start) {
+                    val level = if (outgoing) null else riskNotice(risks, message.id, message.body)
+                    if (level != null) {
+                        AlertBanner(
+                            title = stringResource(if (level == RiskLevel.High) R.string.messages_notice_high else R.string.messages_notice_medium),
+                            message = stringResource(R.string.messages_notice_text),
+                            actionLabel = stringResource(R.string.messages_notice_action),
+                            onAction = { risks[message.id]?.let { onSeeRisk(it.recordId) } },
+                            modifier = Modifier.padding(bottom = Spacing.Xs),
+                        )
+                    }
                     MessageBubble(
                         text = message.body,
                         outgoing = outgoing,
