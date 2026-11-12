@@ -463,6 +463,8 @@ class SmsRoleInstrumentedTest {
                 "+$SENDER_F — ${context.getString(R.string.alert_reason_urgency)}",
                 extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString(),
             )
+            // `Bundle.get` está deprecado, pero es la única forma de leer cualquier extra sin conocer su tipo.
+            @Suppress("DEPRECATION")
             val visible = extras.keySet().mapNotNull { extras.get(it)?.toString() }.joinToString(" ")
             for (secret in listOf("bbva-pe.top", "Actualice", "tarjeta")) {
                 assertTrue("La notificación no debía mostrar «$secret»", secret !in visible)
@@ -592,6 +594,8 @@ class SmsRoleInstrumentedTest {
      * Toca un aviso, como lo hace la persona. Desde Android 14, `PendingIntent.send` desde una prueba (que no está en primer plano) no
      * abre la actividad si no se permite de forma explícita.
      */
+    // La constante está deprecada en la API 36 a favor de otras que no existen en Android 14 y 15, donde también se corre.
+    @Suppress("DEPRECATION")
     private fun tap(notification: android.service.notification.StatusBarNotification) {
         val options = if (android.os.Build.VERSION.SDK_INT >= 34) {
             android.app.ActivityOptions.makeBasic()

@@ -9,7 +9,7 @@ Registro del entorno de build del prototipo (issue #1, RNF-08). Última verifica
 | Nombre / paquete | Smishing Detector / `com.app.smishing` |
 | minSdk | 29 |
 | targetSdk | 34 |
-| compileSdk | 36 (lo exigen `androidx.core` 1.18, que trae `activity-compose`, y Compose; AGP 8.13.2 admite hasta 36) |
+| compileSdk | 37 (lo exigen `androidx.core` 1.19 y Compose 1.12; AGP 9.5 admite hasta 37) |
 | Java (fuente y destino) | 11 |
 | Lenguaje | Kotlin, scripts de Gradle en Kotlin DSL |
 
@@ -17,21 +17,21 @@ Registro del entorno de build del prototipo (issue #1, RNF-08). Última verifica
 
 | Herramienta | Versión |
 |---|---|
-| Android Gradle Plugin | 8.13.2 |
-| Gradle (wrapper) | 8.13 |
+| Android Gradle Plugin | 9.5.1 |
+| Gradle (wrapper) | 9.9.1 |
 | Kotlin | 2.4.21 |
-| JDK para Gradle | de 17 a 23 (lo que acepta Gradle 8.13); verificado con Temurin 17.0.13 |
-| Android Studio | Narwhal 3 Feature Drop (2025.1.3) o más nueva; verificado con Rabbit 2 (2026.2.2) |
+| JDK para Gradle | 17 o superior (AGP 9.5 pide 17 como mínimo; Gradle 9.9.1 acepta hasta el 25); verificado con Temurin 17.0.13 |
+| Android Studio | Rabbit 2 (2026.2.2) o más nueva (la primera que admite AGP 9.5); verificado con Rabbit 2 (2026.2.2) |
 
 Las versiones están en `gradle/libs.versions.toml`.
 
 ### Android Studio y JDK
 
-- **Versión mínima del IDE.** AGP 8.13 exige Android Studio Narwhal 3 (2025.1.3) o más nuevo. Con Koala
-  (2024.1.2), el sync falla: `The project is using an incompatible version (AGP 8.13.2)... Latest supported
-  version is AGP 8.6.1`. La compilación por terminal funciona igual, pero el IDE no.
+- **Versión mínima del IDE.** AGP 9.5 exige Android Studio Rabbit 2 (2026.2.2) o más nuevo (Rabbit 1 llega hasta AGP 9.4).
+  Con una versión más vieja el sync falla con `The project is using an incompatible version (AGP 9.5.1)...`. La compilación
+  por terminal funciona igual, pero el IDE no.
 - **JDK del IDE.** El JDK que trae Android Studio cambia con la versión: Koala traía el 17, pero Rabbit 2 trae el 25,
-  que Gradle 8.13 rechaza (`Gradle 8.13 supports Java versions between 1.8 and 23`). Si el sync falla con
+  que Gradle 9.9.1 sí acepta (con Gradle 8.13 daba `supports Java versions between 1.8 and 23`). Si el sync falla con
   `Incompatible Gradle JVM version`, en **Settings → Build, Execution, Deployment → Build Tools → Gradle** elige
   en **Gradle JDK** un JDK de 17 a 21 (o usa **Download JDK…**). Esa opción queda en `.idea/` y
   `.gradle/config.properties`, que no se versionan: cada persona la configura en su equipo.
@@ -51,15 +51,13 @@ Solo para pruebas en la JVM: `org.json:json` 20260814 (en el dispositivo se usa 
 
 | Dependencia | Versión | Motivo |
 |---|---|---|
-| `androidx.compose:compose-bom` | 2026.06.01 (Compose UI 1.11.4, Material 3 1.4.0) | fija las versiones de Compose |
+| `androidx.compose:compose-bom` | 2026.09.00 (Compose UI 1.12.1) | fija las versiones de Compose |
 | `androidx.activity:activity-compose` | 1.13.0 | actividades con Compose |
 | `org.jetbrains.kotlin.plugin.compose` | 2.4.21 (la de Kotlin) | compilador de Compose |
 | `material-icons-core` | del BOM | iconos básicos; el set extendido se evita por peso |
 
-**Por qué no el BOM más nuevo.** Compose UI 1.12 (BOM 2026.08.00 y 2026.09.00) exige AGP 9.1 o superior, y el proyecto
-usa AGP 8.13.2 por lo que soporta Android Studio. El BOM 2026.06.01 es el último que pide solo AGP 8.6. Para pasar a
-Compose 1.12 habría que subir AGP a 9.x, con su propia verificación. Detalle de la librería en
-[design-system.md](design-system.md).
+**Compose 1.12 y AGP 9.** Compose UI 1.12 (BOM 2026.08.00 y 2026.09.00) y `androidx.core` 1.19 exigen AGP 9.1 o superior y
+`compileSdk` 37, por eso se subió el AGP a 9.5.1 (#63). Detalle de la librería en [design-system.md](design-system.md).
 
 El AAR incluye `libLiteRt.so` para `arm64-v8a`, `armeabi-v7a` y `x86_64`. No incluye `x86`.
 
