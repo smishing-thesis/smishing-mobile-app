@@ -74,7 +74,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 
 - `AnalysisGateTest` y `GatedMessageClassifierTest` (JVM): la regla, y que con el análisis suspendido no se llama al
   modelo, se suspende y se reanuda al cambiar los permisos.
-- `SmsPermissionScreenTest` (dispositivo): los estados de la pantalla, los botones y el área táctil de 48 dp.
+- `SmsPermissionScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo): los estados de la pantalla, los botones y el área táctil de 48 dp.
 - `SmsRoleInstrumentedTest.roleFirstThenPermissionsThenAnalysis` (dispositivo): sin rol el análisis está suspendido y
   la app pide primero el rol; al conceder el rol, Android concede los permisos, el análisis se activa y el clasificador
   analiza un mensaje.

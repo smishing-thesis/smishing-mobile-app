@@ -68,7 +68,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 
 - `SendSmsTest` (JVM, 10 pruebas): el número se normaliza y lo que no es número se rechaza; el texto vacío o en blanco no
   llega al enviador; el texto se envía como se escribió; los fallos del enviador se pasan.
-- `NewMessageScreenTest` (dispositivo, 5) y `MessagesScreensTest` (dispositivo, 4 nuevas): la pantalla "Nuevo mensaje", el
+- `NewMessageScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 5) y `MessagesScreensTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 4 nuevas): la pantalla "Nuevo mensaje", el
   botón que solo se activa con número y texto, el botón Escribir, la barra para escribir, "No se pudo enviar" y los errores.
 - `SmsRoleInstrumentedTest.thenAMessageIsSentToTheChosenRecipientAndAppearsInItsConversation` (dispositivo): **la prueba
   funcional**. Con el rol, por la interfaz: Escribir, número `5554` (el propio emulador), texto con acento, Enviar. Comprueba

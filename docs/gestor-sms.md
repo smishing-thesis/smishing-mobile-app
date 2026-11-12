@@ -67,7 +67,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 - `SmsRoleInstrumentedTest` (dispositivo): el sistema ofrece la solicitud del rol, y el flujo `roleFirstThenPermissionsThenAnalysis`
   comprueba que sin el rol la app pide primero el rol, que el sistema acepta a la app como gestor de SMS al concederlo
   con un comando de shell (como lo haría la persona) y que `MainActivity` lo nota al volver a la app.
-- `DefaultSmsRoleScreenTest` (dispositivo): los tres estados de la pantalla, los botones y el área táctil de 48 dp.
+- `DefaultSmsRoleScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo): los tres estados de la pantalla, los botones y el área táctil de 48 dp.
 
 > **Cambio con #3.** Esta historia tenía pruebas que concedían y **quitaban** el rol dentro de la prueba. Al declarar los
 > permisos de SMS (#3), quitar el rol los retira y Android mata el proceso de la app, que es el mismo en que corre la

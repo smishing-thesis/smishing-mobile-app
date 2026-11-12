@@ -58,7 +58,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
   cumplen las reglas, que los textos que admiten duda lo hacen ("Posible", "No podemos estar seguros", "no garantiza", "puede
   equivocarse") y que las razones no afirman una intención. También comprueba que las reglas **sí detectan** los textos malos (el
   mockup "Mensaje Peligroso", un porcentaje, "el modelo…", "es seguro"), para que el control no sea vacío.
-- `MessageDetailScreenTest` (dispositivo, 14): cada señal detectada aparece nombrada con la parte del mensaje que la motivó, y solo
+- `MessageDetailScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 14): cada señal detectada aparece nombrada con la parte del mensaje que la motivó, y solo
   las que se detectaron; el resumen de cada nivel; el nivel bajo no promete que sea seguro; y, para tres evaluaciones con puntajes
   0,97, 0,94 y 0,04, que **ningún texto en pantalla** muestra un puntaje ni incumple las reglas.
 - `SmsRoleInstrumentedTest.thenARiskyMessageAlertsAndTheAlertOpensItsDetailWithoutActivatingLinks` (dispositivo): **la prueba

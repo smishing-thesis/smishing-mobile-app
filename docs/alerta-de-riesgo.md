@@ -81,7 +81,7 @@ Con el emulador de API 29 abierto y `JAVA_HOME` en un JDK de 17 a 23 (ver [entor
 - `AnalyzeReceivedMessageTest` (JVM; antes `AlertOnRiskyMessageTest`): solo el nivel alto avisa; sin nivel no se avisa; el motivo es el primero en el orden del diseño y el
   enlace solo nunca lo es; la alerta no lleva el texto ni muestra el remitente en `toString`.
 - `ReceiveIncomingSmsTest` (JVM): un mensaje guardado devuelve su id y el mensaje; un duplicado o uno ignorado no, para no analizarlo dos veces.
-- `MessageDetailScreenTest` (dispositivo, 8): el nivel, el mensaje, los motivos y la recomendación; "Posible estafa" y no "Peligroso";
+- `MessageDetailScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (dispositivo, 8): el nivel, el mensaje, los motivos y la recomendación; "Posible estafa" y no "Peligroso";
   **el texto del mensaje no tiene acción de toque**; el medio solo por el modelo, el bajo, el no analizado, el mensaje que ya no está y volver.
 - `SmsRoleInstrumentedTest.thenARiskyMessageAlertsAndTheAlertOpensItsDetailWithoutActivatingLinks` (dispositivo): **la prueba
   funcional**. Entrega al receptor un SMS que el modelo marca como medio y otro de riesgo alto con enlace. Comprueba que **solo el de

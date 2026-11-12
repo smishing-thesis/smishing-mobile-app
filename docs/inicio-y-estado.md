@@ -59,8 +59,8 @@ No se agregó ningún permiso.
 - JVM (205 en total): `ProtectionStatusTest` (con los tres requisitos activa; faltando cualquiera no, y la nombra; enviar no cuenta;
   lo no comprobado cuenta como faltante) y `WeeklySummaryTest` (ventana de 7 días con su borde, lo futuro no cuenta, lo marcado como
   seguro no es posible estafa). Los textos nuevos entran en `ExplanationWordingTest`.
-- Dispositivo (171 en total, 1 omitida por diseño): `HomeScreenTest` (activa solo con todo; sin cada requisito no dice activa;
-  mientras se lee no afirma nada; sigue a los permisos; resumen), `WelcomeScreenTest` (no promete protección) y el flujo del rol de
+- Dispositivo (171 en total, 1 omitida por diseño): `HomeScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (activa solo con todo; sin cada requisito no dice activa;
+  mientras se lee no afirma nada; sigue a los permisos; resumen), `WelcomeScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (no promete protección) y el flujo del rol de
   `SmsRoleInstrumentedTest`, ahora con la bienvenida, el paso del rol, Inicio activo y el paso a Mensajes, con el rol real.
 - Mutación: quitar las notificaciones de los requisitos rompe 2 pruebas JVM, y mostrar "activa" sin comprobar rompe 7 del dispositivo
   (revertidas).
