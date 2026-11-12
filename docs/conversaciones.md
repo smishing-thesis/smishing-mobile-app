@@ -56,7 +56,7 @@ porque el color y el lado no lo transmiten. El botón de volver tiene su descrip
   onboarding, la lista de mensajes es la pantalla principal.
 - **El riesgo se ve en la lista y en la conversación (#60).** La fila de una conversación cuyo último mensaje es de riesgo alto o medio
   dice "Cuidado: Posible estafa" o "Cuidado: Sospechoso", y en la conversación cada mensaje recibido de riesgo alto o medio lleva arriba
-  un aviso de una línea ("Parece una estafa" en rojo o "Parece sospechoso" en ámbar) con "Ver riesgo", que abre el detalle de su análisis (con "atrás" se vuelve a la conversación). **No hay marca para riesgo bajo**
+  un aviso de una línea ("Parece una estafa" en rojo o "Parece sospechoso" en ámbar) con "Ver riesgo", que abre el detalle de su análisis (con "atrás" se vuelve a la conversación). **En la lista de mensajes no hay marca para riesgo bajo** (en la conversación sí: un aviso verde "Sin señales de riesgo")
   (que no haya marca no debe leerse como "es legítimo"), ni para un mensaje que la persona marcó como seguro, ni para uno sin análisis
   (los anteriores a la app, los muy cortos): en la conversación, uno recibido sin análisis dice "No analizado" con "Analizar" (#59; ver [historial.md](historial.md)). Sale del historial, con una sola lectura, y solo
   vale si el texto del mensaje coincide con el guardado.

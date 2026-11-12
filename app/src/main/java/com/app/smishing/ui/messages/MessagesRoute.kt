@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -45,7 +46,6 @@ import com.app.smishing.domain.history.AnalyzeStoredMessage
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.alerts.AnalysisOutcome
 import com.app.smishing.domain.history.isAnalyzed
-import com.app.smishing.domain.history.riskNotice
 import kotlinx.coroutines.CancellationException
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.data.history.RoomAnalysisHistory
@@ -157,6 +157,10 @@ fun MessagesRoute(
     var historyRecordId by rememberSaveable { mutableStateOf<Long?>(null) }
     var historyVersion by remember { mutableIntStateOf(0) }
     // El riesgo guardado de cada mensaje (#60), con una sola lectura; se vuelve a leer cuando el historial o las acciones cambian.
+    // La lista de conversaciones y su desplazamiento viven aquí, no dentro de la lista: al abrir una conversación la lista sale de la
+    // pantalla y, si guardara su propio estado, al volver empezaría de nuevo arriba y vacía.
+    var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
+    val conversationListState = rememberLazyListState()
     // `null` mientras se lee: así un mensaje no aparece "sin analizar" por un instante.
     var loadedRisks by remember { mutableStateOf<Map<Long, MessageRisk>?>(null) }
     LaunchedEffect(historyVersion) { loadedRisks = withContext(Dispatchers.IO) { history.risks() } }
@@ -308,7 +312,6 @@ fun MessagesRoute(
                     modifier = Modifier,
                 )
                 threadId == null -> {
-                    var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
                     LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
                     ConversationListScreen(
                         conversations = conversations,
@@ -324,6 +327,7 @@ fun MessagesRoute(
                         },
                         modifier = Modifier,
                         risks = risks,
+                        listState = conversationListState,
                     )
                 }
                 else -> {
@@ -359,7 +363,8 @@ fun MessagesRoute(
                                 loadedRisks == null -> StoredAnalysis.None
                                 attempt == StoredAnalysis.Analyzing -> StoredAnalysis.Analyzing
                                 isAnalyzed(risks, m.id, m.body) ->
-                                    if (attempt == StoredAnalysis.NoRisk && riskNotice(risks, m.id, m.body) == null) StoredAnalysis.NoRisk else StoredAnalysis.None
+                                    // Analizado y sin señales: siempre lo dice. Uno marcado como seguro por la persona tuvo riesgo, así que no.
+                                    if (risks[m.id]?.level == RiskLevel.Low) StoredAnalysis.NoRisk else StoredAnalysis.None
                                 attempt == StoredAnalysis.Failed -> StoredAnalysis.Failed
                                 assessor.canAssess(m.body) -> StoredAnalysis.CanAnalyze
                                 else -> StoredAnalysis.None
@@ -375,7 +380,7 @@ fun MessagesRoute(
                                 } catch (_: Exception) {
                                     false // sin registrar el motivo: el mensaje es privado y la excepción podría traerlo
                                 }
-                                attempts = attempts + (m.id to if (recorded) StoredAnalysis.NoRisk else StoredAnalysis.Failed)
+                                attempts = if (recorded) attempts - m.id else attempts + (m.id to StoredAnalysis.Failed)
                                 if (recorded) historyVersion++
                             }
                         },

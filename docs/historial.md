@@ -129,8 +129,9 @@ habría que leerlos todos). En su lugar, **dentro de la conversación**, cada me
 botón "Analizar". Al tocarlo se analiza ese mensaje y se guarda en el historial como cualquier otro (nivel, explicación y versiones),
 con la hora de recepción del mensaje; si es de riesgo alto o medio, la conversación y la lista de mensajes lo marcan (#60).
 
-La fila responde a lo que pasó: "Analizando…"; si el mensaje no tiene riesgo, un aviso verde "Sin señales de riesgo" con "Ver análisis" (solo
-en esa visita, porque un mensaje sin riesgo no lleva marca permanente); si falló (por ejemplo, el análisis está suspendido), "No se pudo
+La fila responde a lo que pasó: "Analizando…"; si el mensaje no tiene riesgo, un aviso verde "Sin señales de riesgo" con "Ver análisis", que **queda siempre**
+en la conversación para todo mensaje recibido analizado sin riesgo (así se distingue de uno que no se analizó; uno que la persona marcó
+como seguro no lo lleva, porque sí tuvo riesgo); si falló (por ejemplo, el análisis está suspendido), "No se pudo
 analizar. Inténtelo de nuevo." con "Analizar" otra vez. El fallo no se probó en el emulador: no se pudo provocar.
 
 Analizar uno antiguo **no avisa ni actúa**: no hay alerta, ni bloqueo, ni se retira nada. Un mensaje cuenta como analizado solo si hay un

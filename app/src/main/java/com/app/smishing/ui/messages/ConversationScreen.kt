@@ -53,7 +53,7 @@ enum class StoredAnalysis {
     /** "No se pudo analizar" con "Analizar" otra vez. */
     Failed,
 
-    /** Se acaba de analizar y no hay aviso (riesgo bajo): "Analizado: sin señales de riesgo" con "Ver análisis". */
+    /** Analizado y sin señales (riesgo bajo): el aviso verde "Sin señales de riesgo" con "Ver análisis". */
     NoRisk,
 }
 

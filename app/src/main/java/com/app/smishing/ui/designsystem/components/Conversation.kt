@@ -38,8 +38,9 @@ import com.app.smishing.ui.designsystem.theme.Status
 
 /**
  * Fila de la lista de conversaciones: remitente, hora, inicio del mensaje y, si hace falta, una advertencia
- * ([warning]) como "Cuidado: Posible estafa". Con [unreadCount] mayor que cero (#50) el remitente y el inicio del mensaje van en
- * negrita y aparece un contador; [unreadDescription] es lo que lee un lector de pantalla del contador ("2 sin leer").
+ * ([warning]) como "Cuidado: Posible estafa". El remitente va siempre en negrita y el inicio del
+ * mensaje siempre en texto normal. Con [unreadCount] mayor que cero (#50) aparece un contador azul, que es lo único que marca la
+ * conversación como no leída; [unreadDescription] es lo que lee un lector de pantalla del contador ("2 sin leer").
  */
 @Composable
 fun ConversationRow(
@@ -71,8 +72,8 @@ fun ConversationRow(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Sm)) {
                 Text(
                     snippet,
-                    style = if (unread) SmishingTypography.BodyMediumBold else SmishingTypography.BodyMedium,
-                    color = if (unread) SmishingPalette.TextPrimary else SmishingPalette.TextSecondary,
+                    style = SmishingTypography.BodyMedium,
+                    color = SmishingPalette.TextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
