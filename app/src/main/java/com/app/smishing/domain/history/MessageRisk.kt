@@ -27,3 +27,6 @@ fun riskNotice(risks: Map<Long, MessageRisk>, messageId: Long, body: String): Ri
     risks[messageId]
         ?.takeIf { it.body == body && !it.markedSafe && it.level != RiskLevel.Low }
         ?.level
+
+/** Si hay un análisis **de ese mensaje** (mismo id y mismo texto, por lo que se dijo arriba). Si no, el mensaje está sin analizar (#59). */
+fun isAnalyzed(risks: Map<Long, MessageRisk>, messageId: Long, body: String): Boolean = risks[messageId]?.body == body

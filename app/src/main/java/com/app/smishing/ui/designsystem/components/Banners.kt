@@ -62,6 +62,33 @@ fun AlertBanner(
     }
 }
 
+/**
+ * Aviso de una sola línea sobre un mensaje (#60): el estado con su color (rojo si es peligroso, ámbar si es sospechoso) y una acción como
+ * "Ver riesgo". Más chico que [AlertBanner] para no molestar dentro de una conversación.
+ */
+@Composable
+fun RiskNotice(
+    status: Status,
+    title: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = SmishingPalette.statusColors(status)
+    Row(
+        modifier = modifier
+            .background(colors.container, SmishingShapes.Lg)
+            .border(1.dp, colors.content, SmishingShapes.Lg)
+            .padding(start = Spacing.Sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.Xs),
+    ) {
+        Icon(statusIcon(status), contentDescription = null, tint = colors.onContainer, modifier = Modifier.size(18.dp))
+        Text(title, style = SmishingTypography.NoteBold, color = colors.onContainer)
+        LinkButton(actionLabel, onClick = onAction)
+    }
+}
+
 /** Encabezado grande con el estado de un análisis, por ejemplo "Mensaje Peligroso". */
 @Composable
 fun StatusBanner(status: Status, text: String, modifier: Modifier = Modifier) {

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,6 +49,8 @@ fun ConversationRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     warning: String? = null,
+    /** El estado de la advertencia, que fija su color: rojo si es peligroso, ámbar si es sospechoso. */
+    warningStatus: Status = Status.Suspicious,
     unreadCount: Int = 0,
     unreadDescription: String = "",
 ) {
@@ -89,9 +90,9 @@ fun ConversationRow(
                 }
             }
             if (warning != null) {
-                val colors = SmishingPalette.statusColors(Status.Suspicious)
+                val colors = SmishingPalette.statusColors(warningStatus)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
-                    Icon(Icons.Outlined.Warning, contentDescription = null, tint = colors.onContainer, modifier = Modifier.size(16.dp))
+                    Icon(statusIcon(warningStatus), contentDescription = null, tint = colors.onContainer, modifier = Modifier.size(16.dp))
                     Text(warning, style = SmishingTypography.NoteBold, color = colors.onContainer)
                 }
             }

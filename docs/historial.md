@@ -122,6 +122,21 @@ marca "Posible estafa" y "Sospechoso", como el diseño.
 mensaje nuevo podría coincidir con el id de un registro viejo y mostrar un análisis ajeno. El detalle de una alerta solo usa el
 registro si el texto del mensaje coincide.
 
+## Mensajes que ya estaban en el buzón (#59)
+
+El historial solo muestra lo analizado: no lista los mensajes sin analizar (con cientos de miles en el buzón sería inmanejable, y
+habría que leerlos todos). En su lugar, **dentro de la conversación**, cada mensaje recibido sin análisis dice "No analizado" con un
+botón "Analizar". Al tocarlo se analiza ese mensaje y se guarda en el historial como cualquier otro (nivel, explicación y versiones),
+con la hora de recepción del mensaje; si es de riesgo alto o medio, la conversación y la lista de mensajes lo marcan (#60).
+
+La fila responde a lo que pasó: "Analizando…"; si el mensaje no tiene riesgo, un aviso verde "Sin señales de riesgo" con "Ver análisis" (solo
+en esa visita, porque un mensaje sin riesgo no lleva marca permanente); si falló (por ejemplo, el análisis está suspendido), "No se pudo
+analizar. Inténtelo de nuevo." con "Analizar" otra vez. El fallo no se probó en el emulador: no se pudo provocar.
+
+Analizar uno antiguo **no avisa ni actúa**: no hay alerta, ni bloqueo, ni se retira nada. Un mensaje cuenta como analizado solo si hay un
+registro **de ese** mensaje (mismo id y mismo texto). Los muy cortos no tienen botón (el modelo no los puntúa). Hoy se analiza de a uno;
+analizar toda una conversación o toda la bandeja de una vez no está hecho.
+
 ## Lo que no cubre
 
 - **No hay forma de borrar el historial ni política de retención.** Crece sin límite, y borrar un mensaje en la app no borra su registro:
@@ -130,8 +145,8 @@ registro si el texto del mensaje coincide.
 - **La base no está cifrada.**
 - **La historia habla de "las acciones tomadas"**, pero las acciones (bloquear, retirar, marcar como seguro) son #13 a #16: el esquema
   todavía no tiene su tabla (llegará con una migración a la versión 2 de la base) y la pantalla no las muestra.
-- **Solo entran los mensajes que llegan con la app como predeterminada** y desde #12: no se analizan los que ya estaban en el buzón ni los
-  MMS, y los anteriores a esta versión no tienen registro.
+- **Solo entran los mensajes analizados**: los que llegan con la app como predeterminada y los que la persona analiza a mano (ver
+  abajo). Los que ya estaban en el buzón no se analizan solos, y los MMS están fuera de alcance.
 - **No tiene búsqueda** (el diseño la tiene) ni filtros.
 - **No se midió** el tamaño de la base con muchos mensajes ni el tiempo de guardar o de listar en un teléfono de gama baja, ni cuánto
   pesan Room y KSP en el APK.

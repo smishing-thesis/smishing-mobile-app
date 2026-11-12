@@ -12,6 +12,8 @@ class LocalMessageClassifier(
     private val modelInfo: ModelInfo,
 ) : MessageClassifier {
 
+    override fun accepts(message: String): Boolean = preprocessor.preprocess(message).classify
+
     override fun classify(message: String): ClassificationResult {
         val input = preprocessor.preprocess(message)
         if (!input.classify) {

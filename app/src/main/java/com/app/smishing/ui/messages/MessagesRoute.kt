@@ -41,7 +41,12 @@ import com.app.smishing.ui.designsystem.components.NavItem
 import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.history.AnalyzeStoredMessage
 import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.alerts.AnalysisOutcome
+import com.app.smishing.domain.history.isAnalyzed
+import com.app.smishing.domain.history.riskNotice
+import kotlinx.coroutines.CancellationException
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.data.history.RoomAnalysisHistory
 import com.app.smishing.data.history.HistoryDatabase
@@ -152,8 +157,14 @@ fun MessagesRoute(
     var historyRecordId by rememberSaveable { mutableStateOf<Long?>(null) }
     var historyVersion by remember { mutableIntStateOf(0) }
     // El riesgo guardado de cada mensaje (#60), con una sola lectura; se vuelve a leer cuando el historial o las acciones cambian.
-    var risks by remember { mutableStateOf<Map<Long, MessageRisk>>(emptyMap()) }
-    LaunchedEffect(historyVersion) { risks = withContext(Dispatchers.IO) { history.risks() } }
+    // `null` mientras se lee: así un mensaje no aparece "sin analizar" por un instante.
+    var loadedRisks by remember { mutableStateOf<Map<Long, MessageRisk>?>(null) }
+    LaunchedEffect(historyVersion) { loadedRisks = withContext(Dispatchers.IO) { history.risks() } }
+    val risks = loadedRisks.orEmpty()
+    // Lo que pasó al tocar "Analizar" en cada mensaje, para responderle a la persona (#59): evita guardar dos veces el mismo análisis,
+    // avisa si falló y dice que no hubo señales, porque un mensaje de riesgo bajo no lleva aviso.
+    var attempts by remember { mutableStateOf<Map<Long, StoredAnalysis>>(emptyMap()) }
+    val analyzer = remember(assessor, history) { AnalyzeStoredMessage(assessor, history) }
     DisposableEffect(history) {
         val subscription = history.onChange { historyVersion++ }
         onDispose { subscription.close() }
@@ -342,6 +353,32 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         onSeeRisk = { historyRecordId = it },
+                        analysis = { m ->
+                            val attempt = attempts[m.id]
+                            when {
+                                loadedRisks == null -> StoredAnalysis.None
+                                attempt == StoredAnalysis.Analyzing -> StoredAnalysis.Analyzing
+                                isAnalyzed(risks, m.id, m.body) ->
+                                    if (attempt == StoredAnalysis.NoRisk && riskNotice(risks, m.id, m.body) == null) StoredAnalysis.NoRisk else StoredAnalysis.None
+                                attempt == StoredAnalysis.Failed -> StoredAnalysis.Failed
+                                assessor.canAssess(m.body) -> StoredAnalysis.CanAnalyze
+                                else -> StoredAnalysis.None
+                            }
+                        },
+                        onAnalyze = { m ->
+                            attempts = attempts + (m.id to StoredAnalysis.Analyzing)
+                            scope.launch(Dispatchers.IO) {
+                                val recorded = try {
+                                    analyzer.analyze(m.id, openAddress, m.body, m.atMillis) == AnalysisOutcome.Recorded
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (_: Exception) {
+                                    false // sin registrar el motivo: el mensaje es privado y la excepción podría traerlo
+                                }
+                                attempts = attempts + (m.id to if (recorded) StoredAnalysis.NoRisk else StoredAnalysis.Failed)
+                                if (recorded) historyVersion++
+                            }
+                        },
                     )
                 }
             }

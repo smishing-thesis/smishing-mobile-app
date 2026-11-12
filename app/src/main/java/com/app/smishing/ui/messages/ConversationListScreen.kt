@@ -17,6 +17,7 @@ import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.risk.RiskLevel
+import com.app.smishing.ui.designsystem.theme.Status
 import com.app.smishing.domain.messaging.formatConversationDate
 import com.app.smishing.ui.designsystem.components.ConversationRow
 import com.app.smishing.ui.designsystem.components.SmishingExtendedFab
@@ -64,16 +65,18 @@ fun ConversationListScreen(
                 }
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(conversations, key = { it.threadId }) { conversation ->
+                        val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
                             sender = conversation.address,
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { onOpen(conversation) },
-                            warning = when (riskNotice(risks, conversation.lastMessageId, conversation.snippet)) {
+                            warning = when (notice) {
                                 RiskLevel.High -> stringResource(R.string.messages_warning_high)
                                 RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
                                 else -> null
                             },
+                            warningStatus = if (notice == RiskLevel.High) Status.Danger else Status.Suspicious,
                             unreadCount = conversation.unreadCount,
                             unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )

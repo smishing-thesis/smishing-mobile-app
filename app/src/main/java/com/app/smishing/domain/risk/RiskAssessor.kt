@@ -15,6 +15,9 @@ class RiskAssessor(
     private val signalDetector: SignalDetector,
 ) {
 
+    /** Si el modelo puede evaluar este texto (no es demasiado corto), sin evaluarlo. */
+    fun canAssess(message: String): Boolean = classifier.accepts(message)
+
     fun assess(message: String): RiskResult = when (val classification = classifier.classify(message)) {
         is ClassificationResult.NotClassified -> RiskResult.NotAssessed(classification.reason)
         is ClassificationResult.Classified ->

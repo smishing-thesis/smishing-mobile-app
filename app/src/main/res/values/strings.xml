@@ -36,10 +36,15 @@
     <string name="message_sent">Enviado</string>
     <string name="messages_warning_high">Cuidado: Posible estafa</string>
     <string name="messages_warning_medium">Cuidado: Sospechoso</string>
-    <string name="messages_notice_high">Este mensaje parece una estafa</string>
-    <string name="messages_notice_medium">Este mensaje parece sospechoso</string>
-    <string name="messages_notice_text">No abra el enlace ni comparta datos.</string>
+    <string name="messages_notice_high">Parece una estafa</string>
+    <string name="messages_notice_medium">Parece sospechoso</string>
     <string name="messages_notice_action">Ver riesgo</string>
+    <string name="messages_not_analyzed">No analizado</string>
+    <string name="messages_analyze">Analizar</string>
+    <string name="messages_analyzing">Analizando…</string>
+    <string name="messages_analysis_failed">No se pudo analizar. Inténtelo de nuevo.</string>
+    <string name="messages_analyzed_no_risk">Sin señales de riesgo</string>
+    <string name="messages_see_analysis">Ver análisis</string>
     <!-- Este texto no está en el diseño: revisar con quien lo diseñó. -->
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 
