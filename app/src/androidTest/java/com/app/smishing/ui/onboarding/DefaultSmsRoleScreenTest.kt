@@ -63,10 +63,10 @@ class DefaultSmsRoleScreenTest {
     }
 
     @Test
-    fun confirmsWhenTheAppHoldsTheRoleAndOffersNoRequest() {
+    fun withTheRoleHeldItOffersNoRequestAndKeepsTheMockupText() {
         show(SmsRoleState.Held)
 
-        compose.onNodeWithText(text(R.string.default_sms_held_message)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.default_sms_explanation_replace)).assertIsDisplayed()
         assertEquals(0, count(text(R.string.default_sms_action)))
         assertEquals(0, count(text(R.string.onboarding_skip)))
     }

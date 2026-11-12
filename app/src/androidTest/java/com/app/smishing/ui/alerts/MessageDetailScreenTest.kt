@@ -94,23 +94,26 @@ class MessageDetailScreenTest {
     }
 
     @Test
-    fun theSummaryTellsWhatIsKnownAndWhatIsNotAtEveryLevel() {
+    fun theDisclaimerAdmitsTheAnalysisCanBeWrong() {
         show(MessageDetailState.Loaded(body, assessed(true, SignalType.Urgency)))
-        compose.onNodeWithText(text(R.string.detail_summary_high)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.detail_banner_high)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.detail_disclaimer)).assertIsDisplayed()
+        assertTrue(text(R.string.detail_disclaimer).contains("puede equivocarse"))
+    }
+
+    @Test
+    fun theMediumLevelShowsItsOwnBannerAndTheDisclaimer() {
+        show(MessageDetailState.Loaded(body, assessed(true)))
+        compose.onNodeWithText(text(R.string.detail_banner_medium)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.detail_disclaimer)).assertIsDisplayed()
     }
 
     @Test
-    fun theMediumAndLowSummariesAdmitDoubtToo() {
-        show(MessageDetailState.Loaded(body, assessed(true)))
-        compose.onNodeWithText(text(R.string.detail_summary_medium)).assertIsDisplayed()
-    }
-
-    @Test
-    fun aLowRiskSummaryDoesNotPromiseTheMessageIsSafe() {
+    fun aLowRiskMessageDoesNotClaimToBeSafeAndKeepsTheDisclaimer() {
         show(MessageDetailState.Loaded(body, assessed(false)))
-        compose.onNodeWithText(text(R.string.detail_summary_low)).assertIsDisplayed()
-        assertTrue(text(R.string.detail_summary_low).contains("no garantiza"))
+        compose.onNodeWithText(text(R.string.detail_banner_low)).assertIsDisplayed()
+        assertTrue("No debe decir que es seguro", !text(R.string.detail_banner_low).contains("seguro", ignoreCase = true))
+        compose.onNodeWithText(text(R.string.detail_disclaimer)).assertIsDisplayed()
     }
 
     @Test

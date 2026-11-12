@@ -109,26 +109,34 @@ class SettingsScreenTest {
     fun withEverythingGrantedItShowsTheStatesAndNoExplanation() {
         show()
         val labels = listOf(
-            R.string.settings_permission_default_sms, R.string.settings_permission_read_sms,
-            R.string.settings_permission_send_sms, R.string.settings_permission_notifications,
+            R.string.settings_permission_default_sms, R.string.settings_permission_read_sms, R.string.settings_permission_notifications,
         )
         for (label in labels) assertEquals(text(R.string.settings_state_granted), stateOf(text(label)))
         assertEquals(0, count(text(R.string.settings_open_system)))
-        assertEquals(0, count(text(R.string.settings_mode_note_role)))
+    }
+
+    @Test
+    fun itShowsTheMockupPermissionsAndTheNotificationsButNotSending() {
+        show()
+        compose.onNodeWithText(text(R.string.settings_permission_default_sms)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.settings_permission_read_sms)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.settings_permission_notifications)).assertIsDisplayed()
+        // Enviar mensajes no es un requisito de la protección y no está en el mockup.
+        assertEquals(0, compose.onAllNodesWithText("enviar mensajes", substring = true, ignoreCase = true).fetchSemanticsNodes().size)
     }
 
     @Test
     fun aDeniedPermissionSaysWhatStopsWorkingAndOffersTheSystemSettings() {
-        permissions = allBut(AppPermission.SendSms)
+        permissions = allBut(AppPermission.ReadSms)
         show()
 
-        assertEquals(text(R.string.settings_state_denied), stateOf(text(R.string.settings_permission_send_sms)))
-        assertEquals(text(R.string.settings_state_granted), stateOf(text(R.string.settings_permission_read_sms)))
-        compose.onNodeWithText(text(R.string.settings_limited_send_sms)).assertIsDisplayed()
+        assertEquals(text(R.string.settings_state_denied), stateOf(text(R.string.settings_permission_read_sms)))
+        assertEquals(text(R.string.settings_state_granted), stateOf(text(R.string.settings_permission_notifications)))
+        compose.onNodeWithText(text(R.string.settings_limited_read_sms)).assertIsDisplayed()
         assertEquals(1, count(text(R.string.settings_open_system)))
 
         compose.onNodeWithText(text(R.string.settings_open_system)).performClick()
-        assertEquals(listOf(AppPermission.SendSms), opened)
+        assertEquals(listOf(AppPermission.ReadSms), opened)
     }
 
     @Test
@@ -136,22 +144,14 @@ class SettingsScreenTest {
         val expected = mapOf(
             AppPermission.DefaultSmsApp to R.string.settings_limited_default_sms,
             AppPermission.ReadSms to R.string.settings_limited_read_sms,
-            AppPermission.SendSms to R.string.settings_limited_send_sms,
             AppPermission.Notifications to R.string.settings_limited_notifications,
         )
         permissions = all(false)
         show()
         for ((_, explanation) in expected) assertEquals(1, count(text(explanation)))
-        assertEquals(4, count(text(R.string.settings_open_system)))
-        // Las cuatro explicaciones son distintas.
-        assertEquals(4, expected.values.map { text(it) }.toSet().size)
-    }
-
-    @Test
-    fun withoutTheDefaultSmsRoleItWarnsTheModeCannotActOnMessages() {
-        permissions = allBut(AppPermission.DefaultSmsApp)
-        show()
-        compose.onNodeWithText(text(R.string.settings_mode_note_role)).assertIsDisplayed()
+        assertEquals(3, count(text(R.string.settings_open_system)))
+        // Las tres explicaciones son distintas.
+        assertEquals(3, expected.values.map { text(it) }.toSet().size)
     }
 
     @Test

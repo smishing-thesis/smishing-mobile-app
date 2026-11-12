@@ -245,6 +245,11 @@ fun MessagesRoute(
                             onBlock = { act { mitigation.perform(it, ActionType.BlockSender) } },
                             onRemove = { act { mitigation.perform(it, ActionType.RemoveMessage) } },
                             onMarkSafe = { act { mitigation.markSafe(it) } },
+                            onOpenSettings = {
+                                detailMessageId = null
+                                historyRecordId = null
+                                tab = 3
+                            },
                         ),
                     )
                 }
@@ -368,7 +373,8 @@ private fun loadDetail(
         record != null -> {
             val level = record.assessment.level
             val canAct = level == RiskLevel.High && runCatching { settings.mode() != MitigationMode.Disabled }.getOrDefault(false)
-            val protection = Protection(record.markedSafeAtMillis != null, actionLog.actionsOf(record.id).latest(), canAct)
+            val automatic = runCatching { settings.mode() == MitigationMode.Automatic }.getOrDefault(false)
+            val protection = Protection(record.markedSafeAtMillis != null, actionLog.actionsOf(record.id).latest(), canAct, automatic)
             MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment), protection) to record
         }
         message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body)) to null

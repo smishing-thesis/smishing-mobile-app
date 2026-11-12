@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -261,7 +262,12 @@ class SmsRoleInstrumentedTest {
                 compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_title)) > 0 && count(sender) > 0 }
                 val arriving = "Mensaje nuevo con la lista abierta."
                 deliver(SENDER_E, arriving)
-                compose.waitUntil(TIMEOUT_MS) { count(arriving) > 0 }
+                // Con muchas conversaciones en el teléfono la lista queda desplazada y la nueva, que va arriba, puede quedar fuera de
+                // pantalla (como en cualquier lista): se vuelve al principio para verla.
+                compose.waitUntil(TIMEOUT_MS) {
+                    compose.onNode(androidx.compose.ui.test.hasScrollAction()).performScrollToIndex(0)
+                    count(arriving) > 0
+                }
                 compose.onNodeWithText("+$SENDER_E").assertIsDisplayed()
             }
         } finally {
@@ -484,9 +490,9 @@ class SmsRoleInstrumentedTest {
                 compose.onNodeWithText(context.getString(reason)).assertIsDisplayed()
                 compose.onNodeWithText(context.getString(R.string.detail_found_in_message, fragment)).assertIsDisplayed()
             }
-            compose.onNodeWithText(context.getString(R.string.detail_summary_high)).assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_disclaimer)).assertIsDisplayed()
-            val shown = visibleTexts().filter { it != risky }
+            // "Este mensaje es seguro" es lo que diría la persona (mockup), no una afirmación de la app: no entra en la regla de certeza.
+            val shown = visibleTexts().filter { it != risky && it != context.getString(R.string.detail_button_mark_safe) }
             assertTrue("Debía haber textos en pantalla", shown.size > 8)
             for (text in shown) {
                 assertEquals(text, emptyList<String>(), PlainLanguage.violations(text))
@@ -827,6 +833,9 @@ class SmsRoleInstrumentedTest {
 
             // "Marcar como seguro" deshace las dos acciones.
             compose.onNodeWithText(context.getString(R.string.detail_button_mark_safe)).performScrollTo().performClick()
+            // Se confirma antes de deshacer nada.
+            compose.onNodeWithText(context.getString(R.string.detail_confirm_title)).assertIsDisplayed()
+            compose.onNodeWithText(context.getString(R.string.detail_confirm_yes)).performClick()
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_marked_safe_title)) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_reverted_label).uppercase()).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_reverted_block)).performScrollTo().assertIsDisplayed()

@@ -80,10 +80,10 @@ class SmsPermissionScreenTest {
     }
 
     @Test
-    fun confirmsWhenThePermissionIsGrantedAndOffersNoRequest() {
+    fun withThePermissionGrantedItOffersNoRequestAndKeepsTheMockupText() {
         show(SmsPermissionState.Granted)
 
-        compose.onNodeWithText(text(R.string.sms_permission_held_message)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.sms_permission_explanation_read)).assertIsDisplayed()
         assertEquals(0, count(text(R.string.sms_permission_action)))
         assertEquals(0, count(text(R.string.onboarding_skip_short)))
     }

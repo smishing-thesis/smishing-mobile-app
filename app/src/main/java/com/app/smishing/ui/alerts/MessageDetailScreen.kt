@@ -16,6 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -29,6 +33,7 @@ import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.signals.SignalType
 import com.app.smishing.ui.designsystem.components.ActionDoneRow
+import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.ui.designsystem.components.InfoPanel
 import com.app.smishing.ui.designsystem.components.PrimaryButton
 import com.app.smishing.ui.designsystem.components.SecondaryButton
@@ -63,6 +68,8 @@ data class Protection(
     val markedSafe: Boolean,
     val actions: Map<ActionType, MitigationAction>,
     val canAct: Boolean,
+    /** El modo de mitigación es el automático: tras revertir, el detalle ofrece pasar a "Preguntarme antes de actuar". */
+    val automatic: Boolean = false,
 )
 
 /** Lo que la persona puede pedir desde el detalle. */
@@ -70,6 +77,7 @@ data class DetailActions(
     val onBlock: () -> Unit = {},
     val onRemove: () -> Unit = {},
     val onMarkSafe: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
 )
 
 /**
@@ -127,12 +135,8 @@ private fun Loaded(state: MessageDetailState.Loaded, actions: DetailActions) {
             MarkedSafe(state, state.protection, actions)
         } else {
             val assessment = result.assessment
+            var confirming by remember { mutableStateOf(false) }
             StatusBanner(statusOf(assessment.level), stringResource(bannerText(assessment.level)))
-            Text(
-                stringResource(summaryText(assessment.level)),
-                style = SmishingTypography.BodyMedium,
-                color = SmishingPalette.TextPrimary,
-            )
             Original(state.body)
             SectionLabel(stringResource(R.string.detail_why_label))
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.Sm)) { Reasons(assessment) }
@@ -141,10 +145,31 @@ private fun Loaded(state: MessageDetailState.Loaded, actions: DetailActions) {
                 style = SmishingTypography.Note,
                 color = SmishingPalette.TextSecondary,
             )
+            state.protection?.let { ActionsSection(it, actions) }
             if (assessment.level != RiskLevel.Low) {
                 InfoPanel(stringResource(R.string.detail_recommendation_title), stringResource(R.string.detail_recommendation))
             }
-            state.protection?.let { ProtectionSection(it, assessment.level, actions) }
+            if (state.protection != null && assessment.level != RiskLevel.Low) {
+                SecondaryButton(
+                    stringResource(R.string.detail_button_mark_safe),
+                    onClick = { confirming = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (confirming) {
+                // "¿Está seguro?": marcar como seguro desbloquea al número y devuelve el mensaje, así que se confirma antes.
+                ConfirmDialog(
+                    title = stringResource(R.string.detail_confirm_title),
+                    message = stringResource(R.string.detail_confirm_text),
+                    confirmLabel = stringResource(R.string.detail_confirm_yes),
+                    onConfirm = {
+                        confirming = false
+                        actions.onMarkSafe()
+                    },
+                    dismissLabel = stringResource(R.string.detail_confirm_cancel),
+                    onDismiss = { confirming = false },
+                )
+            }
         }
     }
 }
@@ -187,12 +212,6 @@ private fun bannerText(level: RiskLevel) = when (level) {
     RiskLevel.Low -> R.string.detail_banner_low
 }
 
-private fun summaryText(level: RiskLevel) = when (level) {
-    RiskLevel.High -> R.string.detail_summary_high
-    RiskLevel.Medium -> R.string.detail_summary_medium
-    RiskLevel.Low -> R.string.detail_summary_low
-}
-
 private fun reasonText(type: SignalType) = when (type) {
     SignalType.Urgency -> R.string.detail_reason_urgency
     SignalType.Impersonation -> R.string.detail_reason_impersonation
@@ -222,12 +241,17 @@ private fun MarkedSafe(state: MessageDetailState.Loaded, protection: Protection,
             for (action in stuck) ActionIssueRow(stringResource(revertFailedText(action.type)), null)
         }
     }
+    if (protection.automatic) {
+        // El diseño de "acciones revertidas": se sugiere el modo en que siempre se pide consentimiento.
+        InfoPanel(stringResource(R.string.detail_decide_title), stringResource(R.string.detail_decide_text), uppercaseTitle = false)
+        PrimaryButton(stringResource(R.string.detail_go_settings), onClick = actions.onOpenSettings, modifier = Modifier.fillMaxWidth())
+    }
     ActionButtons(protection, actions)
 }
 
-/** Las acciones tomadas, los botones para tomar las que faltan y "Marcar como seguro". */
+/** Las acciones tomadas y, debajo, los botones para tomar las que faltan (con el título "Acciones" si todavía no se tomó ninguna). */
 @Composable
-private fun ProtectionSection(protection: Protection, level: RiskLevel, actions: DetailActions) {
+private fun ActionsSection(protection: Protection, actions: DetailActions) {
     if (protection.actions.isNotEmpty()) {
         SectionLabel(stringResource(R.string.detail_actions_label))
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
@@ -246,22 +270,17 @@ private fun ProtectionSection(protection: Protection, level: RiskLevel, actions:
             }
         }
     }
+    if (protection.canAct && protection.actions.isEmpty()) SectionLabel(stringResource(R.string.detail_actions_manual_label))
     ActionButtons(protection, actions)
-    if (level != RiskLevel.Low) {
-        SecondaryButton(
-            stringResource(R.string.detail_button_mark_safe),
-            onClick = actions.onMarkSafe,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
 }
 
-/** "Bloquear número" y "Quitar el mensaje", solo las que faltan y solo si la configuración permite actuar. */
+/** "Bloquear este número" y "Borrar mensaje", solo las que faltan y solo si la configuración permite actuar. */
 @Composable
 private fun ActionButtons(protection: Protection, actions: DetailActions) {
     if (!protection.canAct) return
     fun pending(type: ActionType) = protection.actions[type]?.status != ActionStatus.Completed
     if (pending(ActionType.BlockSender)) {
+        // El mockup pone los dos con el mismo peso visual: el principal y el secundario.
         PrimaryButton(stringResource(R.string.detail_button_block), onClick = actions.onBlock, modifier = Modifier.fillMaxWidth())
     }
     if (pending(ActionType.RemoveMessage)) {

@@ -10,8 +10,6 @@
     <string name="default_sms_explanation_safe">Es un paso seguro y necesario para activar la protección en tiempo real.</string>
     <string name="default_sms_action">Usar como aplicación por defecto</string>
     <!-- Los dos siguientes no están en el diseño de Figma: pendientes de revisar con quien lo diseñó. -->
-    <string name="default_sms_held">Aplicación de mensajería principal</string>
-    <string name="default_sms_held_message">Esta aplicación ya es su aplicación de mensajería principal.</string>
     <string name="default_sms_unavailable">Su teléfono no permite elegir esta aplicación como su aplicación de mensajería principal.</string>
 
     <!-- Onboarding, paso 3: permiso de lectura (#3) -->
@@ -19,17 +17,15 @@
     <string name="onboarding_skip_short">Omitir</string>
     <string name="sms_permission_title">Permiso de lectura</string>
     <string name="sms_permission_explanation_read">Necesitamos su permiso para leer los mensajes de texto que recibe.</string>
-    <string name="sms_permission_explanation_privacy">Solo analizamos el contenido buscando enlaces sospechosos o estafas conocidas. Su privacidad está garantizada.</string>
+    <string name="sms_permission_explanation_privacy">Solo analizamos el contenido buscando enlaces sospechosos o estafas conocidas. Todo el análisis se hace en su teléfono.</string>
     <string name="sms_permission_action">Permitir</string>
-    <string name="sms_permission_held">Permiso para leer mensajes</string>
     <!-- Los tres siguientes no están en el diseño de Figma: pendientes de revisar con quien lo diseñó. -->
-    <string name="sms_permission_held_message">Esta aplicación ya puede leer y analizar sus mensajes.</string>
     <string name="sms_permission_blocked_message">Android ya no puede mostrar la solicitud. Puede activar el permiso en los ajustes de la aplicación.</string>
     <string name="sms_permission_open_settings">Abrir ajustes</string>
 
     <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
     <string name="protection_off_title">Protección apagada</string>
-    <string name="protection_off_message">Falta algo para que la protección funcione. Revise lo que se indica abajo.</string>
+    <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
     <string name="protection_activate">Activar protección</string>
 
     <!-- Conversaciones (#5) -->
@@ -68,9 +64,9 @@
     <string name="alert_public_text">Abra la aplicación para ver el detalle.</string>
     <string name="alert_view_details">Ver detalles</string>
     <!-- Motivo corto de la notificación (#10, #11): describe lo que dice el mensaje, no afirma lo que es. -->
-    <string name="alert_reason_urgency">Le mete prisa para que actúe</string>
+    <string name="alert_reason_urgency">Le pide actuar con urgencia</string>
     <string name="alert_reason_impersonation">Dice ser de una entidad conocida</string>
-    <string name="alert_reason_data_request">Le pide datos personales o claves</string>
+    <string name="alert_reason_data_request">Le pide sus datos o claves</string>
 
     <!-- Detalle del análisis (#10). Los textos de los niveles y de "sin señales" no están en el diseño: revisar con quien lo diseñó. -->
     <string name="detail_title">Detalle del análisis</string>
@@ -78,15 +74,12 @@
     <string name="detail_banner_medium">Mensaje sospechoso</string>
     <string name="detail_banner_low">Sin señales de riesgo</string>
     <!-- Resumen en lenguaje claro (#11): dice lo que se sabe y lo que no, sin presentar la sospecha como certeza. -->
-    <string name="detail_summary_high">Este mensaje tiene señales de las estafas por SMS. No podemos estar seguros de que lo sea, pero conviene tratarlo con mucho cuidado.</string>
-    <string name="detail_summary_medium">Algo en este mensaje nos hace dudar, pero no estamos seguros. Revíselo con cuidado antes de abrir enlaces o responder.</string>
-    <string name="detail_summary_low">No encontramos señales de estafa en este mensaje. Eso no garantiza que sea de fiar: si algo le parece raro, desconfíe.</string>
     <string name="detail_original_label">Mensaje original</string>
-    <string name="detail_why_label">Qué encontramos</string>
-    <string name="detail_reason_urgency">Le mete prisa para que actúe sin pensar</string>
-    <string name="detail_reason_impersonation">Nombra a una entidad conocida, pero el enlace no es el suyo o le pide datos</string>
-    <string name="detail_reason_link">Trae un enlace: no lo abra si no está seguro</string>
-    <string name="detail_reason_data_request">Le pide datos personales o claves</string>
+    <string name="detail_why_label">¿Por qué podría ser riesgoso?</string>
+    <string name="detail_reason_urgency">Le pide actuar con urgencia</string>
+    <string name="detail_reason_impersonation">Dice ser de una entidad</string>
+    <string name="detail_reason_link">Contiene un enlace</string>
+    <string name="detail_reason_data_request">Le pide sus datos o claves</string>
     <string name="detail_found_in_message">En el mensaje: «%1$s»</string>
     <string name="detail_model_only">Nuestro análisis automático lo ve sospechoso, aunque no encontramos nada concreto que señalar.</string>
     <string name="detail_no_signals">No encontramos señales concretas.</string>
@@ -94,9 +87,10 @@
     <string name="detail_not_assessed_title">Análisis</string>
     <string name="detail_not_assessed">No pudimos analizar este mensaje: es muy corto o el análisis está apagado.</string>
     <string name="detail_recommendation_title">Recomendación</string>
-    <string name="detail_recommendation">No abra enlaces ni responda con sus datos. Si tiene dudas, llame a la entidad a un número que ya conozca.</string>
+    <string name="detail_recommendation">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
     <string name="detail_actions_label">Acciones realizadas</string>
+    <string name="detail_actions_manual_label">Acciones</string>
     <string name="detail_action_block_done">Bloqueamos este número</string>
     <string name="detail_action_block_already">Este número ya estaba bloqueado antes</string>
     <string name="detail_action_remove_done">Quitamos el mensaje de su bandeja</string>
@@ -110,15 +104,22 @@
     <string name="detail_failure_error">Ocurrió un error.</string>
     <string name="detail_revert_failed_block">No pudimos desbloquear este número</string>
     <string name="detail_revert_failed_remove">No pudimos devolver el mensaje a su bandeja</string>
-    <string name="detail_button_block">Bloquear número</string>
-    <string name="detail_button_remove">Quitar el mensaje de la bandeja</string>
-    <string name="detail_button_mark_safe">Marcar como seguro</string>
+    <string name="detail_button_block">Bloquear este número</string>
+    <string name="detail_button_remove">Borrar mensaje</string>
+    <string name="detail_button_mark_safe">Este mensaje es seguro</string>
     <string name="detail_marked_safe_title">Marcado como seguro</string>
-    <string name="detail_marked_safe_text">Usted indicó que confía en este mensaje.</string>
+    <string name="detail_marked_safe_text">Lo marcó usted manualmente.</string>
     <string name="detail_reverted_label">Acciones revertidas</string>
     <string name="detail_reverted_block">Número desbloqueado</string>
     <string name="detail_reverted_block_already">El número ya estaba bloqueado antes y se dejó como estaba</string>
     <string name="detail_reverted_remove">Mensaje restaurado a su bandeja</string>
+    <string name="detail_confirm_title">¿Está seguro?</string>
+    <string name="detail_confirm_text">Si marca este mensaje como seguro, desbloqueará al número y devolverá el mensaje a su buzón.</string>
+    <string name="detail_confirm_cancel">Cancelar</string>
+    <string name="detail_confirm_yes">Sí, es seguro</string>
+    <string name="detail_decide_title">¿Prefiere decidir antes de actuar?</string>
+    <string name="detail_decide_text">En Ajustes, seleccione «Preguntarme antes de actuar» para que siempre se solicite su consentimiento antes de bloquear un número o borrar un mensaje. Sus ajustes siguen en modo automático.</string>
+    <string name="detail_go_settings">Ir a Ajustes</string>
 
     <!-- Historial (#12). Los textos de la marca de estado no son los del diseño ("Peligroso", "Seguro"): afirman menos. -->
     <string name="history_title">Historial</string>
@@ -137,18 +138,17 @@
 
     <!-- Ajustes (#13, #25, #31). Los textos de los modos son los del diseño; el título de la sección y los textos de los permisos no. -->
     <string name="welcome_title">¡Bienvenido!</string>
-    <string name="welcome_body_one">Esta aplicación revisa sus mensajes de texto cuando llegan, para ayudarle a detectar estafas.</string>
-    <string name="welcome_body_two">Le avisaremos si un mensaje tiene señales de estafa. El análisis se hace en su teléfono, sin internet.</string>
+    <string name="welcome_body_one">Esta aplicación revisa sus mensajes de texto entrantes para protegerlo.</string>
+    <string name="welcome_body_two">Le advertiremos inmediatamente si detectamos un intento de estafa.</string>
     <string name="welcome_next">Siguiente</string>
     <string name="home_status_active">Activo</string>
     <string name="home_status_inactive">Inactivo</string>
     <string name="home_active_title">Protección activa</string>
     <string name="home_active_message">La aplicación está revisando sus mensajes en este momento.</string>
-    <string name="home_requirements_title">Lo que necesita la protección</string>
     <string name="home_summary_title">Resumen de la semana</string>
     <string name="home_summary_reviewed">Mensajes revisados:</string>
-    <string name="home_summary_scams">Con posible estafa:</string>
-    <string name="home_summary_note">Últimos 7 días, de lo que se revisó en este teléfono.</string>
+    <string name="home_summary_scams">Posibles estafas:</string>
+    <string name="home_summary_scams_value">%1$d detectadas</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_mode_title">Cuando llegue un mensaje con posible estafa</string>
     <string name="settings_mode_automatic_title">Protegerme automáticamente</string>
@@ -157,15 +157,12 @@
     <string name="settings_mode_ask_description">Le mostraremos las opciones para que usted decida</string>
     <string name="settings_mode_disabled_title">Solo avisarme</string>
     <string name="settings_mode_disabled_description">Le avisaremos pero no tomaremos ninguna acción</string>
-    <string name="settings_mode_note_role">Para actuar sobre sus mensajes, la aplicación debe ser la de mensajería principal.</string>
     <string name="settings_permissions_title">Permisos</string>
     <string name="settings_permission_default_sms">Aplicación de mensajería principal</string>
     <string name="settings_permission_read_sms">Permiso para leer mensajes</string>
-    <string name="settings_permission_send_sms">Permiso para enviar mensajes</string>
     <string name="settings_permission_notifications">Notificaciones</string>
     <string name="settings_limited_default_sms">Sin esto, la aplicación no recibe ni guarda sus mensajes, y no puede analizarlos.</string>
     <string name="settings_limited_read_sms">Sin este permiso, la aplicación no puede leer ni analizar los mensajes que llegan.</string>
-    <string name="settings_limited_send_sms">Sin este permiso, no puede enviar mensajes desde la aplicación.</string>
     <string name="settings_limited_notifications">Sin este permiso, no podemos avisarle de un mensaje con posible estafa.</string>
     <string name="settings_open_system">Abrir ajustes</string>
     <string name="settings_state_granted">Concedido</string>

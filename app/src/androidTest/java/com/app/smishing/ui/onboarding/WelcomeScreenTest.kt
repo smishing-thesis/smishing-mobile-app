@@ -45,13 +45,11 @@ class WelcomeScreenTest {
     }
 
     @Test
-    fun theTextsDoNotPromiseTotalProtectionAndKeepTheLanguageRules() {
+    fun theTextsAreTheMockupOnesAndKeepTheLanguageRules() {
         for (id in listOf(R.string.welcome_title, R.string.welcome_body_one, R.string.welcome_body_two, R.string.welcome_next)) {
             assertEquals(text(id), emptyList<String>(), PlainLanguage.violations(text(id)))
         }
-        val body = text(R.string.welcome_body_one) + text(R.string.welcome_body_two)
-        for (promise in listOf("proteg", "inmediatamente", "garantiz")) {
-            assertEquals("No debe prometer: $promise", false, body.contains(promise, ignoreCase = true))
-        }
+        assertEquals("Esta aplicación revisa sus mensajes de texto entrantes para protegerlo.", text(R.string.welcome_body_one))
+        assertEquals("Le advertiremos inmediatamente si detectamos un intento de estafa.", text(R.string.welcome_body_two))
     }
 }

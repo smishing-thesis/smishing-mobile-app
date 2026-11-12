@@ -33,16 +33,16 @@ Quien ejecuta la decisión es un `Mitigator`. Con `Act` bloquea al remitente y r
 Cuarta pestaña de la barra inferior (tras Inicio, Mensajes e Historial), "Ajustes" (solo cuando la app ya tiene el rol y los permisos de SMS):
 
 - **Modo:** las tres opciones con su explicación; la actual aparece seleccionada y al elegir otra se guarda en el acto.
-- **Permisos (#25):** para cada uno, concedido o no (también dicho a los lectores de pantalla). Si no está concedido, la pantalla
-  dice **qué función queda limitada** y ofrece "Abrir ajustes", que lleva a donde se cambia.
-- Si la app **no es la de mensajería principal**, avisa que no podrá actuar sobre los mensajes, sea cual sea el modo.
+- **Permisos (#25):** la aplicación de mensajería principal y el permiso de lectura, como en el mockup, más **Notificaciones** (también
+  son un requisito de la protección). Cada uno, concedido o no (también dicho a los lectores de pantalla). Si no está concedido, la
+  pantalla dice **qué función queda limitada** y ofrece "Abrir ajustes", que lleva a donde se cambia. Enviar mensajes no se muestra (#61).
 - El estado de los permisos se **vuelve a leer cada vez que la persona regresa a la app**, para no mostrar un estado viejo.
 
 | Permiso | Si falta | "Abrir ajustes" lleva a |
 |---|---|---|
 | Aplicación de mensajería principal | no se reciben ni se guardan los mensajes, y no se analizan | aplicaciones predeterminadas |
 | Leer y recibir mensajes | no se leen ni analizan los mensajes que llegan | detalles de la app |
-| Enviar mensajes | no se pueden enviar mensajes | detalles de la app |
+| Enviar mensajes (ya no se muestra en Ajustes) | no se pueden enviar mensajes | detalles de la app |
 | Notificaciones | no se avisa de un mensaje con posible estafa | ajustes de notificaciones de la app |
 
 No se pide ningún permiso nuevo. **Falta "Compartir reportes de estafas"** (el aporte al corpus, fase 2: #18, #26, #27), por eso

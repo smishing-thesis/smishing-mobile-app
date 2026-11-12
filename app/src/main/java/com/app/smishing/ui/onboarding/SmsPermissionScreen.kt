@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.sms.SmsPermissionState
 import com.app.smishing.ui.designsystem.components.OnboardingStepLayout
-import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 
@@ -45,10 +44,6 @@ fun SmsPermissionScreen(
         onSkip = if (granted) null else onSkip,
     ) {
         when {
-            granted -> {
-                PermissionRow(stringResource(R.string.sms_permission_held), granted = true)
-                Body(stringResource(R.string.sms_permission_held_message))
-            }
             blocked -> Body(stringResource(R.string.sms_permission_blocked_message))
             else -> {
                 Body(stringResource(R.string.sms_permission_explanation_read))

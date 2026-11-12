@@ -38,8 +38,8 @@ import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
 
 /**
- * "Inicio" (#17), con el diseño: si la protección está activa, lo que necesita (rol, permisos y notificaciones, cada uno con su
- * estado) y el resumen de la semana.
+ * "Inicio" (#17), con el diseño: si la protección está activa y el resumen de la semana. Qué falta (rol, permisos, notificaciones)
+ * se ve en Ajustes, en "Permisos".
  *
  * **Solo dice "Protección activa" si se cumplen todos los requisitos** ([ProtectionStatus.active]); si falta alguno, dice "Protección
  * apagada", cuál falta y ofrece [onActivate]. [statuses] es `null` mientras se leen; mientras tanto no se afirma nada. El resumen
@@ -73,7 +73,6 @@ fun HomeScreen(
                 onAction = onActivate,
             )
         }
-        if (statuses != null) Requirements(statuses)
         Summary(summary, dimmed = protection?.active != true)
     }
 }
@@ -102,36 +101,14 @@ private fun Header(protection: ProtectionStatus?) {
     }
 }
 
-/** Los requisitos de la protección, cada uno con su estado: lo que se ve aquí es lo que se comprueba para decir "activa". */
-@Composable
-private fun Requirements(statuses: List<PermissionStatus>) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
-        SectionLabel(stringResource(R.string.home_requirements_title))
-        val granted = stringResource(R.string.settings_state_granted)
-        val denied = stringResource(R.string.settings_state_denied)
-        for (permission in ProtectionStatus.REQUIRED) {
-            val ok = statuses.any { it.permission == permission && it.granted }
-            PermissionRow(
-                label = stringResource(labelOf(permission)),
-                granted = ok,
-                modifier = Modifier.semantics { stateDescription = if (ok) granted else denied },
-            )
-        }
-    }
-}
-
 @Composable
 private fun Summary(summary: WeeklySummary?, dimmed: Boolean) {
     SummaryCard(title = stringResource(R.string.home_summary_title), dimmed = dimmed) {
         SummaryRow(Icons.Outlined.Email, stringResource(R.string.home_summary_reviewed), summary?.reviewed?.toString() ?: "--")
-        SummaryRow(SmishingIcons.ErrorOutline, stringResource(R.string.home_summary_scams), summary?.possibleScams?.toString() ?: "--")
-        Text(stringResource(R.string.home_summary_note), style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+        SummaryRow(
+            SmishingIcons.ErrorOutline,
+            stringResource(R.string.home_summary_scams),
+            summary?.let { stringResource(R.string.home_summary_scams_value, it.possibleScams) } ?: "--",
+        )
     }
-}
-
-private fun labelOf(permission: AppPermission) = when (permission) {
-    AppPermission.DefaultSmsApp -> R.string.settings_permission_default_sms
-    AppPermission.ReadSms -> R.string.settings_permission_read_sms
-    AppPermission.SendSms -> R.string.settings_permission_send_sms
-    AppPermission.Notifications -> R.string.settings_permission_notifications
 }

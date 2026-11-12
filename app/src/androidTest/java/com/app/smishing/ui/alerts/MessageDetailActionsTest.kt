@@ -65,7 +65,7 @@ class MessageDetailActionsTest {
                 MessageDetailScreen(
                     state = state,
                     onBack = {},
-                    actions = DetailActions({ calls += "block" }, { calls += "remove" }, { calls += "safe" }),
+                    actions = DetailActions({ calls += "block" }, { calls += "remove" }, { calls += "safe" }, { calls += "settings" }),
                 )
             }
         }
@@ -133,6 +133,9 @@ class MessageDetailActionsTest {
         compose.onNodeWithText(text(R.string.detail_button_block)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.detail_button_remove)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.detail_button_mark_safe)).performScrollTo().performClick()
+        // Marcar como seguro se confirma antes: todavía no se pidió.
+        assertEquals(listOf("block", "remove"), calls)
+        compose.onNodeWithText(text(R.string.detail_confirm_yes)).performClick()
         assertEquals(listOf("block", "remove", "safe"), calls)
     }
 
@@ -170,6 +173,46 @@ class MessageDetailActionsTest {
     }
 
     @Test
+    fun markingAsSafeAsksForConfirmationFirstAndCancelingDoesNothing() {
+        show(protection())
+        compose.onNodeWithText(text(R.string.detail_button_mark_safe)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.detail_confirm_title)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.detail_confirm_text)).assertIsDisplayed()
+
+        compose.onNodeWithText(text(R.string.detail_confirm_cancel)).performClick()
+        assertEquals(emptyList<String>(), calls)
+        assertEquals(0, count(text(R.string.detail_confirm_title)))
+    }
+
+    @Test
+    fun afterMarkingAsSafeInAutomaticModeItOffersToDecideBeforeActingAndGoesToSettings() {
+        show(
+            protection(
+                action(ActionType.BlockSender, ActionStatus.Reverted),
+                action(ActionType.RemoveMessage, ActionStatus.Reverted),
+                markedSafe = true,
+            ).copy(automatic = true),
+        )
+        compose.onNodeWithText(text(R.string.detail_decide_title)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.detail_decide_text)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.detail_go_settings)).performScrollTo().performClick()
+        assertEquals(listOf("settings"), calls)
+    }
+
+    @Test
+    fun theDecidePanelIsNotShownOutsideTheAutomaticMode() {
+        show(protection(action(ActionType.BlockSender, ActionStatus.Reverted), markedSafe = true))
+        assertEquals(0, count(text(R.string.detail_decide_title)))
+        assertEquals(0, count(text(R.string.detail_go_settings)))
+    }
+
+    @Test
+    fun theManualActionsHaveTheirOwnTitleOnlyWhenNothingHasBeenDoneYet() {
+        show(protection())
+        compose.onNodeWithText(text(R.string.detail_actions_manual_label).uppercase()).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun everyTextOnTheScreenKeepsTheLanguageRules() {
         show(
             protection(
@@ -182,9 +225,10 @@ class MessageDetailActionsTest {
             R.string.detail_action_block_pending, R.string.detail_action_remove_pending, R.string.detail_action_block_failed,
             R.string.detail_action_remove_failed, R.string.detail_failure_not_supported, R.string.detail_failure_not_allowed,
             R.string.detail_failure_no_copy, R.string.detail_failure_error, R.string.detail_revert_failed_block,
-            R.string.detail_revert_failed_remove, R.string.detail_button_block, R.string.detail_button_remove, R.string.detail_button_mark_safe,
+            R.string.detail_revert_failed_remove, R.string.detail_button_block, R.string.detail_button_remove,
             R.string.detail_marked_safe_title, R.string.detail_marked_safe_text, R.string.detail_reverted_label, R.string.detail_reverted_block,
-            R.string.detail_reverted_block_already, R.string.detail_reverted_remove,
+            R.string.detail_reverted_block_already, R.string.detail_reverted_remove, R.string.detail_confirm_title, R.string.detail_confirm_text,
+            R.string.detail_confirm_cancel, R.string.detail_decide_title, R.string.detail_decide_text, R.string.detail_go_settings, R.string.detail_actions_manual_label,
         )
         for (id in strings) assertEquals(text(id), emptyList<String>(), PlainLanguage.violations(text(id)))
     }

@@ -3,8 +3,6 @@ package com.app.smishing.ui.home
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -46,9 +44,6 @@ class HomeScreenTest {
         SmishingTheme { HomeScreen(statuses = statuses, summary = summary, onActivate = { activated++ }) }
     }
 
-    private fun stateOf(label: String) = generateSequence(compose.onNodeWithText(label).fetchSemanticsNode()) { it.parent }
-        .firstNotNullOfOrNull { it.config.getOrNull(SemanticsProperties.StateDescription) }
-
     @Test
     fun withEveryRequirementMetItSaysTheProtectionIsActive() {
         show()
@@ -57,9 +52,9 @@ class HomeScreenTest {
         compose.onNodeWithText(text(R.string.home_status_active)).assertIsDisplayed()
         assertEquals(0, count(text(R.string.protection_off_title)))
         assertEquals(0, count(text(R.string.protection_activate)))
-        for (label in listOf(R.string.settings_permission_default_sms, R.string.settings_permission_read_sms, R.string.settings_permission_notifications)) {
-            assertEquals(text(R.string.settings_state_granted), stateOf(text(label)))
-        }
+        // El mockup no lista los requisitos en Inicio: se ven en Ajustes.
+        assertEquals(0, count(text(R.string.settings_permission_default_sms)))
+        assertEquals(0, count(text(R.string.settings_permission_read_sms)))
     }
 
     private fun assertNotActiveWithout(missing: AppPermission) {
@@ -90,12 +85,11 @@ class HomeScreenTest {
     }
 
     @Test
-    fun theRequirementThatIsMissingIsTheOneMarkedAsNotGranted() {
+    fun whenSomethingIsMissingItUsesTheMockupMessageAndListsNothingElse() {
         statuses = allBut(AppPermission.Notifications)
         show()
-        assertEquals(text(R.string.settings_state_denied), stateOf(text(R.string.settings_permission_notifications)))
-        assertEquals(text(R.string.settings_state_granted), stateOf(text(R.string.settings_permission_default_sms)))
-        assertEquals(text(R.string.settings_state_granted), stateOf(text(R.string.settings_permission_read_sms)))
+        compose.onNodeWithText(text(R.string.protection_off_message)).assertIsDisplayed()
+        assertEquals("Lo que falta se ve en Ajustes, no en Inicio", 0, count(text(R.string.settings_permission_notifications)))
     }
 
     @Test
@@ -134,7 +128,8 @@ class HomeScreenTest {
         show()
         compose.onNodeWithText(text(R.string.home_summary_title)).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("${text(R.string.home_summary_reviewed)} 47").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("${text(R.string.home_summary_scams)} 2").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("${text(R.string.home_summary_scams)} ${context.getString(R.string.home_summary_scams_value, 2)}")
+            .performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -148,8 +143,8 @@ class HomeScreenTest {
     fun everyTextOfTheHomeKeepsTheLanguageRules() {
         val strings = listOf(
             R.string.home_status_active, R.string.home_status_inactive, R.string.home_active_title, R.string.home_active_message,
-            R.string.home_requirements_title, R.string.home_summary_title, R.string.home_summary_reviewed, R.string.home_summary_scams,
-            R.string.home_summary_note, R.string.protection_off_title, R.string.protection_off_message, R.string.protection_activate,
+            R.string.home_summary_title, R.string.home_summary_reviewed, R.string.home_summary_scams,
+            R.string.home_summary_scams_value, R.string.protection_off_title, R.string.protection_off_message, R.string.protection_activate,
         )
         for (id in strings) assertEquals(text(id), emptyList<String>(), PlainLanguage.violations(text(id)))
     }
