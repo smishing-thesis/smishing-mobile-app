@@ -43,6 +43,8 @@ import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
+import com.app.smishing.domain.messaging.DeleteMessages
+import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.alerts.AnalysisOutcome
 import com.app.smishing.domain.history.isAnalyzed
@@ -131,9 +133,36 @@ fun MessagesRoute(
     var body by rememberSaveable { mutableStateOf("") }
     var sendError by remember { mutableStateOf<SendOutcome?>(null) }
     var sending by remember { mutableStateOf(false) }
+    // Lo que se va a borrar (#51), mientras la persona confirma, y si el último intento de borrar falló.
+    var deleteTarget by remember { mutableStateOf<DeleteTarget?>(null) }
+    var deleteFailed by remember { mutableStateOf(false) }
 
     val requestSendPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val scope = rememberCoroutineScope()
+
+    /** Borra lo confirmado (#51): el buzón y, si la persona lo pidió, el historial; descarta los avisos de lo borrado. */
+    fun confirmDelete(target: DeleteTarget, alsoHistory: Boolean) {
+        deleteTarget = null
+        scope.launch(Dispatchers.IO) {
+            try {
+                val deleter = DeleteMessages(repository, history)
+                val result = when (target) {
+                    is DeleteTarget.Message -> deleter.deleteMessage(target.message, alsoHistory)
+                    is DeleteTarget.Conversation -> deleter.deleteConversation(target.threadId, alsoHistory)
+                }
+                AndroidMessageNotifier.dismiss(context, result.messageIds)
+                // Si la conversación abierta quedó sin mensajes, se vuelve a la lista.
+                val open = openThreadId
+                if (open != null && repository.messages(open).isEmpty()) openThreadId = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Sin registrar el motivo: la excepción podría traer el texto de un mensaje.
+                deleteFailed = true
+            }
+        }
+    }
+
     fun send(to: String, text: String, onSent: (SendOutcome.Sent) -> Unit) {
         if (sending) return
         sending = true
@@ -328,6 +357,7 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         listState = conversationListState,
+                        onDelete = { deleteTarget = DeleteTarget.Conversation(it.threadId, it.address) },
                     )
                 }
                 else -> {
@@ -357,6 +387,7 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         onSeeRisk = { historyRecordId = it },
+                        onDelete = { deleteTarget = DeleteTarget.Message(it) },
                         analysis = { m ->
                             val attempt = attempts[m.id]
                             when {
@@ -400,6 +431,19 @@ fun MessagesRoute(
                 onSelect = { tab = it },
             )
         }
+    }
+    deleteTarget?.let { target ->
+        DeleteDialog(target = target, onConfirm = { alsoHistory -> confirmDelete(target, alsoHistory) }, onDismiss = { deleteTarget = null })
+    }
+    if (deleteFailed) {
+        ConfirmDialog(
+            title = stringResource(R.string.delete_failed_title),
+            message = stringResource(R.string.delete_failed_text),
+            confirmLabel = stringResource(R.string.delete_failed_ok),
+            onConfirm = { deleteFailed = false },
+            dismissLabel = stringResource(R.string.delete_cancel),
+            onDismiss = { deleteFailed = false },
+        )
     }
 }
 

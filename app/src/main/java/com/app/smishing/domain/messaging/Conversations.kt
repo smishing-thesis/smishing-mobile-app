@@ -79,4 +79,7 @@ interface ConversationRepository {
      * descartar sus notificaciones. No toca los enviados.
      */
     fun markRead(threadId: Long): List<Long>
+
+    /** Borra del buzón los mensajes con esos ids (#51) y devuelve cuántos borró. Los que ya no estén no cuentan. */
+    fun delete(messageIds: List<Long>): Int
 }

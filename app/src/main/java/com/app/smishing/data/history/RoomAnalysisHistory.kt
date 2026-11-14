@@ -64,6 +64,8 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
             it.messageId to MessageRisk(it.messageId, it.recordId, RiskLevel.valueOf(it.level), it.markedSafeAt != null, it.body)
         }
 
+    override fun deleteByMessage(messageId: Long, body: String): Int = dao.deleteByMessage(messageId, body)
+
     override fun markSafe(id: Long, nowMillis: Long) = dao.markSafe(id, nowMillis)
 
     override fun updateMessageId(id: Long, messageId: Long) = dao.updateMessageId(id, messageId)

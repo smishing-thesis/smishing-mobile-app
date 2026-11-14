@@ -24,6 +24,23 @@ fecha completa si es de antes ("12/03/2025"). El día se decide en la zona horar
 **Qué es "recibido" y qué es "enviado".** Recibido es solo el tipo "buzón de entrada" de Android. Todo lo demás (enviado,
 en cola, saliente, fallido) se muestra a la derecha, como del usuario. Los borradores no se muestran.
 
+## Borrar mensajes y conversaciones (#51)
+
+- **Mantener presionada una conversación** en la lista, o **una burbuja** dentro de una conversación, pide borrarla. La confirmación
+  dice que se quitará del teléfono y que no se puede deshacer, y trae la casilla **"Borrar también su análisis del historial"**,
+  **marcada por defecto**. Una línea debajo dice qué pasa en cada caso: marcada, el texto que el historial guarda también se borra;
+  desmarcada, "su análisis seguirá en el historial, con el texto del mensaje".
+- **Por qué la casilla:** borrar un mensaje del buzón no borra su registro del historial, que guarda el texto. Sin la casilla, la persona
+  podría creer que lo borró y que su texto siga guardado.
+- **Cómo se borra** (`DeleteMessages`): primero el buzón y después el historial, así que si el buzón falla (por ejemplo, la app no es la
+  de SMS predeterminada) no se pierde el registro de un mensaje que sigue ahí; en ese caso la app dice "No se pudo borrar". Una
+  conversación se borra **por los ids de sus mensajes**, no por su hilo, para no perder sin decisión un mensaje que llegue mientras
+  tanto. Un registro se borra solo si es **de ese mensaje** (mismo id y mismo texto): el buzón puede reutilizar ids. Lo enviado no tiene
+  análisis y no se busca en el historial. Se descartan las notificaciones de lo borrado, y si una conversación abierta se queda sin
+  mensajes se vuelve a la lista.
+- **El borrado de un mensaje que la app retiró por una acción de mitigación** (restaurarlo mientras su registro exista, #16) es del
+  historial (#52): ese mensaje ya no está en el buzón y no se puede borrar desde aquí.
+
 ## Código
 
 | Pieza | Capa | Qué hace |
@@ -106,6 +123,7 @@ así lo decide el sistema.
 ## Lo que no cubre
 
 - **No hay nombres de contacto** (ver arriba), ni el formato de número del diseño.
+- **El borrado no se probó** con miles de mensajes en una conversación (se borra en tandas de 400 ids), ni en un teléfono real.
 - **Los MMS no se leen**: solo `Telephony.Sms`. Una conversación que tuvo MMS no los muestra.
 - **Toda la lista se lee del buzón entero** (se agrupa en la app por `thread_id`), no con una consulta por conversación.
   Con 3000 mensajes tardó 39 ms en el emulador, pero **no se midió en un teléfono de gama baja ni con decenas de miles

@@ -47,6 +47,12 @@ interface AnalysisHistory {
     /** Cambia el id del mensaje en el buzón: al restaurar un mensaje retirado, el buzón le da uno nuevo (#16). */
     fun updateMessageId(id: Long, messageId: Long)
 
+    /**
+     * Borra los registros del mensaje con ese id **y ese texto** (#51) y devuelve cuántos borró. El texto debe coincidir: el buzón puede
+     * reutilizar ids y no debe borrarse el análisis de otro mensaje. Con el registro se van su resultado, sus señales y sus acciones.
+     */
+    fun deleteByMessage(messageId: Long, body: String): Int
+
     /** Avisa cuando el historial cambia (llega un análisis nuevo). Devuelve algo que se cierra para dejar de avisar. */
     fun onChange(listener: () -> Unit): AutoCloseable = AutoCloseable {}
 }

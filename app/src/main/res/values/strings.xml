@@ -46,6 +46,21 @@
     <string name="messages_analyzed_no_risk">Sin señales de riesgo</string>
     <string name="messages_see_analysis">Ver análisis</string>
     <!-- Este texto no está en el diseño: revisar con quien lo diseñó. -->
+    <string name="messages_delete_conversation">Borrar conversación</string>
+    <string name="messages_delete_message">Borrar mensaje</string>
+    <string name="delete_message_title">¿Borrar este mensaje?</string>
+    <string name="delete_conversation_title">¿Borrar esta conversación?</string>
+    <string name="delete_message_text">Se quitará de su teléfono. Esta acción no se puede deshacer.</string>
+    <string name="delete_conversation_text">Se quitarán de su teléfono todos los mensajes de %1$s. Esta acción no se puede deshacer.</string>
+    <string name="delete_history_one">Borrar también su análisis del historial</string>
+    <string name="delete_history_many">Borrar también sus análisis del historial</string>
+    <string name="delete_history_on">El historial guarda el texto de los mensajes analizados: con esta casilla, ese texto también se borra.</string>
+    <string name="delete_history_off">Su análisis seguirá en el historial, con el texto del mensaje.</string>
+    <string name="delete_confirm">Borrar</string>
+    <string name="delete_cancel">Cancelar</string>
+    <string name="delete_failed_title">No se pudo borrar</string>
+    <string name="delete_failed_text">Para borrar mensajes, esta aplicación debe ser la de mensajería predeterminada. Revise Ajustes e inténtelo de nuevo.</string>
+    <string name="delete_failed_ok">Entendido</string>
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 
     <!-- Redactar y enviar (#6) -->

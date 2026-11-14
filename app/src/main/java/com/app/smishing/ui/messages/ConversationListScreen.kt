@@ -53,6 +53,8 @@ fun ConversationListScreen(
     risks: Map<Long, MessageRisk> = emptyMap(),
     /** El desplazamiento de la lista. Lo guarda quien la usa, para volver al mismo lugar al regresar de una conversación. */
     listState: LazyListState = rememberLazyListState(),
+    /** Mantener presionada una conversación (#51): pedir borrarla. */
+    onDelete: (Conversation) -> Unit = {},
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
     Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
@@ -75,6 +77,8 @@ fun ConversationListScreen(
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { onOpen(conversation) },
+                            onLongClick = { onDelete(conversation) },
+                            onLongClickLabel = stringResource(R.string.messages_delete_conversation),
                             warning = when (notice) {
                                 RiskLevel.High -> stringResource(R.string.messages_warning_high)
                                 RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)

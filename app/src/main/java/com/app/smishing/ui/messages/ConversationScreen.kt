@@ -83,6 +83,8 @@ fun ConversationScreen(
     /** Qué dice la fila de análisis de un mensaje recibido (#59). */
     analysis: (ConversationMessage) -> StoredAnalysis = { StoredAnalysis.None },
     onAnalyze: (ConversationMessage) -> Unit = {},
+    /** Mantener presionado un mensaje (#51): pedir borrarlo. */
+    onDelete: (ConversationMessage) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val count = messages?.size ?: 0
@@ -133,6 +135,8 @@ fun ConversationScreen(
                     MessageBubble(
                         text = message.body,
                         outgoing = outgoing,
+                        onLongClick = { onDelete(message) },
+                        onLongClickLabel = stringResource(R.string.messages_delete_message),
                         // El lector de pantalla dice si el mensaje es recibido o enviado, que el color no transmite.
                         modifier = Modifier.semantics(mergeDescendants = true) { stateDescription = if (outgoing) sent else received },
                     )

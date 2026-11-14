@@ -102,7 +102,14 @@ class TelephonyConversationRepository(context: Context) : ConversationRepository
         return unread
     }
 
+    override fun delete(messageIds: List<Long>): Int =
+        // En tandas: SQLite admite un máximo de variables por consulta. Al quedar sin mensajes, el sistema quita la conversación.
+        messageIds.chunked(CHUNK).sumOf { ids ->
+            resolver.delete(Telephony.Sms.CONTENT_URI, "${Telephony.Sms._ID} IN (${ids.joinToString(",") { "?" }})", ids.map(Long::toString).toTypedArray())
+        }
+
     private companion object {
+        const val CHUNK = 400
         const val NOT_A_DRAFT = "${Telephony.Sms.TYPE} != ${Telephony.Sms.MESSAGE_TYPE_DRAFT}"
     }
 }

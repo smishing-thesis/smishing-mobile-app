@@ -3,6 +3,7 @@ package com.app.smishing.ui.designsystem.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
@@ -54,13 +55,16 @@ fun ConversationRow(
     warningStatus: Status = Status.Suspicious,
     unreadCount: Int = 0,
     unreadDescription: String = "",
+    /** Mantener presionada la fila (#51): borrar la conversación. [onLongClickLabel] es lo que lee un lector de pantalla. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
 ) {
     val unread = unreadCount > 0
     Column(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
                 .heightIn(min = 72.dp)
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
             verticalArrangement = Arrangement.spacedBy(Spacing.X2s),
@@ -104,7 +108,14 @@ fun ConversationRow(
 
 /** Burbuja de un mensaje: azul claro a la derecha si es enviado, gris a la izquierda si es recibido. */
 @Composable
-fun MessageBubble(text: String, outgoing: Boolean, modifier: Modifier = Modifier) {
+fun MessageBubble(
+    text: String,
+    outgoing: Boolean,
+    modifier: Modifier = Modifier,
+    /** Mantener presionada la burbuja (#51): borrar el mensaje. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = if (outgoing) Arrangement.End else Arrangement.Start,
@@ -120,6 +131,10 @@ fun MessageBubble(text: String, outgoing: Boolean, modifier: Modifier = Modifier
                     SmishingShapes.Xl,
                 )
                 .then(if (outgoing) Modifier else Modifier.border(1.dp, SmishingPalette.Border, SmishingShapes.Xl))
+                .then(
+                    if (onLongClick == null) Modifier
+                    else Modifier.combinedClickable(onClick = {}, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel),
+                )
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
         )
     }

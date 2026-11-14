@@ -41,6 +41,7 @@ class AnalyzeReceivedMessageTest {
         override fun all() = saved.reversed()
         override fun byId(id: Long) = saved.getOrNull(id.toInt() - 1)
         override fun byMessageId(messageId: Long) = saved.lastOrNull { it.messageId == messageId }
+        override fun deleteByMessage(messageId: Long, body: String) = 0
         override fun markSafe(id: Long, nowMillis: Long) = Unit
         override fun updateMessageId(id: Long, messageId: Long) = Unit
     }

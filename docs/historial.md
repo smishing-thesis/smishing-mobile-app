@@ -140,9 +140,9 @@ analizar toda una conversación o toda la bandeja de una vez no está hecho.
 
 ## Lo que no cubre
 
-- **No hay forma de borrar el historial ni política de retención.** Crece sin límite, y borrar un mensaje en la app no borra su registro:
-  la persona puede creer que lo borró y el texto sigue guardado. Es lo primero que hay que decidir antes de usar la app con mensajes
-  reales (podría ir en Ajustes, #31).
+- **No hay forma de borrar el historial entero ni política de retención (#52).** Crece sin límite. Desde #51, al borrar un mensaje o una
+  conversación la confirmación deja borrar también el registro de ese mensaje (casilla marcada por defecto); si se desmarca, el texto
+  sigue guardado en el historial. Es lo primero que hay que decidir antes de usar la app con mensajes reales (podría ir en Ajustes, #31).
 - **La base no está cifrada.**
 - **La historia habla de "las acciones tomadas"**, pero las acciones (bloquear, retirar, marcar como seguro) son #13 a #16: el esquema
   todavía no tiene su tabla (llegará con una migración a la versión 2 de la base) y la pantalla no las muestra.

@@ -61,6 +61,24 @@ class RoomAnalysisHistoryInstrumentedTest {
     ) = AnalysisRecord(0, messageId, sender, body, at, at + 50, assessment)
 
     @Test
+    fun deletingByMessageRemovesOnlyTheRecordOfThatMessageWithItsResultAndSignals() {
+        val mine = history.save(record(messageId = 7, body = "Mensaje sintético uno"))
+        val sameIdOtherText = history.save(record(messageId = 7, body = "Otro texto con el mismo id"))
+        val otherId = history.save(record(messageId = 8, body = "Mensaje sintético uno"))
+        assertEquals(3, database.dao().messageCount())
+
+        // Mismo id y mismo texto: es de ese mensaje. Un registro con otro texto (el buzón reutilizó el id) o con otro id no se toca.
+        assertEquals(1, history.deleteByMessage(7, "Mensaje sintético uno"))
+        assertNull(history.byId(mine))
+        assertNotNull(history.byId(sameIdOtherText))
+        assertNotNull(history.byId(otherId))
+        // Con el registro se va su resultado y sus señales.
+        assertEquals(2, database.dao().messageCount())
+        assertEquals(2, database.dao().resultCount())
+        assertEquals(0, history.deleteByMessage(7, "Mensaje sintético uno"))
+    }
+
+    @Test
     fun aRecordComesBackExactlyAsItWasSaved() {
         val saved = record()
         val id = history.save(saved)
