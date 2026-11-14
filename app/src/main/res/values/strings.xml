@@ -218,6 +218,14 @@
     <string name="settings_limited_read_sms">Sin este permiso, la aplicación no puede leer ni analizar los mensajes que llegan.</string>
     <string name="settings_limited_notifications">Sin este permiso, no podemos avisarle de un mensaje con posible estafa.</string>
     <string name="settings_open_system">Abrir ajustes</string>
+    <string name="settings_permission_contacts">Nombres de contactos</string>
+    <string name="settings_limited_contacts">Sin este permiso, se muestra el número en lugar del nombre de cada contacto.</string>
+    <string name="settings_contacts_allow">Permitir</string>
+    <string name="contacts_prompt_title">¿Mostrar el nombre de sus contactos?</string>
+    <string name="contacts_prompt_text">Para mostrar el nombre en lugar del número, la aplicación necesita leer sus contactos. Los nombres no salen de su teléfono.</string>
+    <string name="contacts_prompt_allow">Permitir</string>
+    <string name="contacts_prompt_not_now">Ahora no</string>
+    <string name="new_message_pick_contact">Elegir un contacto</string>
     <string name="settings_state_granted">Concedido</string>
     <string name="settings_state_denied">No concedido</string>
     <string name="nav_settings">Ajustes</string>

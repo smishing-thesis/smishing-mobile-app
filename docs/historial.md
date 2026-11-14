@@ -162,6 +162,9 @@ acciones (borrado en cascada): una prueba de dispositivo comprueba que, tras bor
 **Lo que no cubre esto:** borrar el historial no borra los mensajes del buzón (eso es #51), no desbloquea números que el modo automático
 haya bloqueado, y no se probó con miles de registros (se borra en tandas de 400 ids) ni en un teléfono real.
 
+**Nombres de contactos (#53):** el Historial muestra el nombre del contacto si hay permiso, pero el registro guarda **solo el número**: el
+nombre se resuelve al mostrar y no se guarda.
+
 ## Lo que no cubre
 
 - **El historial crece sin límite**: no hay retención automática (decisión de #52, ver arriba). Desde #51, al borrar un mensaje o una

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.app.smishing.R
+import com.app.smishing.data.contacts.AndroidContacts
 import com.app.smishing.domain.alerts.AlertReason
 import com.app.smishing.domain.alerts.RiskAlert
 import com.app.smishing.domain.alerts.RiskAlertNotifier
@@ -49,7 +50,8 @@ class AndroidRiskAlertNotifier(private val context: Context) : RiskAlertNotifier
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val title = context.getString(R.string.alert_title)
-        val summary = "${alert.sender} — ${alert.body}"
+        // El nombre del contacto si hay permiso y existe; si no, el número, como antes (#53).
+        val summary = "${AndroidContacts(context).book().display(alert.sender)} — ${alert.body}"
         val red = SmishingPalette.statusColors(Status.Danger).onContainer.toArgb()
         val publicVersion = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)

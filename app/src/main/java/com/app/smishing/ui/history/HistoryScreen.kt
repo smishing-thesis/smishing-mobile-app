@@ -55,6 +55,8 @@ fun HistoryScreen(
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
     onDeleteSelected: () -> Unit = {},
+    /** Cómo se muestra un remitente: el nombre del contacto o, si no hay, el número (#53). */
+    displayName: (String) -> String = { it },
 ) {
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         if (selecting) {
@@ -84,7 +86,7 @@ fun HistoryScreen(
             else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(records, key = { it.id }) { record ->
                     HistoryRow(
-                        sender = record.sender,
+                        sender = displayName(record.sender),
                         date = formatHistoryDate(record.analyzedAtMillis, zone),
                         snippet = record.body,
                         onClick = { if (selecting) onToggle(record) else onOpen(record) },

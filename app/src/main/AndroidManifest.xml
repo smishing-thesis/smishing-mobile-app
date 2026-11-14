@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <!-- Avisar de un mensaje riesgoso (#10). Solo Android 13 o superior lo pide en tiempo de ejecución. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

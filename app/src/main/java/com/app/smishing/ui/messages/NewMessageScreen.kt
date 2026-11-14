@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,8 +35,8 @@ import com.app.smishing.ui.designsystem.theme.Spacing
  * "Nuevo mensaje" (#6): el destinatario, el texto y el botón de enviar, que no se activa hasta tener las dos cosas.
  * [error] es el motivo por el que el último intento no se envió.
  *
- * El diseño permite elegir un contacto con "+" y escribir su nombre; eso exige `READ_CONTACTS`, que esta historia no
- * justifica: hoy solo se escribe el número.
+ * El "+" abre el selector de contactos del sistema y pone el número del elegido (#53); eso no necesita `READ_CONTACTS`. Se sigue
+ * pudiendo escribir un número a mano. Escribir el nombre de un contacto no está hecho.
  */
 @Composable
 fun NewMessageScreen(
@@ -44,6 +48,8 @@ fun NewMessageScreen(
     onBack: () -> Unit,
     error: SendOutcome?,
     modifier: Modifier = Modifier,
+    /** El "+" del diseño (#53): abre el selector de contactos del sistema. */
+    onPickContact: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).imePadding()) {
         SmishingTopBar(
@@ -65,6 +71,9 @@ fun NewMessageScreen(
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 )
+                IconButton(onClick = onPickContact) {
+                    Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.new_message_pick_contact), tint = SmishingPalette.Primary)
+                }
             }
             SmishingTextField(
                 value = body,

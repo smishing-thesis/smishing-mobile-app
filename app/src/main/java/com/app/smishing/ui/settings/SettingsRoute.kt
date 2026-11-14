@@ -5,7 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import android.Manifest
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +54,12 @@ fun SettingsRoute(
     var statuses by remember { mutableStateOf<List<PermissionStatus>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
     var confirmDeleteHistory by remember { mutableStateOf(false) }
+    // Si se negó el permiso de contactos en esta pantalla, el botón pasa a abrir los ajustes de la app (Android deja de preguntar).
+    var contactsDenied by rememberSaveable { mutableStateOf(false) }
+    val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        contactsDenied = !granted
+        refresh++
+    }
 
     val activity = LocalActivity.current as? ComponentActivity
     DisposableEffect(activity) {
@@ -78,6 +88,11 @@ fun SettingsRoute(
         permissions = statuses,
         onOpenSystemSettings = { permission -> context.startActivity(SystemSettingsIntents.forPermission(context, permission)) },
         modifier = modifier,
+        onContacts = {
+            // La primera vez se pide; si ya se negó y Android no vuelve a preguntar, se abren los ajustes de la app.
+            if (contactsDenied) context.startActivity(SystemSettingsIntents.forPermission(context, AppPermission.Contacts))
+            else requestContacts.launch(Manifest.permission.READ_CONTACTS)
+        },
         onDeleteHistory = { confirmDeleteHistory = true },
         extra = { DemoSection() },
     )
@@ -103,7 +118,7 @@ object SystemSettingsIntents {
         AppPermission.DefaultSmsApp -> Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
         AppPermission.Notifications ->
             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        AppPermission.ReadSms, AppPermission.SendSms ->
+        AppPermission.ReadSms, AppPermission.SendSms, AppPermission.Contacts ->
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
     }
 }

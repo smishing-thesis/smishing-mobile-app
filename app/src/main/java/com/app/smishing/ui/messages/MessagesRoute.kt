@@ -43,7 +43,16 @@ import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
+import com.app.smishing.data.contacts.AndroidContacts
+import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.domain.contacts.ContactBook
 import com.app.smishing.domain.messaging.DeleteMessages
+import com.app.smishing.domain.settings.OnboardingProgress
+import android.content.Intent
+import android.provider.ContactsContract
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.app.smishing.domain.mitigation.restorableCount
 import androidx.compose.ui.res.pluralStringResource
 import com.app.smishing.ui.designsystem.components.ConfirmDialog
@@ -112,6 +121,7 @@ fun MessagesRoute(
     /** El mensaje cuya conversación hay que abrir (por tocar el aviso de un SMS, #49), o `null`. */
     openConversationOfMessageId: Long? = null,
     onConversationOpened: () -> Unit = {},
+    onboarding: OnboardingProgress = rememberOnboardingProgress(),
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -126,6 +136,37 @@ fun MessagesRoute(
         onDispose { resolver.unregisterContentObserver(observer) }
     }
 
+    // Los nombres de los contactos (#53): se leen al entrar, al volver a la app, al cambiar los contactos y al dar o quitar el permiso.
+    // Solo se usan para mostrar; no se guardan.
+    val scope = rememberCoroutineScope()
+    var contactsVersion by remember { mutableIntStateOf(0) }
+    var contacts by remember { mutableStateOf(ContactBook()) }
+    LaunchedEffect(contactsVersion) { contacts = withContext(Dispatchers.IO) { AndroidContacts(context).book() } }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { contactsVersion++ }
+        }
+        // Sin el permiso el sistema no avisa de nada, y no pasa nada: la libreta queda vacía.
+        runCatching { resolver.registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, observer) }
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) contactsVersion++ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { contactsVersion++ }
+    // Explicar para qué se piden los contactos, una sola vez, cuando ya están el rol y los permisos de SMS (#53).
+    var askContacts by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val shouldAsk = withContext(Dispatchers.IO) {
+            val granted = permissionStatuses.statuses().filter { it.granted }.map { it.permission }.toSet()
+            AppPermission.DefaultSmsApp in granted && AppPermission.ReadSms in granted && AppPermission.Contacts !in granted &&
+                !onboarding.contactsPromptSeen()
+        }
+        askContacts = shouldAsk
+    }
     // Se guardan solo el id y el remitente de la conversación abierta y lo escrito, para que sobrevivan a girar la pantalla.
     var openThreadId by rememberSaveable { mutableStateOf<Long?>(null) }
     var openAddress by rememberSaveable { mutableStateOf("") }
@@ -150,7 +191,12 @@ fun MessagesRoute(
     var deleteRecords by remember { mutableStateOf<Pair<List<AnalysisRecord>, Map<Long, List<MitigationAction>>>?>(null) }
 
     val requestSendPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-    val scope = rememberCoroutineScope()
+    val pickContact = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        result.data?.data?.let { row ->
+            scope.launch(Dispatchers.IO) { AndroidContacts(context).numberOf(row)?.let { recipient = it } }
+        }
+    }
+
 
     /** Borra lo confirmado (#51): el buzón y, si la persona lo pidió, el historial; descarta los avisos de lo borrado. */
     fun confirmDelete(target: DeleteTarget, alsoHistory: Boolean) {
@@ -350,6 +396,9 @@ fun MessagesRoute(
                     },
                     error = sendError,
                     modifier = Modifier,
+                    onPickContact = {
+                        pickContact.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
+                    },
                 )
                 tab == 3 && threadId == null -> SettingsRoute(
             history = history,
@@ -368,6 +417,7 @@ fun MessagesRoute(
                         actions = actions,
                         modifier = Modifier,
                         selecting = selectingHistory,
+                        displayName = contacts::display,
                         selected = selectedRecords,
                         onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
                         onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
@@ -399,6 +449,7 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         listState = conversationListState,
+                        displayName = contacts::display,
                         selecting = selectingConversations,
                         selected = selectedThreads,
                         onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
@@ -426,7 +477,7 @@ fun MessagesRoute(
                         }
                     }
                     ConversationScreen(
-                        address = openAddress,
+                        address = contacts.display(openAddress),
                         messages = messages,
                         onBack = {
                             sendError = null
@@ -489,6 +540,23 @@ fun MessagesRoute(
                 onSelect = { tab = it },
             )
         }
+    }
+    if (askContacts) {
+        ConfirmDialog(
+            title = stringResource(R.string.contacts_prompt_title),
+            message = stringResource(R.string.contacts_prompt_text),
+            confirmLabel = stringResource(R.string.contacts_prompt_allow),
+            onConfirm = {
+                askContacts = false
+                scope.launch(Dispatchers.IO) { onboarding.setContactsPromptSeen(true) }
+                requestContacts.launch(Manifest.permission.READ_CONTACTS)
+            },
+            dismissLabel = stringResource(R.string.contacts_prompt_not_now),
+            onDismiss = {
+                askContacts = false
+                scope.launch(Dispatchers.IO) { onboarding.setContactsPromptSeen(true) }
+            },
+        )
     }
     deleteRecords?.let { (records, actions) ->
         ConfirmDialog(
@@ -574,6 +642,12 @@ private fun rememberActionLog(): MitigationLog {
 private fun rememberMitigationSettings(): MitigationSettings {
     val context = LocalContext.current.applicationContext
     return remember(context) { DataStoreMitigationSettings(context) }
+}
+
+@Composable
+private fun rememberOnboardingProgress(): OnboardingProgress {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { DataStoreOnboardingProgress(context) }
 }
 
 @Composable

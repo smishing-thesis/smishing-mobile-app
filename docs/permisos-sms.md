@@ -10,6 +10,7 @@ análisis si se revocan. Última verificación: 2026-11-08.
 | `READ_SMS` | leer los mensajes: es el "permiso de lectura" del paso 3 y lo necesitan las conversaciones (#5) | después del rol | lo pide el diseño; la lectura del buzón es de #5, ya hecha ([conversaciones.md](conversaciones.md)) |
 | `SEND_SMS` | enviar los SMS que la persona redacta (#6) | el rol lo concede; si falta, la app lo pide al enviar | **comprobado en API 29** con el rol concedido: Android lo otorga solo (`GRANTED_BY_ROLE`) y el envío funciona; ver [enviar-sms.md](enviar-sms.md). **No** forma parte de la compuerta del análisis: analizar no necesita enviar |
 | `POST_NOTIFICATIONS` | mostrar la alerta de un mensaje riesgoso (#10) | solo Android 13 (API 33) o superior lo pide en tiempo de ejecución, al abrir los mensajes | **no se verificó**: el emulador es API 29 y ahí el permiso no existe. En API 29 la alerta se mostró sin pedirlo; ver [alerta-de-riesgo.md](alerta-de-riesgo.md). No forma parte de la compuerta del análisis |
+| `READ_CONTACTS` | mostrar el nombre del contacto en lugar del número (#53): en la lista de mensajes, la conversación, el historial y las notificaciones. **Es opcional**: no cuenta para la protección | la primera vez que la persona llega a Mensajes con el rol y los permisos de SMS, un cuadro explica el motivo ("¿Mostrar el nombre de sus contactos?", con "Permitir" y "Ahora no"); no se repite. También en Ajustes, en la fila "Nombres de contactos" | **comprobado en API 29**: con el rol de SMS el sistema **ya concede** `READ_CONTACTS` (`GRANTED_BY_ROLE`), así que ahí el cuadro no aparece; apareció al quitarlo con `pm revoke`. En una instalación donde el rol no lo conceda (otras versiones de Android) no se probó |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
 El estado de estos permisos y de las notificaciones se ve, con lo que queda limitado si faltan, en la pestaña Ajustes (#25; ver
@@ -24,8 +25,7 @@ modelos y de la NPU) y que la app **no usa**: `FOREGROUND_SERVICE`, `FOREGROUND_
 biblioteca los usaría y no hay forma de probar todas; queda como decisión pendiente, porque la regla del proyecto es no pedir más
 permisos de los que una historia justifique.
 
-No se piden otros. Tampoco se pide `READ_CONTACTS` (los nombres de contacto no están justificados por ninguna historia
-hecha), ni `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
+No se piden otros. Tampoco se pide `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
 motivo en esta tabla.
 
 ## Cómo los otorga Android

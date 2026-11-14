@@ -64,6 +64,8 @@ fun ConversationListScreen(
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
     onDeleteSelected: () -> Unit = {},
+    /** Cómo se muestra un remitente: el nombre del contacto o, si no hay, el número (#53). */
+    displayName: (String) -> String = { it },
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
     Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
@@ -96,7 +98,7 @@ fun ConversationListScreen(
                     items(conversations, key = { it.threadId }) { conversation ->
                         val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
-                            sender = conversation.address,
+                            sender = displayName(conversation.address),
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
                             onClick = { if (selecting) onToggle(conversation) else onOpen(conversation) },

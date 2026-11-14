@@ -24,6 +24,27 @@ fecha completa si es de antes ("12/03/2025"). El día se decide en la zona horar
 **Qué es "recibido" y qué es "enviado".** Recibido es solo el tipo "buzón de entrada" de Android. Todo lo demás (enviado,
 en cola, saliente, fallido) se muestra a la derecha, como del usuario. Los borradores no se muestran.
 
+## Nombres de contactos (#53)
+
+- **El nombre en lugar del número** en la lista de mensajes, el título de la conversación, el Historial y las notificaciones (la de un
+  mensaje y la alerta de riesgo). Sin el permiso `READ_CONTACTS`, o si el número no está en los contactos, se muestra el número, como
+  antes. Los remitentes que no son un número de persona (códigos cortos como 88800 o nombres como ONPE) nunca se buscan.
+- **Cómo se compara el número** (`ContactBook`): por los **últimos 9 dígitos**, así "+51 987 654 321" y "987654321" son el mismo contacto.
+  Si un número está en más de un contacto, gana el primero.
+- **Los nombres no salen del teléfono ni se guardan**: se leen al mostrar (al entrar, al volver a la app, al cambiar los contactos y al
+  dar o quitar el permiso) y se descartan. El historial sigue guardando el número, no el nombre, y los nombres no entrarían en el aporte
+  al corpus (#19). `ContactBook` no muestra su contenido en `toString`.
+- **El permiso** (ver [permisos-sms.md](permisos-sms.md)): un cuadro lo explica la primera vez que se llega a Mensajes con el rol y los
+  permisos de SMS; en Ajustes hay una fila "Nombres de contactos" con "Permitir" (si ya se negó y Android no vuelve a preguntar, el botón
+  abre los ajustes de la app). **En Android 10 el rol de SMS ya trae el permiso**, así que el cuadro casi nunca se ve.
+- **El "+" de Nuevo mensaje** abre el selector de contactos del sistema y pone el número elegido en "Para". No necesita el permiso (el
+  selector da un permiso temporal sobre la fila elegida). No muestra el nombre en el campo, y escribir un nombre en lugar del número no
+  está hecho.
+- **Probado** en el emulador API 29 con dos contactos inventados: con el permiso salen los nombres en la lista, el Historial, el título y
+  la notificación; al quitarlo con `pm revoke` vuelven los números y aparece el cuadro; "Permitir" en Ajustes abre la solicitud del
+  sistema y, concedida, vuelven los nombres; el "+" trae el número. **No se probó** con miles de contactos (se leen todos cada vez; no se
+  midió el tiempo), con números en otros formatos de país ni en un teléfono real.
+
 ## Borrar mensajes y conversaciones (#51)
 
 - **Botón "Seleccionar"** en la barra de la lista de mensajes y de cada conversación (y del Historial, #52): aparecen casillas, la barra
