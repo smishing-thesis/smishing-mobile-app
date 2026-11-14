@@ -44,7 +44,9 @@ import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
 import com.app.smishing.data.contacts.AndroidContacts
+import com.app.smishing.data.settings.DataStoreContributionConsent
 import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.domain.sharing.ContributionConsent
 import com.app.smishing.domain.contacts.ContactBook
 import com.app.smishing.domain.messaging.DeleteMessages
 import com.app.smishing.domain.settings.OnboardingProgress
@@ -122,6 +124,7 @@ fun MessagesRoute(
     openConversationOfMessageId: Long? = null,
     onConversationOpened: () -> Unit = {},
     onboarding: OnboardingProgress = rememberOnboardingProgress(),
+    contributionConsent: ContributionConsent = rememberContributionConsent(),
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -281,10 +284,13 @@ fun MessagesRoute(
         }
     }
 
-    // La conversación de un mensaje (#49): se abre al tocar el aviso de un SMS. Si el mensaje ya no está, se queda en la lista de mensajes.
+    // La conversación de un mensaje (#49): se abre al tocar el aviso de un SMS o una alerta de riesgo. Si el mensaje ya no está en el buzón
+    // (por ejemplo, el modo automático lo retiró) pero su análisis sí está guardado, se abre ese análisis; si no hay ni uno ni otro, se
+    // queda en la lista de mensajes.
     LaunchedEffect(openConversationOfMessageId) {
         if (openConversationOfMessageId != null) {
             val message = withContext(Dispatchers.IO) { repository.message(openConversationOfMessageId) }
+            val saved = message == null && withContext(Dispatchers.IO) { history.byMessageId(openConversationOfMessageId) != null }
             detailMessageId = null
             historyRecordId = null
             composing = false
@@ -294,6 +300,7 @@ fun MessagesRoute(
                 openAddress = message.address
             } else {
                 openThreadId = null
+                if (saved) detailMessageId = openConversationOfMessageId
             }
             onConversationOpened()
         }
@@ -365,8 +372,8 @@ fun MessagesRoute(
                         },
                         modifier = Modifier,
                         actions = DetailActions(
-                            onBlock = { act { mitigation.perform(it, ActionType.BlockSender) } },
-                            onRemove = { act { mitigation.perform(it, ActionType.RemoveMessage) } },
+                            onBlock = { act { mitigation.performManual(it, ActionType.BlockSender) } },
+                            onRemove = { act { mitigation.performManual(it, ActionType.RemoveMessage) } },
                             onMarkSafe = { act { mitigation.markSafe(it) } },
                             onOpenSettings = {
                                 detailMessageId = null
@@ -402,6 +409,7 @@ fun MessagesRoute(
                 )
                 tab == 3 && threadId == null -> SettingsRoute(
             history = history,
+            contributionConsent = contributionConsent,
             settings = mitigationSettings,
             permissions = permissionStatuses,
             modifier = Modifier,
@@ -606,10 +614,8 @@ private fun loadDetail(
         ?: messageId?.let { history.byMessageId(it) }?.takeIf { message == null || message.body == it.body }
     return when {
         record != null -> {
-            val level = record.assessment.level
-            val canAct = level == RiskLevel.High && runCatching { settings.mode() != MitigationMode.Disabled }.getOrDefault(false)
             val automatic = runCatching { settings.mode() == MitigationMode.Automatic }.getOrDefault(false)
-            val protection = Protection(record.markedSafeAtMillis != null, actionLog.actionsOf(record.id).latest(), canAct, automatic)
+            val protection = Protection(record.markedSafeAtMillis != null, actionLog.actionsOf(record.id).latest(), automatic)
             MessageDetailState.Loaded(record.body, RiskResult.Assessed(record.assessment), protection) to record
         }
         message != null -> MessageDetailState.Loaded(message.body, assessor.assess(message.body)) to null
@@ -642,6 +648,12 @@ private fun rememberActionLog(): MitigationLog {
 private fun rememberMitigationSettings(): MitigationSettings {
     val context = LocalContext.current.applicationContext
     return remember(context) { DataStoreMitigationSettings(context) }
+}
+
+@Composable
+private fun rememberContributionConsent(): ContributionConsent {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { DataStoreContributionConsent(context) }
 }
 
 @Composable

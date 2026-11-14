@@ -61,13 +61,12 @@ sealed interface MessageDetailState {
 }
 
 /**
- * Lo que se sabe de las acciones sobre el mensaje (#14 a #16, #28): [actions] es la más reciente de cada tipo. [canAct] dice si la
- * configuración permite actuar ahora (no está en "solo avisarme"); si es `false` no se ofrecen los botones de actuar.
+ * Lo que se sabe de las acciones sobre el mensaje (#14 a #16, #28): [actions] es la más reciente de cada tipo. Los botones de actuar
+ * se ofrecen para cualquier mensaje con análisis, con cualquier modo: tocarlos es la decisión de la persona (#29).
  */
 data class Protection(
     val markedSafe: Boolean,
     val actions: Map<ActionType, MitigationAction>,
-    val canAct: Boolean,
     /** El modo de mitigación es el automático: tras revertir, el detalle ofrece pasar a "Preguntarme antes de actuar". */
     val automatic: Boolean = false,
 )
@@ -270,14 +269,13 @@ private fun ActionsSection(protection: Protection, actions: DetailActions) {
             }
         }
     }
-    if (protection.canAct && protection.actions.isEmpty()) SectionLabel(stringResource(R.string.detail_actions_manual_label))
+    if (protection.actions.isEmpty()) SectionLabel(stringResource(R.string.detail_actions_manual_label))
     ActionButtons(protection, actions)
 }
 
-/** "Bloquear este número" y "Borrar mensaje", solo las que faltan y solo si la configuración permite actuar. */
+/** "Bloquear este número" y "Borrar mensaje", solo las que faltan. */
 @Composable
 private fun ActionButtons(protection: Protection, actions: DetailActions) {
-    if (!protection.canAct) return
     fun pending(type: ActionType) = protection.actions[type]?.status != ActionStatus.Completed
     if (pending(ActionType.BlockSender)) {
         // El mockup pone los dos con el mismo peso visual: el principal y el secundario.

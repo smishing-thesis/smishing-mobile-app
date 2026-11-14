@@ -14,6 +14,12 @@ class ContactBook(private val names: Map<String, String> = emptyMap()) {
     /** El nombre del contacto con ese número, o `null` si no hay (o no hay permiso, y la libreta está vacía). */
     fun nameOf(address: String): String? = keyOf(address)?.let(names::get)
 
+    /**
+     * Los nombres de los contactos, sin repetir. Solo para quitarlos de un texto antes de compartirlo (#19); no deben mostrarse ni
+     * guardarse.
+     */
+    fun displayNames(): List<String> = names.values.distinct()
+
     /** El nombre del contacto o, si no lo hay, el remitente tal cual, como hoy. */
     fun display(address: String): String = nameOf(address) ?: address
 

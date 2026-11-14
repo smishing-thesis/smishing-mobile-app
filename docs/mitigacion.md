@@ -5,19 +5,24 @@ Registro de #14 (RF-07, bloquear al remitente), #15 (RF-08, retirar del buzón),
 
 ## Qué hace
 
-Sobre un mensaje de **riesgo alto**, según el modo de [ajustes-y-modo.md](ajustes-y-modo.md):
+Sobre un mensaje de **riesgo alto**, lo que se hace **solo** depende del modo de [ajustes-y-modo.md](ajustes-y-modo.md):
 
 | Modo | Qué pasa al llegar | Qué ofrece el detalle |
 |---|---|---|
 | Automático | bloquea al remitente y retira el mensaje del buzón, y avisa | lo hecho, y "Marcar como seguro" |
 | Preguntar (por defecto) | avisa y no toca nada | "Bloquear número", "Quitar el mensaje de la bandeja" y "Marcar como seguro" |
-| Solo avisarme | avisa y no toca nada | ningún botón de actuar |
+| Solo avisarme | avisa y no toca nada | "Bloquear número" y "Quitar el mensaje de la bandeja" (a mano) |
 
-Las dos acciones se piden también a mano desde el detalle. En medio y bajo no hay acciones, sea cual sea el modo.
+**A mano (#29):** el detalle de **cualquier mensaje analizado** (riesgo alto, medio o bajo) ofrece "Bloquear este número" y "Borrar
+mensaje", **con cualquier modo, también "solo avisarme"**: tocarlos es la decisión explícita de la persona, que es justo lo que ese modo
+le deja. Lo automático (bloquear y retirar solos) sigue siendo solo de riesgo alto y del modo automático. El resultado queda anotado y el
+historial lo dice ("Número bloqueado"); si falla, se explica la causa y el botón vuelve a aparecer para reintentar. El **reporte
+externo no está**: depende de definir el receptor y los datos compartidos (#26 y #27, que a su vez dependen de #18 y #19).
 
 ### Reglas que se cumplen (y se prueban)
 
-- **Solo si la configuración lo permite:** con "solo avisarme", o si no se puede leer el modo, no se hace nada ni se anota nada.
+- **Lo automático solo si la configuración lo permite:** con "solo avisarme", o si no se puede leer el modo, no se hace nada ni se anota
+  nada. **Lo manual** (`performManual`, #29) no consulta el modo: es la decisión de la persona.
 - **Solo si hay registro local:** sin el registro guardado no se actúa. Retirar un mensaje comprueba además que el historial guarda
   **el mismo remitente y texto**; si no, la acción queda *Fallida* (`NoLocalCopy`) y el mensaje **no se borra**.
 - **Una acción fallida nunca figura como hecha.** Cada una pasa por *Solicitada → Completada | Fallida*, con su causa como dato
@@ -67,6 +72,11 @@ No se agregó ningún permiso.
 - A mano: se ve el detalle con los botones al final, "Bloqueamos este número" tras tocar el botón y "Acciones revertidas" al marcar como seguro.
 
 ## Lo que no se verificó
+
+- **Bloqueo manual no disponible, a mano (#29):** sin el rol de SMS la app vuelve a la bienvenida y no deja entrar al detalle, así que ese
+  fallo no se puede provocar desde la pantalla; está cubierto solo por las pruebas JVM (`NotSupported`, `NotAllowed`, `Error`). El bloqueo
+  manual se probó a mano con "solo avisarme" (botón, "Bloqueamos este número", "Número bloqueado" en el historial) y con una prueba de
+  dispositivo. El reporte externo no existe.
 
 - **Un fallo real de la plataforma** (bloquear sin el rol): se prueba con piezas falsas, no con el sistema; con el rol concedido el
   emulador siempre lo permitió.

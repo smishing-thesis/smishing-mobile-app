@@ -14,7 +14,8 @@ del mensaje **sin activar enlaces**. Última verificación: 2026-11-08.
 2. Si el nivel es **alto**, muestra una notificación "**Posible estafa detectada**", con el remitente y **el texto del mensaje**
    (se corta con "…" y se ve completo al expandirla). El motivo ("Le pide actuar con urgencia", "Finge ser de una entidad" o "Le pide
    sus datos o claves", el primero que corresponda) se ve en el detalle.
-3. Tocar la notificación abre la **conversación** del mensaje, donde el aviso "Parece una estafa" lleva a "Ver riesgo". **Ver detalles**
+3. Tocar la notificación abre la **conversación** del mensaje, donde el aviso "Parece una estafa" lleva a "Ver riesgo". Si el mensaje ya no
+   está en el buzón (por ejemplo, el modo automático lo retiró), abre directo el análisis guardado. **Ver detalles**
    abre directo **Detalle del análisis** en la app: el nivel, el mensaje original y por qué se avisó.
 4. En el detalle **el mensaje es texto plano**: ningún enlace de su texto se activa ni se puede tocar. En la notificación tampoco
    se puede tocar un enlace: tocarla abre el detalle.

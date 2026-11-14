@@ -26,6 +26,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.history.AnalysisHistory
+import com.app.smishing.domain.sharing.ContributionConsent
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.domain.mitigation.MitigationSettings
@@ -44,6 +45,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsRoute(
     history: AnalysisHistory,
+    contributionConsent: ContributionConsent,
     settings: MitigationSettings,
     permissions: PermissionStatusReader,
     modifier: Modifier = Modifier,
@@ -54,6 +56,8 @@ fun SettingsRoute(
     var statuses by remember { mutableStateOf<List<PermissionStatus>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
     var confirmDeleteHistory by remember { mutableStateOf(false) }
+    // El consentimiento del aporte al corpus (#18); `null` mientras se lee.
+    var contribution by remember { mutableStateOf<Boolean?>(null) }
     // Si se negó el permiso de contactos en esta pantalla, el botón pasa a abrir los ajustes de la app (Android deja de preguntar).
     var contactsDenied by rememberSaveable { mutableStateOf(false) }
     val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -76,6 +80,7 @@ fun SettingsRoute(
         withContext(Dispatchers.IO) {
             mode = settings.mode()
             statuses = permissions.statuses()
+            contribution = contributionConsent.isGranted()
         }
     }
 
@@ -92,6 +97,11 @@ fun SettingsRoute(
             // La primera vez se pide; si ya se negó y Android no vuelve a preguntar, se abren los ajustes de la app.
             if (contactsDenied) context.startActivity(SystemSettingsIntents.forPermission(context, AppPermission.Contacts))
             else requestContacts.launch(Manifest.permission.READ_CONTACTS)
+        },
+        contribution = contribution,
+        onContributionChange = { granted ->
+            contribution = granted
+            scope.launch(Dispatchers.IO) { contributionConsent.setGranted(granted) }
         },
         onDeleteHistory = { confirmDeleteHistory = true },
         extra = { DemoSection() },
