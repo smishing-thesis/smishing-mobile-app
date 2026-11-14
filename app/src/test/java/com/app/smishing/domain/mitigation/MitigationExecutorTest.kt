@@ -41,6 +41,13 @@ class MitigationExecutorTest {
         override fun all() = records.values.toList()
         override fun byId(id: Long) = records[id]
         override fun byMessageId(messageId: Long) = records.values.lastOrNull { it.messageId == messageId }
+        override fun delete(ids: Collection<Long>): Int = ids.count { records.remove(it) != null }
+        override fun deleteAll(): Int = records.size.also { records.clear() }
+        override fun deleteByMessage(messageId: Long, body: String): Int {
+            val gone = records.filterValues { it.messageId == messageId && it.body == body }.keys
+            gone.forEach(records::remove)
+            return gone.size
+        }
         override fun markSafe(id: Long, nowMillis: Long) {
             records[id] = records.getValue(id).copy(markedSafeAtMillis = nowMillis)
         }

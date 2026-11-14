@@ -23,6 +23,8 @@ import com.app.smishing.ui.designsystem.theme.Status
 import com.app.smishing.domain.messaging.formatConversationDate
 import com.app.smishing.ui.designsystem.components.ConversationRow
 import com.app.smishing.ui.designsystem.components.SmishingExtendedFab
+import com.app.smishing.ui.designsystem.components.SelectAction
+import com.app.smishing.ui.designsystem.components.SelectionTopBar
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -53,11 +55,36 @@ fun ConversationListScreen(
     risks: Map<Long, MessageRisk> = emptyMap(),
     /** El desplazamiento de la lista. Lo guarda quien la usa, para volver al mismo lugar al regresar de una conversación. */
     listState: LazyListState = rememberLazyListState(),
+    /** Si se están eligiendo conversaciones para borrar (#51) y cuáles (por su hilo). Tocar una fila la marca o desmarca. */
+    selecting: Boolean = false,
+    selected: Set<Long> = emptySet(),
+    onToggle: (Conversation) -> Unit = {},
+    /** Empezar a elegir: desde el botón "Seleccionar" (sin conversación) o manteniendo presionada una (esa conversación). */
+    onStartSelecting: (Conversation?) -> Unit = {},
+    onSelectAll: () -> Unit = {},
+    onCancelSelection: () -> Unit = {},
+    onDeleteSelected: () -> Unit = {},
+    /** Cómo se muestra un remitente: el nombre del contacto o, si no hay, el número (#53). */
+    displayName: (String) -> String = { it },
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
     Box(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            SmishingTopBar(title = stringResource(R.string.messages_title), style = TopBarStyle.Plain)
+            if (selecting) {
+                SelectionTopBar(
+                    count = selected.size,
+                    style = TopBarStyle.Plain,
+                    onCancel = onCancelSelection,
+                    onSelectAll = onSelectAll,
+                    onDelete = onDeleteSelected,
+                )
+            } else {
+                SmishingTopBar(
+                    title = stringResource(R.string.messages_title),
+                    style = TopBarStyle.Plain,
+                    actions = { if (!conversations.isNullOrEmpty()) SelectAction(TopBarStyle.Plain) { onStartSelecting(null) } },
+                )
+            }
             when {
                 conversations == null -> Unit
                 conversations.isEmpty() -> Box(Modifier.fillMaxSize().padding(Spacing.Md), contentAlignment = Alignment.Center) {
@@ -71,10 +98,14 @@ fun ConversationListScreen(
                     items(conversations, key = { it.threadId }) { conversation ->
                         val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
-                            sender = conversation.address,
+                            sender = displayName(conversation.address),
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
                             snippet = conversation.snippet,
-                            onClick = { onOpen(conversation) },
+                            onClick = { if (selecting) onToggle(conversation) else onOpen(conversation) },
+                            onLongClick = { if (!selecting) onStartSelecting(conversation) },
+                            onLongClickLabel = stringResource(R.string.history_select),
+                            selectionMode = selecting,
+                            selected = conversation.threadId in selected,
                             warning = when (notice) {
                                 RiskLevel.High -> stringResource(R.string.messages_warning_high)
                                 RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
@@ -88,10 +119,12 @@ fun ConversationListScreen(
                 }
             }
         }
-        SmishingExtendedFab(
-            text = stringResource(R.string.compose_action),
-            onClick = onCompose,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.Md),
-        )
+        if (!selecting) {
+            SmishingExtendedFab(
+                text = stringResource(R.string.compose_action),
+                onClick = onCompose,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.Md),
+            )
+        }
     }
 }

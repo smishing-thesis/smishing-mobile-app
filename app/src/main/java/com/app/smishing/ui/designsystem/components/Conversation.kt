@@ -3,6 +3,7 @@ package com.app.smishing.ui.designsystem.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
@@ -11,6 +12,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -54,17 +59,28 @@ fun ConversationRow(
     warningStatus: Status = Status.Suspicious,
     unreadCount: Int = 0,
     unreadDescription: String = "",
+    /** Mantener presionada la fila (#51): empezar a seleccionar. [onLongClickLabel] es lo que lee un lector de pantalla. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+    /** En modo de selección (#51) la fila lleva una casilla, marcada si está [selected]. */
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
 ) {
     val unread = unreadCount > 0
     Column(modifier = modifier.fillMaxWidth()) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
                 .heightIn(min = 72.dp)
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
-            verticalArrangement = Arrangement.spacedBy(Spacing.X2s),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (selectionMode) {
+                Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = SmishingPalette.Primary))
+                Spacer(Modifier.width(Spacing.Sm))
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(sender, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
                 Text(time, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
@@ -97,6 +113,7 @@ fun ConversationRow(
                     Text(warning, style = SmishingTypography.NoteBold, color = colors.onContainer)
                 }
             }
+            }
         }
         HorizontalDivider(color = SmishingPalette.Border)
     }
@@ -104,7 +121,15 @@ fun ConversationRow(
 
 /** Burbuja de un mensaje: azul claro a la derecha si es enviado, gris a la izquierda si es recibido. */
 @Composable
-fun MessageBubble(text: String, outgoing: Boolean, modifier: Modifier = Modifier) {
+fun MessageBubble(
+    text: String,
+    outgoing: Boolean,
+    modifier: Modifier = Modifier,
+    /** Tocar la burbuja (en modo de selección, marcarla) y mantenerla presionada (#51: empezar a seleccionar). */
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = if (outgoing) Arrangement.End else Arrangement.Start,
@@ -120,6 +145,10 @@ fun MessageBubble(text: String, outgoing: Boolean, modifier: Modifier = Modifier
                     SmishingShapes.Xl,
                 )
                 .then(if (outgoing) Modifier else Modifier.border(1.dp, SmishingPalette.Border, SmishingShapes.Xl))
+                .then(
+                    if (onClick == null && onLongClick == null) Modifier
+                    else Modifier.combinedClickable(onClick = onClick ?: {}, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel),
+                )
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
         )
     }
@@ -174,16 +203,28 @@ fun HistoryRow(
     modifier: Modifier = Modifier,
     /** Lo que se hizo con el mensaje (por ejemplo, "Número bloqueado"), o `null` si no se hizo nada (#28). */
     actions: String? = null,
+    /** En modo de selección (#52) la fila lleva una casilla, marcada si está [selected]. */
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
+    /** Mantener presionada la fila (#52): empezar a seleccionar. [onLongClickLabel] es lo que lee un lector de pantalla. */
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
                 .heightIn(min = 72.dp)
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
-            verticalArrangement = Arrangement.spacedBy(Spacing.X2s),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            // La fila entera es el control: la casilla solo muestra el estado.
+            if (selectionMode) {
+                Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = SmishingPalette.Primary))
+                Spacer(Modifier.width(Spacing.Sm))
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(sender, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
                 Text(date, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
@@ -204,6 +245,7 @@ fun HistoryRow(
                 chip()
             }
             if (actions != null) Text(actions, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+            }
         }
         HorizontalDivider(color = SmishingPalette.Border)
     }

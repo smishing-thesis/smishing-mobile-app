@@ -33,5 +33,9 @@ class AndroidPermissionStatusReader(private val context: Context) : PermissionSt
             ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED,
         ),
         PermissionStatus(AppPermission.Notifications, NotificationManagerCompat.from(context).areNotificationsEnabled()),
+        PermissionStatus(
+            AppPermission.Contacts,
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED,
+        ),
     )
 }

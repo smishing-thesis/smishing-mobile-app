@@ -24,4 +24,9 @@ interface OnboardingProgress {
     fun welcomeSeen(): Boolean
 
     fun setWelcomeSeen(seen: Boolean)
+
+    /** Si ya se le explicó a la persona para qué se piden los contactos (#53), para no insistir. Puede bloquear. */
+    fun contactsPromptSeen(): Boolean
+
+    fun setContactsPromptSeen(seen: Boolean)
 }

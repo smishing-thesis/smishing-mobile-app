@@ -39,6 +39,9 @@ class AnalyzeStoredMessageTest {
         override fun all() = saved.reversed()
         override fun byId(id: Long) = saved.getOrNull(id.toInt() - 1)
         override fun byMessageId(messageId: Long) = saved.lastOrNull { it.messageId == messageId }
+        override fun delete(ids: Collection<Long>) = 0
+        override fun deleteAll() = 0
+        override fun deleteByMessage(messageId: Long, body: String) = 0
         override fun markSafe(id: Long, nowMillis: Long) = Unit
         override fun updateMessageId(id: Long, messageId: Long) = Unit
     }

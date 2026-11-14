@@ -24,6 +24,47 @@ fecha completa si es de antes ("12/03/2025"). El día se decide en la zona horar
 **Qué es "recibido" y qué es "enviado".** Recibido es solo el tipo "buzón de entrada" de Android. Todo lo demás (enviado,
 en cola, saliente, fallido) se muestra a la derecha, como del usuario. Los borradores no se muestran.
 
+## Nombres de contactos (#53)
+
+- **El nombre en lugar del número** en la lista de mensajes, el título de la conversación, el Historial y las notificaciones (la de un
+  mensaje y la alerta de riesgo). Sin el permiso `READ_CONTACTS`, o si el número no está en los contactos, se muestra el número, como
+  antes. Los remitentes que no son un número de persona (códigos cortos como 88800 o nombres como ONPE) nunca se buscan.
+- **Cómo se compara el número** (`ContactBook`): por los **últimos 9 dígitos**, así "+51 987 654 321" y "987654321" son el mismo contacto.
+  Si un número está en más de un contacto, gana el primero.
+- **Los nombres no salen del teléfono ni se guardan**: se leen al mostrar (al entrar, al volver a la app, al cambiar los contactos y al
+  dar o quitar el permiso) y se descartan. El historial sigue guardando el número, no el nombre, y los nombres no entrarían en el aporte
+  al corpus (#19). `ContactBook` no muestra su contenido en `toString`.
+- **El permiso** (ver [permisos-sms.md](permisos-sms.md)): un cuadro lo explica la primera vez que se llega a Mensajes con el rol y los
+  permisos de SMS; en Ajustes hay una fila "Nombres de contactos" con "Permitir" (si ya se negó y Android no vuelve a preguntar, el botón
+  abre los ajustes de la app). **En Android 10 el rol de SMS ya trae el permiso**, así que el cuadro casi nunca se ve.
+- **El "+" de Nuevo mensaje** abre el selector de contactos del sistema y pone el número elegido en "Para". No necesita el permiso (el
+  selector da un permiso temporal sobre la fila elegida). No muestra el nombre en el campo, y escribir un nombre en lugar del número no
+  está hecho.
+- **Probado** en el emulador API 29 con dos contactos inventados: con el permiso salen los nombres en la lista, el Historial, el título y
+  la notificación; al quitarlo con `pm revoke` vuelven los números y aparece el cuadro; "Permitir" en Ajustes abre la solicitud del
+  sistema y, concedida, vuelven los nombres; el "+" trae el número. **No se probó** con miles de contactos (se leen todos cada vez; no se
+  midió el tiempo), con números en otros formatos de país ni en un teléfono real.
+
+## Borrar mensajes y conversaciones (#51)
+
+- **Botón "Seleccionar"** en la barra de la lista de mensajes y de cada conversación (y del Historial, #52): aparecen casillas, la barra
+  dice "N seleccionados" con "Todos" y "Borrar" (que no se puede tocar sin ninguno elegido), y la flecha cancela. **Mantener presionada**
+  una conversación o una burbuja es un atajo: empieza a seleccionar con esa ya marcada. Se pueden borrar **varias conversaciones o varios
+  mensajes a la vez**. Cambiar de pestaña o de conversación deja de seleccionar, y "atrás" cancela la selección. La confirmación
+  es corta, como la de las apps de mensajes: "Esta conversación será borrada de su dispositivo." (o "Este mensaje será borrado…", y en
+  plural), con la casilla **"Borrar también su análisis del historial"**, **marcada por defecto**. No lleva más texto: la casilla ya dice
+  qué se decide.
+- **Por qué la casilla:** borrar un mensaje del buzón no borra su registro del historial, que guarda el texto. Sin la casilla, la persona
+  podría creer que lo borró y que su texto siga guardado.
+- **Cómo se borra** (`DeleteMessages`: `deleteMessages` y `deleteConversations`): primero el buzón y después el historial, así que si el buzón falla (por ejemplo, la app no es la
+  de SMS predeterminada) no se pierde el registro de un mensaje que sigue ahí; en ese caso la app dice "No se pudo borrar". Una
+  conversación se borra **por los ids de sus mensajes**, no por su hilo, para no perder sin decisión un mensaje que llegue mientras
+  tanto. Un registro se borra solo si es **de ese mensaje** (mismo id y mismo texto): el buzón puede reutilizar ids. Lo enviado no tiene
+  análisis y no se busca en el historial. Se descartan las notificaciones de lo borrado, y si una conversación abierta se queda sin
+  mensajes se vuelve a la lista.
+- **El borrado de un mensaje que la app retiró por una acción de mitigación** (restaurarlo mientras su registro exista, #16) es del
+  historial (#52): ese mensaje ya no está en el buzón y no se puede borrar desde aquí.
+
 ## Código
 
 | Pieza | Capa | Qué hace |
@@ -106,6 +147,7 @@ así lo decide el sistema.
 ## Lo que no cubre
 
 - **No hay nombres de contacto** (ver arriba), ni el formato de número del diseño.
+- **El borrado no se probó** con miles de mensajes en una conversación (se borra en tandas de 400 ids), ni en un teléfono real.
 - **Los MMS no se leen**: solo `Telephony.Sms`. Una conversación que tuvo MMS no los muestra.
 - **Toda la lista se lee del buzón entero** (se agrupa en la app por `thread_id`), no con una consulta por conversación.
   Con 3000 mensajes tardó 39 ms en el emulador, pero **no se midió en un teléfono de gama baja ni con decenas de miles

@@ -46,6 +46,30 @@
     <string name="messages_analyzed_no_risk">Sin señales de riesgo</string>
     <string name="messages_see_analysis">Ver análisis</string>
     <!-- Este texto no está en el diseño: revisar con quien lo diseñó. -->
+    <string name="select_action">Seleccionar</string>
+    <plurals name="delete_messages_title">
+        <item quantity="one">¿Borrar este mensaje?</item>
+        <item quantity="other">¿Borrar %d mensajes?</item>
+    </plurals>
+    <plurals name="delete_messages_text">
+        <item quantity="one">Este mensaje será borrado de su dispositivo.</item>
+        <item quantity="other">Estos mensajes serán borrados de su dispositivo.</item>
+    </plurals>
+    <plurals name="delete_conversations_title">
+        <item quantity="one">¿Borrar esta conversación?</item>
+        <item quantity="other">¿Borrar %d conversaciones?</item>
+    </plurals>
+    <plurals name="delete_conversations_text">
+        <item quantity="one">Esta conversación será borrada de su dispositivo.</item>
+        <item quantity="other">Estas conversaciones serán borradas de su dispositivo.</item>
+    </plurals>
+    <string name="delete_history_one">Borrar también su análisis del historial</string>
+    <string name="delete_history_many">Borrar también sus análisis del historial</string>
+    <string name="delete_confirm">Borrar</string>
+    <string name="delete_cancel">Cancelar</string>
+    <string name="delete_failed_title">No se pudo borrar</string>
+    <string name="delete_failed_text">Para borrar mensajes, esta aplicación debe ser la de mensajería predeterminada. Revise Ajustes e inténtelo de nuevo.</string>
+    <string name="delete_failed_ok">Entendido</string>
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 
     <!-- Redactar y enviar (#6) -->
@@ -133,6 +157,25 @@
 
     <!-- Historial (#12). Los textos de la marca de estado no son los del diseño ("Peligroso", "Seguro"): afirman menos. -->
     <string name="history_title">Historial</string>
+    <plurals name="history_selected">
+        <item quantity="one">%d seleccionado</item>
+        <item quantity="other">%d seleccionados</item>
+    </plurals>
+    <string name="history_select">Seleccionar</string>
+    <string name="history_select_all">Todos</string>
+    <string name="history_cancel_selection">Cancelar la selección</string>
+    <plurals name="delete_records_title">
+        <item quantity="one">¿Borrar este análisis?</item>
+        <item quantity="other">¿Borrar %d análisis?</item>
+    </plurals>
+    <string name="delete_records_text">Se borran el análisis y el texto del mensaje que guarda el historial. Los mensajes siguen en su teléfono.</string>
+    <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
+    <string name="settings_privacy_title">Privacidad</string>
+    <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
+    <string name="settings_delete_history">Borrar todo el historial</string>
+    <string name="delete_history_title">¿Borrar todo el historial?</string>
+    <string name="delete_history_text">Se borran todos los análisis y el texto de los mensajes que guardan. Los mensajes siguen en su teléfono. Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
+    <string name="delete_history_confirm">Borrar todo</string>
     <string name="history_empty">Todavía no hay mensajes analizados.</string>
     <string name="history_chip_high">Posible estafa</string>
     <string name="history_chip_medium">Sospechoso</string>
@@ -175,6 +218,14 @@
     <string name="settings_limited_read_sms">Sin este permiso, la aplicación no puede leer ni analizar los mensajes que llegan.</string>
     <string name="settings_limited_notifications">Sin este permiso, no podemos avisarle de un mensaje con posible estafa.</string>
     <string name="settings_open_system">Abrir ajustes</string>
+    <string name="settings_permission_contacts">Nombres de contactos</string>
+    <string name="settings_limited_contacts">Sin este permiso, se muestra el número en lugar del nombre de cada contacto.</string>
+    <string name="settings_contacts_allow">Permitir</string>
+    <string name="contacts_prompt_title">¿Mostrar el nombre de sus contactos?</string>
+    <string name="contacts_prompt_text">Para mostrar el nombre en lugar del número, la aplicación necesita leer sus contactos. Los nombres no salen de su teléfono.</string>
+    <string name="contacts_prompt_allow">Permitir</string>
+    <string name="contacts_prompt_not_now">Ahora no</string>
+    <string name="new_message_pick_contact">Elegir un contacto</string>
     <string name="settings_state_granted">Concedido</string>
     <string name="settings_state_denied">No concedido</string>
     <string name="nav_settings">Ajustes</string>

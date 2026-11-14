@@ -43,6 +43,19 @@ import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
+import com.app.smishing.data.contacts.AndroidContacts
+import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.domain.contacts.ContactBook
+import com.app.smishing.domain.messaging.DeleteMessages
+import com.app.smishing.domain.settings.OnboardingProgress
+import android.content.Intent
+import android.provider.ContactsContract
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.app.smishing.domain.mitigation.restorableCount
+import androidx.compose.ui.res.pluralStringResource
+import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.alerts.AnalysisOutcome
 import com.app.smishing.domain.history.isAnalyzed
@@ -108,6 +121,7 @@ fun MessagesRoute(
     /** El mensaje cuya conversación hay que abrir (por tocar el aviso de un SMS, #49), o `null`. */
     openConversationOfMessageId: Long? = null,
     onConversationOpened: () -> Unit = {},
+    onboarding: OnboardingProgress = rememberOnboardingProgress(),
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -122,6 +136,37 @@ fun MessagesRoute(
         onDispose { resolver.unregisterContentObserver(observer) }
     }
 
+    // Los nombres de los contactos (#53): se leen al entrar, al volver a la app, al cambiar los contactos y al dar o quitar el permiso.
+    // Solo se usan para mostrar; no se guardan.
+    val scope = rememberCoroutineScope()
+    var contactsVersion by remember { mutableIntStateOf(0) }
+    var contacts by remember { mutableStateOf(ContactBook()) }
+    LaunchedEffect(contactsVersion) { contacts = withContext(Dispatchers.IO) { AndroidContacts(context).book() } }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { contactsVersion++ }
+        }
+        // Sin el permiso el sistema no avisa de nada, y no pasa nada: la libreta queda vacía.
+        runCatching { resolver.registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, observer) }
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) contactsVersion++ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { contactsVersion++ }
+    // Explicar para qué se piden los contactos, una sola vez, cuando ya están el rol y los permisos de SMS (#53).
+    var askContacts by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val shouldAsk = withContext(Dispatchers.IO) {
+            val granted = permissionStatuses.statuses().filter { it.granted }.map { it.permission }.toSet()
+            AppPermission.DefaultSmsApp in granted && AppPermission.ReadSms in granted && AppPermission.Contacts !in granted &&
+                !onboarding.contactsPromptSeen()
+        }
+        askContacts = shouldAsk
+    }
     // Se guardan solo el id y el remitente de la conversación abierta y lo escrito, para que sobrevivan a girar la pantalla.
     var openThreadId by rememberSaveable { mutableStateOf<Long?>(null) }
     var openAddress by rememberSaveable { mutableStateOf("") }
@@ -131,9 +176,55 @@ fun MessagesRoute(
     var body by rememberSaveable { mutableStateOf("") }
     var sendError by remember { mutableStateOf<SendOutcome?>(null) }
     var sending by remember { mutableStateOf(false) }
+    // Lo que se va a borrar (#51), mientras la persona confirma, y si el último intento de borrar falló.
+    var deleteTarget by remember { mutableStateOf<DeleteTarget?>(null) }
+    var deleteFailed by remember { mutableStateOf(false) }
+    // Los registros del historial marcados para borrar (#52) y, mientras la persona confirma, cuáles son (con sus acciones, para avisar
+    // si alguno es un mensaje retirado que ya no se podría restaurar).
+    var selectingHistory by remember { mutableStateOf(false) }
+    var selectedRecords by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    // Lo mismo para las conversaciones de la lista (por su hilo) y para los mensajes de la conversación abierta (por su id) (#51).
+    var selectingConversations by remember { mutableStateOf(false) }
+    var selectedThreads by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var selectingMessages by remember { mutableStateOf(false) }
+    var selectedMessages by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var deleteRecords by remember { mutableStateOf<Pair<List<AnalysisRecord>, Map<Long, List<MitigationAction>>>?>(null) }
 
     val requestSendPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-    val scope = rememberCoroutineScope()
+    val pickContact = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        result.data?.data?.let { row ->
+            scope.launch(Dispatchers.IO) { AndroidContacts(context).numberOf(row)?.let { recipient = it } }
+        }
+    }
+
+
+    /** Borra lo confirmado (#51): el buzón y, si la persona lo pidió, el historial; descarta los avisos de lo borrado. */
+    fun confirmDelete(target: DeleteTarget, alsoHistory: Boolean) {
+        deleteTarget = null
+        selectingConversations = false
+        selectedThreads = emptySet()
+        selectingMessages = false
+        selectedMessages = emptySet()
+        scope.launch(Dispatchers.IO) {
+            try {
+                val deleter = DeleteMessages(repository, history)
+                val result = when (target) {
+                    is DeleteTarget.Messages -> deleter.deleteMessages(target.messages, alsoHistory)
+                    is DeleteTarget.Conversations -> deleter.deleteConversations(target.items.map { it.first }, alsoHistory)
+                }
+                AndroidMessageNotifier.dismiss(context, result.messageIds)
+                // Si la conversación abierta quedó sin mensajes, se vuelve a la lista.
+                val open = openThreadId
+                if (open != null && repository.messages(open).isEmpty()) openThreadId = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Sin registrar el motivo: la excepción podría traer el texto de un mensaje.
+                deleteFailed = true
+            }
+        }
+    }
+
     fun send(to: String, text: String, onSent: (SendOutcome.Sent) -> Unit) {
         if (sending) return
         sending = true
@@ -208,15 +299,28 @@ fun MessagesRoute(
         }
     }
 
-    BackHandler(enabled = composing || openThreadId != null || detailMessageId != null || historyRecordId != null) {
+    BackHandler(
+        enabled = composing || openThreadId != null || detailMessageId != null || historyRecordId != null ||
+            selectingHistory || selectingConversations || selectingMessages,
+    ) {
         sendError = null
         when {
             detailMessageId != null -> detailMessageId = null
             historyRecordId != null -> historyRecordId = null
+            selectingMessages -> { selectingMessages = false; selectedMessages = emptySet() }
+            selectingConversations -> { selectingConversations = false; selectedThreads = emptySet() }
+            selectingHistory -> { selectingHistory = false; selectedRecords = emptySet() }
             composing -> composing = false
             else -> openThreadId = null
         }
     }
+
+    // Cambiar de pestaña o de conversación deja de elegir: lo elegido era de la pantalla anterior.
+    LaunchedEffect(tab) {
+        selectingHistory = false; selectedRecords = emptySet()
+        selectingConversations = false; selectedThreads = emptySet()
+    }
+    LaunchedEffect(openThreadId) { selectingMessages = false; selectedMessages = emptySet() }
 
     val threadId = openThreadId
     val detailId = detailMessageId
@@ -292,8 +396,12 @@ fun MessagesRoute(
                     },
                     error = sendError,
                     modifier = Modifier,
+                    onPickContact = {
+                        pickContact.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
+                    },
                 )
                 tab == 3 && threadId == null -> SettingsRoute(
+            history = history,
             settings = mitigationSettings,
             permissions = permissionStatuses,
             modifier = Modifier,
@@ -303,7 +411,20 @@ fun MessagesRoute(
                     LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
                     var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
                     LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
-                    HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, actions = actions, modifier = Modifier)
+                    HistoryScreen(
+                        records = records,
+                        onOpen = { historyRecordId = it.id },
+                        actions = actions,
+                        modifier = Modifier,
+                        selecting = selectingHistory,
+                        displayName = contacts::display,
+                        selected = selectedRecords,
+                        onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
+                        onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
+                        onSelectAll = { selectedRecords = records.orEmpty().map { it.id }.toSet() },
+                        onCancelSelection = { selectingHistory = false; selectedRecords = emptySet() },
+                        onDeleteSelected = { deleteRecords = records.orEmpty().filter { it.id in selectedRecords } to actions },
+                    )
                 }
                 tab == 0 && threadId == null -> HomeRoute(
                     permissions = permissionStatuses,
@@ -328,6 +449,18 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         listState = conversationListState,
+                        displayName = contacts::display,
+                        selecting = selectingConversations,
+                        selected = selectedThreads,
+                        onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
+                        onStartSelecting = { first -> selectingConversations = true; selectedThreads = first?.let { setOf(it.threadId) }.orEmpty() },
+                        onSelectAll = { selectedThreads = conversations.orEmpty().map { it.threadId }.toSet() },
+                        onCancelSelection = { selectingConversations = false; selectedThreads = emptySet() },
+                        onDeleteSelected = {
+                            deleteTarget = DeleteTarget.Conversations(
+                                conversations.orEmpty().filter { it.threadId in selectedThreads }.map { it.threadId to it.address },
+                            )
+                        },
                     )
                 }
                 else -> {
@@ -344,7 +477,7 @@ fun MessagesRoute(
                         }
                     }
                     ConversationScreen(
-                        address = openAddress,
+                        address = contacts.display(openAddress),
                         messages = messages,
                         onBack = {
                             sendError = null
@@ -357,6 +490,13 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         onSeeRisk = { historyRecordId = it },
+                        selecting = selectingMessages,
+                        selected = selectedMessages,
+                        onToggle = { selectedMessages = if (it.id in selectedMessages) selectedMessages - it.id else selectedMessages + it.id },
+                        onStartSelecting = { first -> selectingMessages = true; selectedMessages = first?.let { setOf(it.id) }.orEmpty() },
+                        onSelectAll = { selectedMessages = messages.orEmpty().map { it.id }.toSet() },
+                        onCancelSelection = { selectingMessages = false; selectedMessages = emptySet() },
+                        onDeleteSelected = { deleteTarget = DeleteTarget.Messages(messages.orEmpty().filter { it.id in selectedMessages }) },
                         analysis = { m ->
                             val attempt = attempts[m.id]
                             when {
@@ -400,6 +540,52 @@ fun MessagesRoute(
                 onSelect = { tab = it },
             )
         }
+    }
+    if (askContacts) {
+        ConfirmDialog(
+            title = stringResource(R.string.contacts_prompt_title),
+            message = stringResource(R.string.contacts_prompt_text),
+            confirmLabel = stringResource(R.string.contacts_prompt_allow),
+            onConfirm = {
+                askContacts = false
+                scope.launch(Dispatchers.IO) { onboarding.setContactsPromptSeen(true) }
+                requestContacts.launch(Manifest.permission.READ_CONTACTS)
+            },
+            dismissLabel = stringResource(R.string.contacts_prompt_not_now),
+            onDismiss = {
+                askContacts = false
+                scope.launch(Dispatchers.IO) { onboarding.setContactsPromptSeen(true) }
+            },
+        )
+    }
+    deleteRecords?.let { (records, actions) ->
+        ConfirmDialog(
+            title = pluralStringResource(R.plurals.delete_records_title, records.size, records.size),
+            message = stringResource(R.string.delete_records_text) +
+                restorableCount(records, actions).takeIf { it > 0 }?.let { " " + stringResource(R.string.delete_records_restorable) }.orEmpty(),
+            confirmLabel = stringResource(R.string.delete_confirm),
+            onConfirm = {
+                deleteRecords = null
+                selectingHistory = false
+                selectedRecords = emptySet()
+                scope.launch(Dispatchers.IO) { history.delete(records.map { it.id }) }
+            },
+            dismissLabel = stringResource(R.string.delete_cancel),
+            onDismiss = { deleteRecords = null },
+        )
+    }
+    deleteTarget?.let { target ->
+        DeleteDialog(target = target, onConfirm = { alsoHistory -> confirmDelete(target, alsoHistory) }, onDismiss = { deleteTarget = null })
+    }
+    if (deleteFailed) {
+        ConfirmDialog(
+            title = stringResource(R.string.delete_failed_title),
+            message = stringResource(R.string.delete_failed_text),
+            confirmLabel = stringResource(R.string.delete_failed_ok),
+            onConfirm = { deleteFailed = false },
+            dismissLabel = stringResource(R.string.delete_cancel),
+            onDismiss = { deleteFailed = false },
+        )
     }
 }
 
@@ -456,6 +642,12 @@ private fun rememberActionLog(): MitigationLog {
 private fun rememberMitigationSettings(): MitigationSettings {
     val context = LocalContext.current.applicationContext
     return remember(context) { DataStoreMitigationSettings(context) }
+}
+
+@Composable
+private fun rememberOnboardingProgress(): OnboardingProgress {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { DataStoreOnboardingProgress(context) }
 }
 
 @Composable

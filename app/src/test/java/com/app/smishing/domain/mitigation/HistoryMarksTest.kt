@@ -75,6 +75,23 @@ class HistoryMarksTest {
     }
 
     @Test
+    fun onlyAMessageTheAppRemovedAndCanStillBeRestoredCountsAsRestorable() {
+        val removed = record.copy(id = 1)
+        val removedThenRestored = record.copy(id = 2, markedSafeAtMillis = 5)
+        val blockedOnly = record.copy(id = 3)
+        val noActions = record.copy(id = 4)
+        val actions = mapOf(
+            1L to listOf(action(ActionType.RemoveMessage, ActionStatus.Completed)),
+            // Marcado como seguro: ya se restauró, no hay nada que perder.
+            2L to listOf(action(ActionType.RemoveMessage, ActionStatus.Completed)),
+            3L to listOf(action(ActionType.BlockSender, ActionStatus.Completed)),
+        )
+
+        assertEquals(1, restorableCount(listOf(removed, removedThenRestored, blockedOnly, noActions), actions))
+        assertEquals(0, restorableCount(emptyList(), actions))
+    }
+
+    @Test
     fun theStoredIdsAreStableAndUnique() {
         assertEquals(listOf("block", "remove"), ActionType.entries.map { it.id })
         assertEquals(listOf("requested", "completed", "failed", "reverted"), ActionStatus.entries.map { it.id })

@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.app.smishing.R
+import com.app.smishing.data.contacts.AndroidContacts
 import com.app.smishing.domain.alerts.IncomingMessageNotifier
 import com.app.smishing.domain.sms.IncomingSms
 import com.app.smishing.ui.MainActivity
@@ -35,16 +36,21 @@ class AndroidMessageNotifier(private val context: Context) : IncomingMessageNoti
             MainActivity.conversationIntent(context, messageId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // El nombre del contacto si hay permiso y existe; si no, el número, como antes (#53).
+        val sender = AndroidContacts(context).book().display(message.sender)
         val publicVersion = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.message_notification_public))
             .build()
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(message.sender)
+            .setContentTitle(sender)
             .setContentText(message.body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            // Sin las acciones que el sistema sugiere ("Open link" si el texto trae un enlace): abrirían el enlace de un posible fraude
+            // sin pasar por la app, que nunca activa los enlaces de un mensaje.
+            .setAllowSystemGeneratedContextualActions(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)

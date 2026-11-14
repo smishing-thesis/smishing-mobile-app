@@ -13,6 +13,9 @@ enum class AppPermission {
 
     /** Mostrar notificaciones (las alertas). */
     Notifications,
+
+    /** Leer los contactos, para mostrar el nombre en lugar del número (#53). Es opcional: no afecta a la protección. */
+    Contacts,
 }
 
 data class PermissionStatus(val permission: AppPermission, val granted: Boolean)

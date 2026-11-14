@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,7 @@ import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.RadioOption
 import com.app.smishing.ui.designsystem.components.SectionLabel
+import com.app.smishing.ui.designsystem.components.SecondaryButton
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -45,6 +47,10 @@ fun SettingsScreen(
     permissions: List<PermissionStatus>,
     onOpenSystemSettings: (AppPermission) -> Unit,
     modifier: Modifier = Modifier,
+    /** Pedir el permiso de contactos (#53). Si ya se negó, abre los ajustes de la app. */
+    onContacts: (granted: Boolean) -> Unit = {},
+    /** "Borrar todo el historial" (#52): pedir confirmación. */
+    onDeleteHistory: () -> Unit = {},
     /** Al final de la pantalla: en depuración, las herramientas de demostración (#65); en `qa` y `release`, nada. */
     extra: @Composable () -> Unit = {},
 ) {
@@ -90,6 +96,37 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            // Los contactos son opcionales (#53): no cuentan para la protección, así que van aparte de los permisos obligatorios.
+            permissions.firstOrNull { it.permission == AppPermission.Contacts }?.let { contacts ->
+                PermissionRow(
+                    label = stringResource(R.string.settings_permission_contacts),
+                    granted = contacts.granted,
+                    modifier = Modifier.semantics { stateDescription = if (contacts.granted) granted else denied },
+                )
+                if (!contacts.granted) {
+                    Text(
+                        stringResource(R.string.settings_limited_contacts),
+                        style = SmishingTypography.Note,
+                        color = SmishingPalette.TextSecondary,
+                        modifier = Modifier.padding(start = 32.dp),
+                    )
+                    LinkButton(
+                        text = stringResource(R.string.settings_contacts_allow),
+                        onClick = { onContacts(false) },
+                        modifier = Modifier.padding(start = 24.dp),
+                    )
+                }
+            }
+
+            HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
+            SectionLabel(stringResource(R.string.settings_privacy_title))
+            Text(
+                stringResource(R.string.settings_privacy_text),
+                style = SmishingTypography.BodyMedium,
+                color = SmishingPalette.TextSecondary,
+            )
+            SecondaryButton(stringResource(R.string.settings_delete_history), onClick = onDeleteHistory, modifier = Modifier.fillMaxWidth())
             extra()
         }
     }
@@ -113,6 +150,7 @@ private fun labelOf(permission: AppPermission) = when (permission) {
     // Enviar mensajes no se muestra (no es un requisito de la protección ni está en el mockup).
     AppPermission.SendSms -> R.string.settings_permission_default_sms
     AppPermission.Notifications -> R.string.settings_permission_notifications
+    AppPermission.Contacts -> R.string.settings_permission_contacts
 }
 
 private fun limitedOf(permission: AppPermission) = when (permission) {
@@ -120,4 +158,5 @@ private fun limitedOf(permission: AppPermission) = when (permission) {
     AppPermission.ReadSms -> R.string.settings_limited_read_sms
     AppPermission.SendSms -> R.string.settings_limited_default_sms
     AppPermission.Notifications -> R.string.settings_limited_notifications
+    AppPermission.Contacts -> R.string.settings_limited_contacts
 }

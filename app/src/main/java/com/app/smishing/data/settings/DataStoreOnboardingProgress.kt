@@ -23,7 +23,14 @@ class DataStoreOnboardingProgress(private val store: DataStore<Preferences>) : O
         runBlocking { store.edit { it[KEY_WELCOME_SEEN] = seen } }
     }
 
+    override fun contactsPromptSeen(): Boolean = runBlocking { store.data.first()[KEY_CONTACTS_PROMPT_SEEN] ?: false }
+
+    override fun setContactsPromptSeen(seen: Boolean) {
+        runBlocking { store.edit { it[KEY_CONTACTS_PROMPT_SEEN] = seen } }
+    }
+
     private companion object {
         val KEY_WELCOME_SEEN = booleanPreferencesKey("welcome_seen")
+        val KEY_CONTACTS_PROMPT_SEEN = booleanPreferencesKey("contacts_prompt_seen")
     }
 }

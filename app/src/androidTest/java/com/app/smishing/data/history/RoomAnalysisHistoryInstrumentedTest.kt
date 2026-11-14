@@ -61,6 +61,48 @@ class RoomAnalysisHistoryInstrumentedTest {
     ) = AnalysisRecord(0, messageId, sender, body, at, at + 50, assessment)
 
     @Test
+    fun deletingRecordsLeavesNoTextAndDeletingAllLeavesEveryTableEmpty() {
+        val log = RoomMitigationLog(database)
+        val ids = (1L..5L).map { history.save(record(messageId = it, body = "Mensaje sintético $it")) }
+        log.request(ids[0], com.app.smishing.domain.mitigation.ActionType.BlockSender, 1)
+        log.request(ids[1], com.app.smishing.domain.mitigation.ActionType.RemoveMessage, 1)
+
+        // Borrar algunos: solo esos, con su resultado, sus señales y sus acciones.
+        assertEquals(2, history.delete(listOf(ids[0], ids[1])))
+        assertEquals(3, database.dao().messageCount())
+        assertEquals(3, database.dao().resultCount())
+        assertEquals(0, database.dao().allActions().size)
+        assertNull(history.byId(ids[0]))
+        assertEquals(0, history.delete(listOf(ids[0])))
+
+        // Borrar todo: las cuatro tablas quedan vacías, así que el texto ya no está en la base.
+        assertEquals(3, history.deleteAll())
+        assertEquals(0, database.dao().messageCount())
+        assertEquals(0, database.dao().resultCount())
+        assertEquals(0, database.dao().signalCount())
+        assertEquals(0, database.dao().allActions().size)
+        assertEquals(emptyList<AnalysisRecord>(), history.all())
+    }
+
+    @Test
+    fun deletingByMessageRemovesOnlyTheRecordOfThatMessageWithItsResultAndSignals() {
+        val mine = history.save(record(messageId = 7, body = "Mensaje sintético uno"))
+        val sameIdOtherText = history.save(record(messageId = 7, body = "Otro texto con el mismo id"))
+        val otherId = history.save(record(messageId = 8, body = "Mensaje sintético uno"))
+        assertEquals(3, database.dao().messageCount())
+
+        // Mismo id y mismo texto: es de ese mensaje. Un registro con otro texto (el buzón reutilizó el id) o con otro id no se toca.
+        assertEquals(1, history.deleteByMessage(7, "Mensaje sintético uno"))
+        assertNull(history.byId(mine))
+        assertNotNull(history.byId(sameIdOtherText))
+        assertNotNull(history.byId(otherId))
+        // Con el registro se va su resultado y sus señales.
+        assertEquals(2, database.dao().messageCount())
+        assertEquals(2, database.dao().resultCount())
+        assertEquals(0, history.deleteByMessage(7, "Mensaje sintético uno"))
+    }
+
+    @Test
     fun aRecordComesBackExactlyAsItWasSaved() {
         val saved = record()
         val id = history.save(saved)
