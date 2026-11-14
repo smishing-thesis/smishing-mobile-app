@@ -603,6 +603,18 @@ class SmsRoleInstrumentedTest {
         notification.notification.contentIntent.send(context, 0, null, null, null, null, options)
     }
 
+    /**
+     * Toca una alerta de riesgo y llega al detalle del análisis. Tocarla abre la conversación del mensaje, donde "Ver riesgo" abre el
+     * detalle; si el mensaje ya no está en el buzón (el modo automático lo retiró), abre el detalle directo.
+     */
+    private fun openDetailFromAlert(notification: android.service.notification.StatusBarNotification, text: String, messageStillThere: Boolean) {
+        tap(notification)
+        if (messageStillThere) {
+            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.messages_notice_action)) > 0 && count(text) > 0 }
+            compose.onAllNodesWithText(context.getString(R.string.messages_notice_action)).onLast().performClick()
+        }
+    }
+
     private fun ourNotifications(manager: android.app.NotificationManager) =
         manager.activeNotifications.filter { it.packageName == context.packageName }
 
@@ -823,7 +835,7 @@ class SmsRoleInstrumentedTest {
             assertEquals("La copia local conserva el mensaje", risky, record.body)
 
             // La alerta abre el detalle desde lo guardado aunque el mensaje ya no esté en el buzón; muestra lo hecho, sin botones de actuar.
-            tap(riskAlerts(manager).single())
+            openDetailFromAlert(riskAlerts(manager).single(), risky, messageStillThere = false)
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_actions_label).uppercase()).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_action_block_done)).performScrollTo().assertIsDisplayed()
@@ -867,7 +879,7 @@ class SmsRoleInstrumentedTest {
 
     /**
      * #14 y #15 a elección de la persona: en modo "preguntar" no se toca nada hasta que toca los botones del detalle, y cada acción
-     * se refleja en el sistema y en lo que se muestra; en "solo avisarme" no hay botones de actuar ni acciones. Datos sintéticos.
+     * se refleja en el sistema y en lo que se muestra; en "solo avisarme" no se actúa solo, pero el detalle ofrece las acciones y la persona puede pedirlas (#29). Datos sintéticos.
      */
     @Test
     fun thenAskModeActsOnlyWhenThePersonChoosesAndTheOnlyNotifyModeNeverActs() {
@@ -894,7 +906,7 @@ class SmsRoleInstrumentedTest {
             val record = history.all().single()
             assertTrue("Sin acciones hasta que la persona decida", log.actionsOf(record.id).isEmpty())
 
-            tap(riskAlerts(manager).single())
+            openDetailFromAlert(riskAlerts(manager).single(), risky, messageStillThere = true)
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
             compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().assertIsDisplayed()
             compose.onNodeWithText(context.getString(R.string.detail_button_remove)).performScrollTo().assertIsDisplayed()
@@ -930,11 +942,16 @@ class SmsRoleInstrumentedTest {
             assertEquals("Solo el primer análisis tiene acciones", 2, history.all().size)
             assertEquals(0, log.actionsOf(history.all().first().id).size)
 
-            tap(riskAlerts(manager).single())
+            openDetailFromAlert(riskAlerts(manager).single(), risky, messageStillThere = true)
             compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
-            assertEquals(0, count(context.getString(R.string.detail_button_block)))
-            assertEquals(0, count(context.getString(R.string.detail_button_remove)))
+            // #29: en «solo avisarme» no se actúa solo, pero el detalle ofrece las acciones y tocarlas es decisión de la persona.
+            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().assertIsDisplayed()
+            assertEquals(1, count(context.getString(R.string.detail_button_remove)))
             assertEquals(0, count(context.getString(R.string.detail_actions_label).uppercase()))
+            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().performClick()
+            waitUntil { isBlocked(SENDER_F) }
+            val manual = log.actionsOf(history.all().first().id).latest()
+            assertEquals(ActionStatus.Completed, manual.getValue(ActionType.BlockSender).status)
         } finally {
             manager.cancelAll()
             settings.setMode(MitigationMode.Ask)

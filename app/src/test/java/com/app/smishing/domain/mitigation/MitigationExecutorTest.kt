@@ -154,6 +154,49 @@ class MitigationExecutorTest {
         assertEquals(0, inbox.removeCalls)
     }
 
+    // --- Lo que la persona pide a mano (#29) ---
+
+    @Test
+    fun whatThePersonAsksForIsDoneWithAnyModeEvenTheOnlyNotifyOne() {
+        settings.current = MitigationMode.Disabled
+        val record = saved()
+        assertEquals(ActionStatus.Completed, executor.performManual(record, ActionType.BlockSender))
+        assertEquals(ActionStatus.Completed, executor.performManual(record, ActionType.RemoveMessage))
+        assertTrue("+10000000001" in blocker.blocked)
+        assertEquals(1, inbox.removeCalls)
+        // Queda anotado, para que el historial lo refleje.
+        assertEquals(ActionStatus.Completed, latest(record, ActionType.BlockSender).status)
+        assertEquals(ActionStatus.Completed, latest(record, ActionType.RemoveMessage).status)
+    }
+
+    @Test
+    fun theAutomaticActionStillRespectsTheModeAndOnlyTheManualOneDoesNot() {
+        settings.current = MitigationMode.Disabled
+        val record = saved()
+        executor.act(record)
+        assertTrue(log.rows.isEmpty())
+        assertEquals(0, blocker.blockCalls)
+        executor.performManual(record, ActionType.BlockSender)
+        assertEquals(1, blocker.blockCalls)
+    }
+
+    @Test
+    fun aManualBlockThatCannotBeDoneIsRecordedAsFailedWithItsCause() {
+        settings.current = MitigationMode.Disabled
+        blocker.available = false
+        val record = saved()
+        assertEquals(ActionStatus.Failed, executor.performManual(record, ActionType.BlockSender))
+        assertEquals(ActionNote.NotSupported, latest(record, ActionType.BlockSender).note)
+        assertTrue(blocker.blocked.isEmpty())
+    }
+
+    @Test
+    fun aManualActionWithoutALocalRecordDoesNothingAndIsNotRecorded() {
+        assertNull(executor.performManual(unsaved, ActionType.BlockSender))
+        assertTrue(log.rows.isEmpty())
+        assertEquals(0, blocker.blockCalls)
+    }
+
     // --- Bloquear (#14) ---
 
     @Test

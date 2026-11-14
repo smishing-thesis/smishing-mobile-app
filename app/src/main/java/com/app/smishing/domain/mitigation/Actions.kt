@@ -121,8 +121,9 @@ data class RevertResult(val notReverted: Set<ActionType>) {
 /**
  * Hace, anota y deshace las acciones sobre un mensaje (#14, #15, #16, #28).
  *
- * - **Solo si la configuración lo permite:** con el modo "solo avisarme" (o si no se puede leer el modo) no se hace nada y no
- *   se anota nada.
+ * - **Lo automático solo si la configuración lo permite:** con el modo "solo avisarme" (o si no se puede leer el modo) no se hace
+ *   nada y no se anota nada. **Lo manual** ([performManual], cuando la persona toca el botón en el detalle, #29) **no consulta el modo**:
+ *   es su decisión explícita y es lo que ese modo deja en sus manos.
  * - **Solo si hay registro local:** sin el registro guardado no se actúa, porque no habría de dónde explicar ni revertir.
  * - **Lo que falla se anota como fallido**, con su causa, y nunca como hecho. Ninguna operación lanza: el resultado se lee en
  *   el estado.
@@ -144,11 +145,19 @@ class MitigationExecutor(
     }
 
     /**
-     * Hace la acción y devuelve en qué quedó, o `null` si no se hizo porque la configuración no lo permite o no hay registro
-     * local. Si ya estaba completada no la repite.
+     * Hace la acción **automática** y devuelve en qué quedó, o `null` si no se hizo porque la configuración no lo permite o no hay
+     * registro local. Si ya estaba completada no la repite.
      */
-    fun perform(record: AnalysisRecord, type: ActionType): ActionStatus? {
-        if (record.id == 0L || !allowed()) return null
+    fun perform(record: AnalysisRecord, type: ActionType): ActionStatus? = if (allowed()) run(record, type) else null
+
+    /**
+     * Hace la acción porque **la persona la pidió** (#29): vale con cualquier modo, para cualquier mensaje analizado. Queda anotada y
+     * explica sus fallos igual que la automática. Devuelve `null` solo si no hay registro local.
+     */
+    fun performManual(record: AnalysisRecord, type: ActionType): ActionStatus? = run(record, type)
+
+    private fun run(record: AnalysisRecord, type: ActionType): ActionStatus? {
+        if (record.id == 0L) return null
         val current = log.actionsOf(record.id).latest()[type]
         if (current?.status == ActionStatus.Completed) return ActionStatus.Completed
 
