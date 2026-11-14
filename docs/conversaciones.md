@@ -26,13 +26,16 @@ en cola, saliente, fallido) se muestra a la derecha, como del usuario. Los borra
 
 ## Borrar mensajes y conversaciones (#51)
 
-- **Mantener presionada una conversación** en la lista, o **una burbuja** dentro de una conversación, pide borrarla. La confirmación
-  dice que se quitará del teléfono y que no se puede deshacer, y trae la casilla **"Borrar también su análisis del historial"**,
-  **marcada por defecto**. Una línea debajo dice qué pasa en cada caso: marcada, el texto que el historial guarda también se borra;
-  desmarcada, "su análisis seguirá en el historial, con el texto del mensaje".
+- **Botón "Seleccionar"** en la barra de la lista de mensajes y de cada conversación (y del Historial, #52): aparecen casillas, la barra
+  dice "N seleccionados" con "Todos" y "Borrar" (que no se puede tocar sin ninguno elegido), y la flecha cancela. **Mantener presionada**
+  una conversación o una burbuja es un atajo: empieza a seleccionar con esa ya marcada. Se pueden borrar **varias conversaciones o varios
+  mensajes a la vez**. Cambiar de pestaña o de conversación deja de seleccionar, y "atrás" cancela la selección. La confirmación
+  es corta, como la de las apps de mensajes: "Esta conversación será borrada de su dispositivo." (o "Este mensaje será borrado…", y en
+  plural), con la casilla **"Borrar también su análisis del historial"**, **marcada por defecto**. No lleva más texto: la casilla ya dice
+  qué se decide.
 - **Por qué la casilla:** borrar un mensaje del buzón no borra su registro del historial, que guarda el texto. Sin la casilla, la persona
   podría creer que lo borró y que su texto siga guardado.
-- **Cómo se borra** (`DeleteMessages`): primero el buzón y después el historial, así que si el buzón falla (por ejemplo, la app no es la
+- **Cómo se borra** (`DeleteMessages`: `deleteMessages` y `deleteConversations`): primero el buzón y después el historial, así que si el buzón falla (por ejemplo, la app no es la
   de SMS predeterminada) no se pierde el registro de un mensaje que sigue ahí; en ese caso la app dice "No se pudo borrar". Una
   conversación se borra **por los ids de sus mensajes**, no por su hilo, para no perder sin decisión un mensaje que llegue mientras
   tanto. Un registro se borra solo si es **de ese mensaje** (mismo id y mismo texto): el buzón puede reutilizar ids. Lo enviado no tiene

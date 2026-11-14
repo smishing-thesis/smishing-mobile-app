@@ -138,12 +138,35 @@ Analizar uno antiguo **no avisa ni actúa**: no hay alerta, ni bloqueo, ni se re
 registro **de ese** mensaje (mismo id y mismo texto). Los muy cortos no tienen botón (el modelo no los puntúa). Hoy se analiza de a uno;
 analizar toda una conversación o toda la bandeja de una vez no está hecho.
 
+## Retención, borrado y cifrado (#52)
+
+**Decisiones (2026-11-14, del equipo):**
+- **Sin retención automática.** Los análisis se guardan hasta que la persona los borre; no se borran solos. Se dice en lenguaje claro en
+  Ajustes → Privacidad, en una frase: "El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre." Es una política explícita, no una falta de política. Consecuencia: el historial crece sin límite y guarda texto de
+  mensajes mientras la persona no lo borre; cada registro es chico, pero **no se midió el tamaño** con muchos mensajes.
+- **No se cifra la base, y queda documentado.** Razones: la base está en el almacenamiento privado de la app, y la copia de seguridad de
+  Android y la migración a otro teléfono **la excluyen** (`backup_rules.xml` y `data_extraction_rules.xml`, desde #12); Android cifra
+  los datos del teléfono (no se verificó en un teléfono real, y los teléfonos actualizados de versiones viejas pueden no tenerlo); y el
+  borrado deja que la persona controle cuánto texto se guarda. Cifrar con SQLCipher sumaría una dependencia nativa (más peso en el APK, que
+  **no se midió**), costo de rendimiento en un teléfono de gama baja y la gestión de una clave con el Keystore. **Lo que queda sin
+  proteger:** un teléfono con root, o alguien con acceso al teléfono desbloqueado, podría leer la base. Revisar la decisión si el
+  historial pasa a guardar algo más que el texto, o si la tesis exige protección ante ese caso.
+
+**Borrar.** En el Historial, el botón **"Seleccionar"** de la barra (o **mantener presionado un registro**, como atajo) empieza a seleccionar; la
+barra dice "N seleccionados", con casillas en cada fila, "Todos" y "Borrar"; tocar otras filas las marca o desmarca, y la flecha cancela. "Borrar" pide confirmar: dice que se borran el
+análisis y el texto que guarda el historial, que los mensajes siguen en el teléfono y, si alguno de los seleccionados es un mensaje que la
+app **retiró del buzón y todavía se puede restaurar** (#16), que ya no podrá restaurarlo (`restorableCount`). En Ajustes → Privacidad,
+**"Borrar todo el historial"** hace lo mismo con todos, con su confirmación. Con cada registro se van su resultado, sus señales y sus
+acciones (borrado en cascada): una prueba de dispositivo comprueba que, tras borrar todo, las cuatro tablas quedan vacías.
+
+**Lo que no cubre esto:** borrar el historial no borra los mensajes del buzón (eso es #51), no desbloquea números que el modo automático
+haya bloqueado, y no se probó con miles de registros (se borra en tandas de 400 ids) ni en un teléfono real.
+
 ## Lo que no cubre
 
-- **No hay forma de borrar el historial entero ni política de retención (#52).** Crece sin límite. Desde #51, al borrar un mensaje o una
-  conversación la confirmación deja borrar también el registro de ese mensaje (casilla marcada por defecto); si se desmarca, el texto
-  sigue guardado en el historial. Es lo primero que hay que decidir antes de usar la app con mensajes reales (podría ir en Ajustes, #31).
-- **La base no está cifrada.**
+- **El historial crece sin límite**: no hay retención automática (decisión de #52, ver arriba). Desde #51, al borrar un mensaje o una
+  conversación la confirmación deja borrar también su registro (casilla marcada por defecto); si se desmarca, el texto sigue guardado.
+- **La base no está cifrada** (decisión de #52, ver arriba).
 - **La historia habla de "las acciones tomadas"**, pero las acciones (bloquear, retirar, marcar como seguro) son #13 a #16: el esquema
   todavía no tiene su tabla (llegará con una migración a la versión 2 de la base) y la pantalla no las muestra.
 - **Solo entran los mensajes analizados**: los que llegan con la app como predeterminada y los que la persona analiza a mano (ver

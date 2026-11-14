@@ -19,7 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.res.stringResource
+import com.app.smishing.R
+import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.mitigation.MitigationMode
+import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.domain.mitigation.MitigationSettings
 import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
@@ -35,6 +39,7 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 fun SettingsRoute(
+    history: AnalysisHistory,
     settings: MitigationSettings,
     permissions: PermissionStatusReader,
     modifier: Modifier = Modifier,
@@ -44,6 +49,7 @@ fun SettingsRoute(
     var mode by remember { mutableStateOf<MitigationMode?>(null) }
     var statuses by remember { mutableStateOf<List<PermissionStatus>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
+    var confirmDeleteHistory by remember { mutableStateOf(false) }
 
     val activity = LocalActivity.current as? ComponentActivity
     DisposableEffect(activity) {
@@ -72,8 +78,22 @@ fun SettingsRoute(
         permissions = statuses,
         onOpenSystemSettings = { permission -> context.startActivity(SystemSettingsIntents.forPermission(context, permission)) },
         modifier = modifier,
+        onDeleteHistory = { confirmDeleteHistory = true },
         extra = { DemoSection() },
     )
+    if (confirmDeleteHistory) {
+        ConfirmDialog(
+            title = stringResource(R.string.delete_history_title),
+            message = stringResource(R.string.delete_history_text),
+            confirmLabel = stringResource(R.string.delete_history_confirm),
+            onConfirm = {
+                confirmDeleteHistory = false
+                scope.launch(Dispatchers.IO) { history.deleteAll() }
+            },
+            dismissLabel = stringResource(R.string.delete_cancel),
+            onDismiss = { confirmDeleteHistory = false },
+        )
+    }
 }
 
 /** A dónde lleva "Abrir ajustes" para cada permiso. */

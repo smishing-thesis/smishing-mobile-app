@@ -9,8 +9,8 @@ import com.app.smishing.domain.history.AnalysisHistory
 data class DeleteResult(val messageIds: List<Long>, val records: Int)
 
 /**
- * Borra mensajes y conversaciones (#51). Borrar un mensaje del buzón **no** borra su análisis del historial, que guarda el texto: por
- * eso la persona decide, y [alsoHistory] dice si también se borran los registros de los mensajes borrados.
+ * Borra mensajes y conversaciones (#51), uno o varios. Borrar un mensaje del buzón **no** borra su análisis del historial, que guarda el
+ * texto: por eso la persona decide, y [alsoHistory] dice si también se borran los registros de los mensajes borrados.
  *
  * - Primero se borra del buzón y después el historial: si el buzón falla, no se pierde el registro de un mensaje que sigue ahí.
  * - Un registro se borra solo si es **de ese mensaje**: mismo id y mismo texto. El buzón puede reutilizar ids si se restablece, y no
@@ -24,11 +24,7 @@ class DeleteMessages(
     private val history: AnalysisHistory,
 ) {
 
-    fun deleteMessage(message: ConversationMessage, alsoHistory: Boolean): DeleteResult = delete(listOf(message), alsoHistory)
-
-    fun deleteConversation(threadId: Long, alsoHistory: Boolean): DeleteResult = delete(repository.messages(threadId), alsoHistory)
-
-    private fun delete(messages: List<ConversationMessage>, alsoHistory: Boolean): DeleteResult {
+    fun deleteMessages(messages: List<ConversationMessage>, alsoHistory: Boolean): DeleteResult {
         if (messages.isEmpty()) return DeleteResult(emptyList(), 0)
         repository.delete(messages.map { it.id })
         val records = if (alsoHistory) {
@@ -38,4 +34,7 @@ class DeleteMessages(
         }
         return DeleteResult(messages.map { it.id }, records)
     }
+
+    fun deleteConversations(threadIds: List<Long>, alsoHistory: Boolean): DeleteResult =
+        deleteMessages(threadIds.flatMap { repository.messages(it) }, alsoHistory)
 }

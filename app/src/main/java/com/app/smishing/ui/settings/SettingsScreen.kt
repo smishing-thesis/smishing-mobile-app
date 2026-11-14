@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,7 @@ import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.RadioOption
 import com.app.smishing.ui.designsystem.components.SectionLabel
+import com.app.smishing.ui.designsystem.components.SecondaryButton
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -45,6 +47,8 @@ fun SettingsScreen(
     permissions: List<PermissionStatus>,
     onOpenSystemSettings: (AppPermission) -> Unit,
     modifier: Modifier = Modifier,
+    /** "Borrar todo el historial" (#52): pedir confirmación. */
+    onDeleteHistory: () -> Unit = {},
     /** Al final de la pantalla: en depuración, las herramientas de demostración (#65); en `qa` y `release`, nada. */
     extra: @Composable () -> Unit = {},
 ) {
@@ -90,6 +94,15 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
+            SectionLabel(stringResource(R.string.settings_privacy_title))
+            Text(
+                stringResource(R.string.settings_privacy_text),
+                style = SmishingTypography.BodyMedium,
+                color = SmishingPalette.TextSecondary,
+            )
+            SecondaryButton(stringResource(R.string.settings_delete_history), onClick = onDeleteHistory, modifier = Modifier.fillMaxWidth())
             extra()
         }
     }

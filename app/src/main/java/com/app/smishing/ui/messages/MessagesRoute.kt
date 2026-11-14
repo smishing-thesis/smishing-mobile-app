@@ -44,6 +44,8 @@ import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
 import com.app.smishing.domain.messaging.DeleteMessages
+import com.app.smishing.domain.mitigation.restorableCount
+import androidx.compose.ui.res.pluralStringResource
 import com.app.smishing.ui.designsystem.components.ConfirmDialog
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.alerts.AnalysisOutcome
@@ -136,6 +138,16 @@ fun MessagesRoute(
     // Lo que se va a borrar (#51), mientras la persona confirma, y si el último intento de borrar falló.
     var deleteTarget by remember { mutableStateOf<DeleteTarget?>(null) }
     var deleteFailed by remember { mutableStateOf(false) }
+    // Los registros del historial marcados para borrar (#52) y, mientras la persona confirma, cuáles son (con sus acciones, para avisar
+    // si alguno es un mensaje retirado que ya no se podría restaurar).
+    var selectingHistory by remember { mutableStateOf(false) }
+    var selectedRecords by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    // Lo mismo para las conversaciones de la lista (por su hilo) y para los mensajes de la conversación abierta (por su id) (#51).
+    var selectingConversations by remember { mutableStateOf(false) }
+    var selectedThreads by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var selectingMessages by remember { mutableStateOf(false) }
+    var selectedMessages by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var deleteRecords by remember { mutableStateOf<Pair<List<AnalysisRecord>, Map<Long, List<MitigationAction>>>?>(null) }
 
     val requestSendPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val scope = rememberCoroutineScope()
@@ -143,12 +155,16 @@ fun MessagesRoute(
     /** Borra lo confirmado (#51): el buzón y, si la persona lo pidió, el historial; descarta los avisos de lo borrado. */
     fun confirmDelete(target: DeleteTarget, alsoHistory: Boolean) {
         deleteTarget = null
+        selectingConversations = false
+        selectedThreads = emptySet()
+        selectingMessages = false
+        selectedMessages = emptySet()
         scope.launch(Dispatchers.IO) {
             try {
                 val deleter = DeleteMessages(repository, history)
                 val result = when (target) {
-                    is DeleteTarget.Message -> deleter.deleteMessage(target.message, alsoHistory)
-                    is DeleteTarget.Conversation -> deleter.deleteConversation(target.threadId, alsoHistory)
+                    is DeleteTarget.Messages -> deleter.deleteMessages(target.messages, alsoHistory)
+                    is DeleteTarget.Conversations -> deleter.deleteConversations(target.items.map { it.first }, alsoHistory)
                 }
                 AndroidMessageNotifier.dismiss(context, result.messageIds)
                 // Si la conversación abierta quedó sin mensajes, se vuelve a la lista.
@@ -237,15 +253,28 @@ fun MessagesRoute(
         }
     }
 
-    BackHandler(enabled = composing || openThreadId != null || detailMessageId != null || historyRecordId != null) {
+    BackHandler(
+        enabled = composing || openThreadId != null || detailMessageId != null || historyRecordId != null ||
+            selectingHistory || selectingConversations || selectingMessages,
+    ) {
         sendError = null
         when {
             detailMessageId != null -> detailMessageId = null
             historyRecordId != null -> historyRecordId = null
+            selectingMessages -> { selectingMessages = false; selectedMessages = emptySet() }
+            selectingConversations -> { selectingConversations = false; selectedThreads = emptySet() }
+            selectingHistory -> { selectingHistory = false; selectedRecords = emptySet() }
             composing -> composing = false
             else -> openThreadId = null
         }
     }
+
+    // Cambiar de pestaña o de conversación deja de elegir: lo elegido era de la pantalla anterior.
+    LaunchedEffect(tab) {
+        selectingHistory = false; selectedRecords = emptySet()
+        selectingConversations = false; selectedThreads = emptySet()
+    }
+    LaunchedEffect(openThreadId) { selectingMessages = false; selectedMessages = emptySet() }
 
     val threadId = openThreadId
     val detailId = detailMessageId
@@ -323,6 +352,7 @@ fun MessagesRoute(
                     modifier = Modifier,
                 )
                 tab == 3 && threadId == null -> SettingsRoute(
+            history = history,
             settings = mitigationSettings,
             permissions = permissionStatuses,
             modifier = Modifier,
@@ -332,7 +362,19 @@ fun MessagesRoute(
                     LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
                     var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
                     LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
-                    HistoryScreen(records = records, onOpen = { historyRecordId = it.id }, actions = actions, modifier = Modifier)
+                    HistoryScreen(
+                        records = records,
+                        onOpen = { historyRecordId = it.id },
+                        actions = actions,
+                        modifier = Modifier,
+                        selecting = selectingHistory,
+                        selected = selectedRecords,
+                        onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
+                        onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
+                        onSelectAll = { selectedRecords = records.orEmpty().map { it.id }.toSet() },
+                        onCancelSelection = { selectingHistory = false; selectedRecords = emptySet() },
+                        onDeleteSelected = { deleteRecords = records.orEmpty().filter { it.id in selectedRecords } to actions },
+                    )
                 }
                 tab == 0 && threadId == null -> HomeRoute(
                     permissions = permissionStatuses,
@@ -357,7 +399,17 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         listState = conversationListState,
-                        onDelete = { deleteTarget = DeleteTarget.Conversation(it.threadId, it.address) },
+                        selecting = selectingConversations,
+                        selected = selectedThreads,
+                        onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
+                        onStartSelecting = { first -> selectingConversations = true; selectedThreads = first?.let { setOf(it.threadId) }.orEmpty() },
+                        onSelectAll = { selectedThreads = conversations.orEmpty().map { it.threadId }.toSet() },
+                        onCancelSelection = { selectingConversations = false; selectedThreads = emptySet() },
+                        onDeleteSelected = {
+                            deleteTarget = DeleteTarget.Conversations(
+                                conversations.orEmpty().filter { it.threadId in selectedThreads }.map { it.threadId to it.address },
+                            )
+                        },
                     )
                 }
                 else -> {
@@ -387,7 +439,13 @@ fun MessagesRoute(
                         modifier = Modifier,
                         risks = risks,
                         onSeeRisk = { historyRecordId = it },
-                        onDelete = { deleteTarget = DeleteTarget.Message(it) },
+                        selecting = selectingMessages,
+                        selected = selectedMessages,
+                        onToggle = { selectedMessages = if (it.id in selectedMessages) selectedMessages - it.id else selectedMessages + it.id },
+                        onStartSelecting = { first -> selectingMessages = true; selectedMessages = first?.let { setOf(it.id) }.orEmpty() },
+                        onSelectAll = { selectedMessages = messages.orEmpty().map { it.id }.toSet() },
+                        onCancelSelection = { selectingMessages = false; selectedMessages = emptySet() },
+                        onDeleteSelected = { deleteTarget = DeleteTarget.Messages(messages.orEmpty().filter { it.id in selectedMessages }) },
                         analysis = { m ->
                             val attempt = attempts[m.id]
                             when {
@@ -431,6 +489,22 @@ fun MessagesRoute(
                 onSelect = { tab = it },
             )
         }
+    }
+    deleteRecords?.let { (records, actions) ->
+        ConfirmDialog(
+            title = pluralStringResource(R.plurals.delete_records_title, records.size, records.size),
+            message = stringResource(R.string.delete_records_text) +
+                restorableCount(records, actions).takeIf { it > 0 }?.let { " " + stringResource(R.string.delete_records_restorable) }.orEmpty(),
+            confirmLabel = stringResource(R.string.delete_confirm),
+            onConfirm = {
+                deleteRecords = null
+                selectingHistory = false
+                selectedRecords = emptySet()
+                scope.launch(Dispatchers.IO) { history.delete(records.map { it.id }) }
+            },
+            dismissLabel = stringResource(R.string.delete_cancel),
+            onDismiss = { deleteRecords = null },
+        )
     }
     deleteTarget?.let { target ->
         DeleteDialog(target = target, onConfirm = { alsoHistory -> confirmDelete(target, alsoHistory) }, onDismiss = { deleteTarget = null })

@@ -64,6 +64,11 @@ class RoomAnalysisHistory(private val database: HistoryDatabase) : AnalysisHisto
             it.messageId to MessageRisk(it.messageId, it.recordId, RiskLevel.valueOf(it.level), it.markedSafeAt != null, it.body)
         }
 
+    // En tandas: SQLite admite un máximo de variables por consulta.
+    override fun delete(ids: Collection<Long>): Int = ids.chunked(400).sumOf { dao.deleteByIds(it) }
+
+    override fun deleteAll(): Int = dao.deleteAll()
+
     override fun deleteByMessage(messageId: Long, body: String): Int = dao.deleteByMessage(messageId, body)
 
     override fun markSafe(id: Long, nowMillis: Long) = dao.markSafe(id, nowMillis)

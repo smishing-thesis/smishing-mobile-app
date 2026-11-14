@@ -20,6 +20,8 @@ import com.app.smishing.domain.mitigation.MitigationAction
 import com.app.smishing.domain.mitigation.historyMarks
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.ui.designsystem.components.HistoryRow
+import com.app.smishing.ui.designsystem.components.SelectAction
+import com.app.smishing.ui.designsystem.components.SelectionTopBar
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.StatusChip
 import com.app.smishing.ui.designsystem.components.TopBarStyle
@@ -44,9 +46,32 @@ fun HistoryScreen(
     zone: ZoneId = ZoneId.systemDefault(),
     /** Las acciones tomadas por registro (#28), para marcar cada mensaje con lo que se hizo. */
     actions: Map<Long, List<MitigationAction>> = emptyMap(),
+    /** Si se están eligiendo registros para borrar (#52) y cuáles. Tocar una fila la marca o desmarca. */
+    selecting: Boolean = false,
+    selected: Set<Long> = emptySet(),
+    onToggle: (AnalysisRecord) -> Unit = {},
+    /** Empezar a elegir: desde el botón "Seleccionar" (sin registro) o manteniendo presionado uno (ese registro). */
+    onStartSelecting: (AnalysisRecord?) -> Unit = {},
+    onSelectAll: () -> Unit = {},
+    onCancelSelection: () -> Unit = {},
+    onDeleteSelected: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
-        SmishingTopBar(title = stringResource(R.string.history_title), style = TopBarStyle.Primary)
+        if (selecting) {
+            SelectionTopBar(
+                count = selected.size,
+                style = TopBarStyle.Primary,
+                onCancel = onCancelSelection,
+                onSelectAll = onSelectAll,
+                onDelete = onDeleteSelected,
+            )
+        } else {
+            SmishingTopBar(
+                title = stringResource(R.string.history_title),
+                style = TopBarStyle.Primary,
+                actions = { if (!records.isNullOrEmpty()) SelectAction(TopBarStyle.Primary) { onStartSelecting(null) } },
+            )
+        }
         when {
             records == null -> Unit
             records.isEmpty() -> Box(Modifier.fillMaxSize().padding(Spacing.Md), contentAlignment = Alignment.Center) {
@@ -62,7 +87,11 @@ fun HistoryScreen(
                         sender = record.sender,
                         date = formatHistoryDate(record.analyzedAtMillis, zone),
                         snippet = record.body,
-                        onClick = { onOpen(record) },
+                        onClick = { if (selecting) onToggle(record) else onOpen(record) },
+                        selectionMode = selecting,
+                        selected = record.id in selected,
+                        onLongClick = { if (!selecting) onStartSelecting(record) },
+                        onLongClickLabel = stringResource(R.string.history_select),
                         actions = marksText(historyMarks(record, actions[record.id].orEmpty())),
                         chip = { StatusChip(statusOf(record.assessment.level), stringResource(chipText(record.assessment.level))) },
                     )

@@ -64,6 +64,12 @@ abstract class HistoryDao {
     )
     abstract fun risks(): List<RiskRow>
 
+    @Query("DELETE FROM analyzed_message WHERE id IN (:ids)")
+    abstract fun deleteByIds(ids: List<Long>): Int
+
+    @Query("DELETE FROM analyzed_message")
+    abstract fun deleteAll(): Int
+
     @Query("DELETE FROM analyzed_message WHERE messageId = :messageId AND body = :body")
     abstract fun deleteByMessage(messageId: Long, body: String): Int
 

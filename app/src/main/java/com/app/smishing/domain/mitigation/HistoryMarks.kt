@@ -13,6 +13,13 @@ enum class HistoryMark { MarkedSafe, Blocked, Removed, ActionFailed, ActionPendi
  * - Una acción pedida cuyo resultado aún no se sabe da `ActionPending`.
  * - Una acción revertida no deja marca.
  */
+/**
+ * Cuántos de los [records] son de un mensaje que la app **retiró del buzón** y que todavía se puede restaurar (#16, #52). Su registro es
+ * la única copia del texto: borrarlo impide restaurarlo, y la confirmación de borrar debe decirlo.
+ */
+fun restorableCount(records: List<AnalysisRecord>, actions: Map<Long, List<MitigationAction>>): Int =
+    records.count { HistoryMark.Removed in historyMarks(it, actions[it.id].orEmpty()) }
+
 fun historyMarks(record: AnalysisRecord, actions: List<MitigationAction>): List<HistoryMark> {
     if (record.markedSafeAtMillis != null) return listOf(HistoryMark.MarkedSafe)
     val latest = actions.latest()

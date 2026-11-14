@@ -1,6 +1,7 @@
 package com.app.smishing.ui.messages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +30,8 @@ import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.ConversationMessage
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.ui.designsystem.components.RiskNotice
+import com.app.smishing.ui.designsystem.components.SelectAction
+import com.app.smishing.ui.designsystem.components.SelectionTopBar
 import com.app.smishing.domain.messaging.MessageDirection
 import com.app.smishing.domain.messaging.SendOutcome
 import com.app.smishing.ui.designsystem.components.LinkButton
@@ -83,8 +88,15 @@ fun ConversationScreen(
     /** Qué dice la fila de análisis de un mensaje recibido (#59). */
     analysis: (ConversationMessage) -> StoredAnalysis = { StoredAnalysis.None },
     onAnalyze: (ConversationMessage) -> Unit = {},
-    /** Mantener presionado un mensaje (#51): pedir borrarlo. */
-    onDelete: (ConversationMessage) -> Unit = {},
+    /** Si se están eligiendo mensajes para borrar (#51) y cuáles (por su id). Tocar una burbuja la marca o desmarca. */
+    selecting: Boolean = false,
+    selected: Set<Long> = emptySet(),
+    onToggle: (ConversationMessage) -> Unit = {},
+    /** Empezar a elegir: desde el botón "Seleccionar" (sin mensaje) o manteniendo presionado uno (ese mensaje). */
+    onStartSelecting: (ConversationMessage?) -> Unit = {},
+    onSelectAll: () -> Unit = {},
+    onCancelSelection: () -> Unit = {},
+    onDeleteSelected: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val count = messages?.size ?: 0
@@ -94,13 +106,24 @@ fun ConversationScreen(
     val received = stringResource(R.string.message_received)
     val sent = stringResource(R.string.message_sent)
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).imePadding()) {
-        SmishingTopBar(
-            title = address,
-            subtitle = stringResource(R.string.conversation_subtitle),
-            style = TopBarStyle.Plain,
-            onBack = onBack,
-            backDescription = stringResource(R.string.conversation_back),
-        )
+        if (selecting) {
+            SelectionTopBar(
+                count = selected.size,
+                style = TopBarStyle.Plain,
+                onCancel = onCancelSelection,
+                onSelectAll = onSelectAll,
+                onDelete = onDeleteSelected,
+            )
+        } else {
+            SmishingTopBar(
+                title = address,
+                subtitle = stringResource(R.string.conversation_subtitle),
+                style = TopBarStyle.Plain,
+                onBack = onBack,
+                backDescription = stringResource(R.string.conversation_back),
+                actions = { if (count > 0) SelectAction(TopBarStyle.Plain) { onStartSelecting(null) } },
+            )
+        }
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -109,7 +132,20 @@ fun ConversationScreen(
         ) {
             items(messages.orEmpty(), key = { it.id }) { message ->
                 val outgoing = message.direction == MessageDirection.Outgoing
-                Column(horizontalAlignment = if (outgoing) Alignment.End else Alignment.Start) {
+                // Al seleccionar, toda la fila (la casilla y el espacio de alrededor, no solo la burbuja) marca y desmarca el mensaje.
+                Row(
+                    modifier = if (selecting) Modifier.fillMaxWidth().clickable { onToggle(message) } else Modifier,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                if (selecting) {
+                    Checkbox(
+                        checked = message.id in selected,
+                        onCheckedChange = null,
+                        colors = CheckboxDefaults.colors(checkedColor = SmishingPalette.Primary),
+                        modifier = Modifier.padding(end = Spacing.Sm),
+                    )
+                }
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = if (outgoing) Alignment.End else Alignment.Start) {
                     val level = if (outgoing) null else riskNotice(risks, message.id, message.body)
                     if (level != null) {
                         RiskNotice(
@@ -135,8 +171,9 @@ fun ConversationScreen(
                     MessageBubble(
                         text = message.body,
                         outgoing = outgoing,
-                        onLongClick = { onDelete(message) },
-                        onLongClickLabel = stringResource(R.string.messages_delete_message),
+                        onClick = if (selecting) ({ onToggle(message) }) else null,
+                        onLongClick = if (selecting) null else ({ onStartSelecting(message) }),
+                        onLongClickLabel = stringResource(R.string.history_select),
                         // El lector de pantalla dice si el mensaje es recibido o enviado, que el color no transmite.
                         modifier = Modifier.semantics(mergeDescendants = true) { stateDescription = if (outgoing) sent else received },
                     )
@@ -174,6 +211,7 @@ fun ConversationScreen(
                             modifier = Modifier.padding(top = Spacing.X2s, end = Spacing.Xs),
                         )
                     }
+                }
                 }
             }
         }

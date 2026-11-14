@@ -41,6 +41,15 @@ interface AnalysisHistory {
     /** El riesgo de cada mensaje analizado, por su id en el buzón (el registro más reciente de cada uno). Una sola lectura (#60). */
     fun risks(): Map<Long, MessageRisk> = emptyMap()
 
+    /**
+     * Borra los registros con esos ids (#52) y devuelve cuántos borró. Con cada registro se van su resultado, sus señales y sus acciones:
+     * el texto del mensaje deja de estar en la base.
+     */
+    fun delete(ids: Collection<Long>): Int
+
+    /** Borra todo el historial (#52) y devuelve cuántos registros borró. */
+    fun deleteAll(): Int
+
     /** Guarda que la persona marcó el mensaje como seguro (#16). */
     fun markSafe(id: Long, nowMillis: Long)
 
