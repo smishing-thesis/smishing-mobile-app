@@ -1,0 +1,183 @@
+{
+  "rules_version": "1.3.0",
+  "rules": [
+    {
+      "name": "url",
+      "placeholder": "<URL>",
+      "priority": 2,
+      "pattern": "https?://\\S+|\\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}(?:/\\S*)?"
+    },
+    {
+      "name": "email",
+      "placeholder": "<EMAIL_ADDRESS>",
+      "priority": 3,
+      "pattern": "[\\w.+-]+@[\\w-]+\\.[\\w.-]+"
+    },
+    {
+      "name": "phone_pe",
+      "placeholder": "<PHONE_NUMBER>",
+      "priority": 2,
+      "pattern": "(?:\\+?51[\\s.-]?)?9\\d{2}[\\s.-]?\\d{3}[\\s.-]?\\d{3}\\b"
+    },
+    {
+      "name": "id_number_pe",
+      "placeholder": "<ID_NUMBER>",
+      "priority": 3,
+      "pattern": "\\b(?:ruc|dni)\\b\\W{0,3}(?:n(?:ro|°|º|\\.)?\\W{0,3})?(?P<value>\\d{11}|\\d{8})\\b"
+    }
+  ],
+  "known_names": [
+    "Juan",
+    "Perez",
+    "Maria Jose",
+    "Muñoz",
+    "Ana"
+  ],
+  "cases": [
+    {
+      "id": "sin_cambios",
+      "text": "Su pedido llega hoy entre las 9 y las 11.",
+      "expected": "Su pedido llega hoy entre las 9 y las 11."
+    },
+    {
+      "id": "url_con_esquema",
+      "text": "Ingrese a https://banco-seguro.example/login ahora",
+      "expected": "Ingrese a <URL> ahora"
+    },
+    {
+      "id": "url_sin_esquema",
+      "text": "Actualice en pagos-seguros.example/osc ya",
+      "expected": "Actualice en <URL> ya"
+    },
+    {
+      "id": "url_mayusculas",
+      "text": "Visite WWW.Ejemplo.COM/Promo hoy",
+      "expected": "Visite <URL> hoy"
+    },
+    {
+      "id": "url_acortada",
+      "text": "Mire bit.ly/abc123 y gane",
+      "expected": "Mire <URL> y gane"
+    },
+    {
+      "id": "dos_enlaces",
+      "text": "Escribanos a soporte@banco.com.pe o www.banco.com.pe",
+      "expected": "Escribanos a <EMAIL_ADDRESS> o <URL>"
+    },
+    {
+      "id": "correo",
+      "text": "Escriba a soporte@correo.example para ayuda",
+      "expected": "Escriba a <EMAIL_ADDRESS> para ayuda"
+    },
+    {
+      "id": "correo_prioridad_sobre_url",
+      "text": "Contacto: ana.lopez@dominio.pe",
+      "expected": "Contacto: <EMAIL_ADDRESS>"
+    },
+    {
+      "id": "correo_con_acento",
+      "text": "Escriba a josé@correo.pe por favor",
+      "expected": "Escriba a <EMAIL_ADDRESS> por favor"
+    },
+    {
+      "id": "telefono_con_mas_51",
+      "text": "Llame al +51 912 345 678 hoy",
+      "expected": "Llame al <PHONE_NUMBER> hoy"
+    },
+    {
+      "id": "telefono_con_guiones",
+      "text": "Comuniquese al 912-345-678",
+      "expected": "Comuniquese al <PHONE_NUMBER>"
+    },
+    {
+      "id": "telefono_pegado",
+      "text": "WhatsApp 912345678.",
+      "expected": "WhatsApp <PHONE_NUMBER>."
+    },
+    {
+      "id": "telefono_con_51_sin_mas",
+      "text": "Llame al 51912345678 ya",
+      "expected": "Llame al <PHONE_NUMBER> ya"
+    },
+    {
+      "id": "numero_de_ocho_digitos_no_es_telefono",
+      "text": "Codigo 12345678 para su pedido",
+      "expected": "Codigo 12345678 para su pedido"
+    },
+    {
+      "id": "dni",
+      "text": "Su DNI 12345678 fue validado",
+      "expected": "Su DNI <ID_NUMBER> fue validado"
+    },
+    {
+      "id": "dni_con_numero",
+      "text": "DNI N° 87654321 verificado",
+      "expected": "DNI N° <ID_NUMBER> verificado"
+    },
+    {
+      "id": "ruc",
+      "text": "RUC: 20123456789 registrado",
+      "expected": "RUC: <ID_NUMBER> registrado"
+    },
+    {
+      "id": "ruc_persona_natural",
+      "text": "ruc 10123456789 activo",
+      "expected": "ruc <ID_NUMBER> activo"
+    },
+    {
+      "id": "numero_sin_palabra_clave",
+      "text": "Pedido 12345678 listo",
+      "expected": "Pedido 12345678 listo"
+    },
+    {
+      "id": "nombres_conocidos",
+      "text": "Hola Juan Perez, su pedido salio",
+      "expected": "Hola <NAMED_ENTITY>, su pedido salio"
+    },
+    {
+      "id": "nombres_sin_distinguir_mayusculas_ni_acentos",
+      "text": "MARÍA JOSÉ llamo ayer",
+      "expected": "<NAMED_ENTITY> llamo ayer"
+    },
+    {
+      "id": "nombre_con_enie_no_coincide",
+      "text": "Sr. Muñoz respondio",
+      "expected": "Sr. Muñoz respondio"
+    },
+    {
+      "id": "nombre_dentro_de_otra_palabra",
+      "text": "Anabel y Ana vinieron",
+      "expected": "Anabel y <NAMED_ENTITY> vinieron"
+    },
+    {
+      "id": "nombre_gana_a_enlace",
+      "text": "Atte. Sr.Perez",
+      "expected": "Atte. Sr.<NAMED_ENTITY>"
+    },
+    {
+      "id": "combinado",
+      "text": "Juan: llame al 912345678 o escriba a juan@x.pe, DNI 12345678, https://x.pe/a",
+      "expected": "<NAMED_ENTITY>: llame al <PHONE_NUMBER> o escriba a <EMAIL_ADDRESS>, DNI <ID_NUMBER>, <URL>"
+    },
+    {
+      "id": "ya_anonimizado",
+      "text": "Ya anonimizado <URL> y <PHONE_NUMBER>",
+      "expected": "Ya anonimizado <URL> y <PHONE_NUMBER>"
+    },
+    {
+      "id": "montos_y_horas",
+      "text": "Pago de S/ 1.500,00 el 12.05 a las 3:30 p.m.",
+      "expected": "Pago de S/ 1.500,00 el 12.05 a las 3:30 p.m."
+    },
+    {
+      "id": "saltos_de_linea",
+      "text": "Hola\nllame al 912 345 678\nGracias",
+      "expected": "Hola\nllame al <PHONE_NUMBER>\nGracias"
+    },
+    {
+      "id": "vacio",
+      "text": "",
+      "expected": ""
+    }
+  ]
+}

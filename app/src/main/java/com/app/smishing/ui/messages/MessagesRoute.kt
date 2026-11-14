@@ -44,7 +44,9 @@ import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.history.AnalyzeStoredMessage
 import com.app.smishing.data.contacts.AndroidContacts
+import com.app.smishing.data.settings.DataStoreContributionConsent
 import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.domain.sharing.ContributionConsent
 import com.app.smishing.domain.contacts.ContactBook
 import com.app.smishing.domain.messaging.DeleteMessages
 import com.app.smishing.domain.settings.OnboardingProgress
@@ -122,6 +124,7 @@ fun MessagesRoute(
     openConversationOfMessageId: Long? = null,
     onConversationOpened: () -> Unit = {},
     onboarding: OnboardingProgress = rememberOnboardingProgress(),
+    contributionConsent: ContributionConsent = rememberContributionConsent(),
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -406,6 +409,7 @@ fun MessagesRoute(
                 )
                 tab == 3 && threadId == null -> SettingsRoute(
             history = history,
+            contributionConsent = contributionConsent,
             settings = mitigationSettings,
             permissions = permissionStatuses,
             modifier = Modifier,
@@ -644,6 +648,12 @@ private fun rememberActionLog(): MitigationLog {
 private fun rememberMitigationSettings(): MitigationSettings {
     val context = LocalContext.current.applicationContext
     return remember(context) { DataStoreMitigationSettings(context) }
+}
+
+@Composable
+private fun rememberContributionConsent(): ContributionConsent {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { DataStoreContributionConsent(context) }
 }
 
 @Composable

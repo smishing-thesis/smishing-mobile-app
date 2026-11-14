@@ -25,6 +25,7 @@ import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.RadioOption
 import com.app.smishing.ui.designsystem.components.SectionLabel
+import com.app.smishing.ui.designsystem.components.SwitchRow
 import com.app.smishing.ui.designsystem.components.SecondaryButton
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.TopBarStyle
@@ -47,6 +48,9 @@ fun SettingsScreen(
     permissions: List<PermissionStatus>,
     onOpenSystemSettings: (AppPermission) -> Unit,
     modifier: Modifier = Modifier,
+    /** Si el aporte anónimo al corpus está activado (#18), o `null` mientras se lee, y el cambio que pide la persona. */
+    contribution: Boolean? = null,
+    onContributionChange: (Boolean) -> Unit = {},
     /** Pedir el permiso de contactos (#53). Si ya se negó, abre los ajustes de la app. */
     onContacts: (granted: Boolean) -> Unit = {},
     /** "Borrar todo el historial" (#52): pedir confirmación. */
@@ -127,6 +131,14 @@ fun SettingsScreen(
                 color = SmishingPalette.TextSecondary,
             )
             SecondaryButton(stringResource(R.string.settings_delete_history), onClick = onDeleteHistory, modifier = Modifier.fillMaxWidth())
+            if (contribution != null) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_contribution_title),
+                    description = stringResource(if (contribution) R.string.settings_contribution_on else R.string.settings_contribution_off),
+                    checked = contribution,
+                    onCheckedChange = onContributionChange,
+                )
+            }
             extra()
         }
     }
