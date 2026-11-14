@@ -63,6 +63,8 @@ class AndroidRiskAlertNotifier(private val context: Context) : RiskAlertNotifier
             .setContentText(summary)
             .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
             .setColor(red)
+            // Sin las acciones que el sistema sugiere ("Open link"): la alerta es de un mensaje riesgoso y su enlace no debe abrirse desde aquí.
+            .setAllowSystemGeneratedContextualActions(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)

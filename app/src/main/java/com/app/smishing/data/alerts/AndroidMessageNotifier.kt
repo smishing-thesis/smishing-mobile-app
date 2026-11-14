@@ -45,6 +45,9 @@ class AndroidMessageNotifier(private val context: Context) : IncomingMessageNoti
             .setContentText(message.body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            // Sin las acciones que el sistema sugiere ("Open link" si el texto trae un enlace): abrirían el enlace de un posible fraude
+            // sin pasar por la app, que nunca activa los enlaces de un mensaje.
+            .setAllowSystemGeneratedContextualActions(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)

@@ -15,7 +15,7 @@ principal: hasta aquí solo avisaban los mensajes de riesgo alto, y los recibido
 
 - **El aviso** va en su propio canal, "Mensajes", con **importancia alta** (como la alerta de riesgo): sale como ventana emergente. Antes era normal y solo aparecía en la
   bandeja (cambiado el 2026-11-11, a pedido). Un canal ya creado conserva su importancia: en una instalación existente hay que reinstalar
-  la app o subirla en los ajustes del sistema. Muestra el remitente y el texto del mensaje. **En la pantalla de bloqueo solo dice "Mensaje nuevo"**: ni remitente ni texto.
+  la app o subirla en los ajustes del sistema. Muestra el remitente y el texto del mensaje, **sin las acciones que el sistema sugiere** (por ejemplo "Open link" cuando el texto trae un enlace): abrirían el enlace de un posible fraude sin pasar por la app, que nunca activa los enlaces. **En la pantalla de bloqueo solo dice "Mensaje nuevo"**: ni remitente ni texto.
 - **Tocarlo abre la conversación** del mensaje (no el detalle del análisis). Si el mensaje ya no está, se queda en la lista.
 - **Un aviso por mensaje**, con la etiqueta `message` y el id del mensaje, para que no choque con la alerta de riesgo (que usa solo el id).
 - Se avisa **después** de guardar el análisis, y un fallo al avisar no cambia el resultado del análisis.
