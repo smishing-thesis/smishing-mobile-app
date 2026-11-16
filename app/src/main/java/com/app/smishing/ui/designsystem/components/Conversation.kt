@@ -32,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.smishing.ui.designsystem.theme.MinTouchTarget
@@ -129,6 +131,11 @@ fun MessageBubble(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
+    /**
+     * Lo que lee el lector de pantalla para decir si el mensaje es recibido o enviado, que el color no transmite. Va en el **mismo nodo que
+     * el texto y el toque**: puesto en un nodo de afuera, el toque separa a la burbuja de él y el lector deja de decirlo.
+     */
+    stateText: String? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -149,6 +156,7 @@ fun MessageBubble(
                     if (onClick == null && onLongClick == null) Modifier
                     else Modifier.combinedClickable(onClick = onClick ?: {}, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel),
                 )
+                .then(if (stateText == null) Modifier else Modifier.semantics { stateDescription = stateText })
                 .padding(horizontal = Spacing.Md, vertical = Spacing.Sm),
         )
     }
