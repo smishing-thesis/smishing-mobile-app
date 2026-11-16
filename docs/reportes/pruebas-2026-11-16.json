@@ -37,7 +37,7 @@
     "build": "BUILD SUCCESSFUL en 1m51s"
   },
   "no_probado": [
-    "esta corrida no incluye Android 13 o superior; el permiso de notificaciones se verificó el 2026-11-10 en API 35 (Android 15), pero no el envío de SMS",
+    "esta corrida no incluye Android 13 o superior; el permiso de notificaciones se verificó el 2026-11-10 en API 35 (Android 15), y el envío de SMS el 2026-11-16 (la app envía bien; la copia que el emulador se devuelve a sí mismo no llegó en 10 s y esa comprobación quedó solo para API < 33)",
     "teléfono real",
     "cobertura de código en porcentaje"
   ]

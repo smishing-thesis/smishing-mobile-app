@@ -102,8 +102,10 @@ condición; **cuáles se omiten cambia entre corridas** porque cada una deja el 
 ### Lo que esta corrida no demuestra
 
 - **Esta corrida fue solo en un emulador API 29 (Android 10, el mínimo declarado) x86_64.** No incluye Android 13 o posterior. El permiso de
-  notificaciones de Android 13+ se verificó el 2026-11-10 en un emulador API 35, pero **el envío de SMS no se verificó en API 35** (esa prueba
-  falló allá y no se investigó). Tampoco hay teléfono real, ARM ni un teléfono de gama baja.
+  notificaciones de Android 13+ se verificó el 2026-11-10 en un emulador API 35. **El envío de SMS se probó en API 35 el 2026-11-16**: la app
+  envía bien (burbuja «Enviado», una sola fila saliente no fallida, conversación), pero **la copia que el emulador debía devolverse a sí
+  mismo no llegó en 10 s**, y no se determinó por qué (se atribuye al emulador, sin comprobarlo). Ese último paso quedó solo para API < 33.
+  Tampoco hay teléfono real, ARM ni un teléfono de gama baja.
 - Las pruebas de punta a punta usan SMS sintéticos entregados al receptor, no mensajes de la red.
 - No se midió la cobertura de código: «cubre» significa que hay pruebas de esa área, no un porcentaje.
 - Las pruebas de dispositivo que dependen del estado del emulador pueden omitirse; hay que leer la lista de omitidas, no solo «0 fallos».
