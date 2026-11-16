@@ -1,0 +1,44 @@
+{
+  "fecha": "2026-11-16",
+  "rama": "30-22-pruebas",
+  "base": "d73f1b4",
+  "emulador": "Pixel_4_API_29 (Android 10, API 29, x86_64)",
+  "comandos": [
+    ".\\gradlew.bat testDebugUnitTest --rerun",
+    ".\\gradlew.bat connectedDebugAndroidTest"
+  ],
+  "jvm": {
+    "clases": 34,
+    "pruebas": 259,
+    "fallos": 0,
+    "errores": 0,
+    "omitidas": [
+      "domain.signals.CorpusSignalReportTest (solo con el corpus real)"
+    ]
+  },
+  "dispositivo_primera_corrida": {
+    "pruebas": 90,
+    "fallos": 2,
+    "omitidas": 3,
+    "fallos_detalle": [
+      "SmsRoleInstrumentedTest.thenAMessageIsSentToTheChosenRecipientAndAppearsInItsConversation",
+      "SmsRoleInstrumentedTest.thenTheConversationsShowReceivedAndSentMessages"
+    ],
+    "causa": "MessageBubble: el manejador de toque separaba la burbuja del nodo con la descripción de estado Enviado/Recibido"
+  },
+  "dispositivo_tras_el_arreglo": {
+    "pruebas": 90,
+    "fallos": 0,
+    "errores": 0,
+    "omitidas": [
+      "AnalysisSuspensionInstrumentedTest.analysisResumesWhenThePermissionsAreGrantedAgain (estado inicial)",
+      "SmsRoleInstrumentedTest.roleThenNotificationsFollowTheAndroid13Permission (solo Android 13+; corrió en API 35 el 2026-11-10)"
+    ],
+    "build": "BUILD SUCCESSFUL en 1m51s"
+  },
+  "no_probado": [
+    "esta corrida no incluye Android 13 o superior; el permiso de notificaciones se verificó el 2026-11-10 en API 35 (Android 15), y el envío de SMS el 2026-11-16 (la app envía bien; la copia que el emulador se devuelve a sí mismo no llegó en 10 s y esa comprobación quedó solo para API < 33)",
+    "teléfono real",
+    "cobertura de código en porcentaje"
+  ]
+}

@@ -22,8 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import com.app.smishing.R
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.history.riskNotice
@@ -175,7 +173,7 @@ fun ConversationScreen(
                         onLongClick = if (selecting) null else ({ onStartSelecting(message) }),
                         onLongClickLabel = stringResource(R.string.history_select),
                         // El lector de pantalla dice si el mensaje es recibido o enviado, que el color no transmite.
-                        modifier = Modifier.semantics(mergeDescendants = true) { stateDescription = if (outgoing) sent else received },
+                        stateText = if (outgoing) sent else received,
                     )
                     if (state == StoredAnalysis.CanAnalyze || state == StoredAnalysis.Analyzing || state == StoredAnalysis.Failed) {
                         Row(
