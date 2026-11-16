@@ -5,6 +5,9 @@
         Solo en debug: galería de los componentes del sistema de diseño. No tiene icono de lanzador, para que Run abra
         la app real; se abre con adb (ver docs/design-system.md). No existe en release.
     -->
+    <!-- Solo en debug: el demo agrega y quita contactos de ejemplo (ver docs/modo-demo.md). No existe en release. -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
     <application>
         <activity
             android:name=".ui.designsystem.ComponentGalleryActivity"

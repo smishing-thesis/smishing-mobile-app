@@ -107,7 +107,7 @@ fun ConversationScreen(
         if (selecting) {
             SelectionTopBar(
                 count = selected.size,
-                style = TopBarStyle.Plain,
+                style = TopBarStyle.Primary,
                 onCancel = onCancelSelection,
                 onSelectAll = onSelectAll,
                 onDelete = onDeleteSelected,
@@ -116,10 +116,10 @@ fun ConversationScreen(
             SmishingTopBar(
                 title = address,
                 subtitle = stringResource(R.string.conversation_subtitle),
-                style = TopBarStyle.Plain,
+                style = TopBarStyle.Primary,
                 onBack = onBack,
                 backDescription = stringResource(R.string.conversation_back),
-                actions = { if (count > 0) SelectAction(TopBarStyle.Plain) { onStartSelecting(null) } },
+                actions = { if (count > 0) SelectAction(TopBarStyle.Primary) { onStartSelecting(null) } },
             )
         }
         LazyColumn(

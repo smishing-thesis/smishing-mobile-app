@@ -1,18 +1,39 @@
 # Aporte opcional al corpus: consentimiento y desidentificación
 
-Registro de #18 (RF-13) y #19 (RF-14). Última verificación: 2026-11-14.
+Registro de #18 (RF-13), #19 (RF-14) y #71 (envío pendiente). Última verificación: 2026-11-16.
 
-> **ATENCIÓN.** Esta parte **no envía nada**. Está el consentimiento y la desidentificación; falta el destino y el envío (#26 y #27, que
-> dependen del backend). Activar el interruptor hoy solo guarda la decisión.
+> **ATENCIÓN.** Esta parte **todavía no envía nada**. Están el consentimiento, la desidentificación y la cola de pendientes (#71); falta el
+> destino: el esquema y el endpoint del backend (#72, y #26/#27 para el modo de reporte). Hoy los mensajes peligrosos quedan en la cola y
+> se conservan; no sale ningún dato del teléfono, y la app ni siquiera declara el permiso `INTERNET`.
 
 ## Consentimiento (#18)
 
-- **Ajustes → Privacidad → "Compartir mensajes de forma anónima".** Un interruptor, **desactivado por defecto**, con el texto "Desactivado.
+- **Ajustes → Privacidad → "Ayúdanos a mejorar la aplicación".** Un interruptor, **desactivado por defecto**, con el texto "Desactivado.
   Puede cambiarlo cuando quiera." (o "Activado. …"). La decisión se guarda en el teléfono (DataStore, `contribution_consent`) y sobrevive a
   cerrar la app.
+- **Activarlo abre un aviso** («Compartir datos de forma anónima», con el texto del diseño): solo se activa con **Aceptar**; **Denegar** o tocar
+  fuera lo deja apagado. Apagarlo es inmediato y no pregunta. El enlace «Ver términos y condiciones» **todavía no lleva a ninguna parte**
+  (no hay documento). El aviso dice que nunca se comparte «cualquier dato personal», lo cual es más de lo que se puede garantizar: ver
+  los límites conocidos más abajo.
 - **Revocarlo detiene los envíos futuros** porque el consentimiento se **lee cada vez** que se prepara un aporte (`PrepareContribution`),
   no una sola vez. El backend no guarda nada que identifique al dispositivo, así que el teléfono es quien lo verifica antes de enviar.
 - Sin consentimiento, `PrepareContribution` **no toca el texto**: ni siquiera arma el desidentificador.
+
+## Envío pendiente (#71)
+
+- **Qué se encola:** con el aporte activado, cada mensaje de nivel **alto** (peligroso) que se analiza, al llegar o a pedido. Los de nivel
+  medio no. Solo se guarda una referencia al registro del historial (tabla `pending_contribution`, base versión 3): el texto se
+  desidentifica justo antes de enviarlo, y **borrar el mensaje del historial lo saca de la cola**.
+- **Cuándo se envía:** WorkManager lo ejecuta **cuando hay conexión**, aunque la app esté cerrada, y lo reintenta con espera creciente si
+  falla. Al abrir la app se retoma lo que haya quedado. Si se pierde la conexión, lo pendiente sale en cuanto vuelve.
+- **Por lotes:** de 20 en 20 (`SendPendingContributions.BATCH_SIZE`). Si un lote falla se detiene y lo no enviado se conserva.
+- **Antes de cada texto** se vuelve a leer el consentimiento y se desidentifica; lo que no quede anónimo se **descarta** de la cola. Si se
+  revoca el consentimiento, se vacía la cola y se cancela el envío programado.
+- **El destino es una interfaz** (`ContributionSender`). Hoy es `NotConfiguredContributionSender`: no envía y todo se conserva. Se
+  reemplaza en #72, cuando el backend defina su esquema y endpoint; entonces hará falta `INTERNET`.
+- **Permisos que agrega WorkManager** (se documentan porque la regla es pedir solo los que se justifican): `ACCESS_NETWORK_STATE` (saber si
+  hay conexión), `RECEIVE_BOOT_COMPLETED` (retomar el envío tras reiniciar) y `WAKE_LOCK`. Son permisos normales: no se piden en pantalla.
+  Los de servicio en primer plano que también trae se **quitan** en el manifiesto.
 
 ## Desidentificación (#19)
 
@@ -71,6 +92,9 @@ dan lo mismo que la referencia **en la JVM y en el dispositivo**.
   consentimiento sale desidentificado, revocar detiene el siguiente porque se lee cada vez, sin consentimiento no se arma el
   desidentificador, un ejemplo aún no anónimo se rechaza, vacío se rechaza, `toString` no muestra el texto, los nombres de contactos se
   quitan palabra por palabra, un nombre que no está en la lista no se detecta, el texto crudo no es anónimo y el resultado sí).
+- Envío pendiente: `SendPendingContributionsTest` (6: lotes, fallo a mitad, sin destino, revocar a mitad, lo no anónimo se descarta, un
+  teléfono nunca sale en claro) y `QueueingAnalysisHistoryTest` (3: solo el nivel alto con consentimiento se encola; un fallo al encolar no
+  rompe el análisis). Dispositivo: `RoomPendingContributionsInstrumentedTest` (orden y límite, quitar y vaciar, borrar el historial).
 - Dispositivo (API 29): `AnonymizationVectorsInstrumentedTest` (los mismos 29 vectores con el motor de Android) y
   `DataStoreContributionConsentInstrumentedTest` (4: desactivado por defecto, activar y revocar, sobrevive a reabrir el almacén, y
   revocar detiene el aporte siguiente con el almacén real).
@@ -78,6 +102,6 @@ dan lo mismo que la referencia **en la JVM y en el dispositivo**.
 
 ## Lo que no cubre
 
-- **No se envía nada** y no hay vista previa de lo que se compartiría. Entregar el texto a un destino es #27; el modo de reporte, #26.
+- **No se envía nada** (falta el destino, #72) y no hay vista previa de lo que se compartiría. Entregar el texto a un destino es #27; el modo de reporte, #26.
 - Solo API 29 (emulador); no se probó en otras versiones de Android ni en un teléfono real.
 - No se midió el tiempo de desidentificar ni el de leer todos los contactos para la lista de nombres.

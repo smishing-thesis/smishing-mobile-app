@@ -131,3 +131,28 @@ data class MessageWithResult(
     @Relation(parentColumn = "id", entityColumn = "analyzedMessageId", entity = AnalysisResultEntity::class)
     val result: ResultWithSignals,
 )
+
+/**
+ * Un aporte pendiente de enviar (#71): el registro del historial que se compartirá cuando haya conexión y destino. Borrar el registro del
+ * historial lo saca de la cola (en cascada). Se agregó en la versión 3 de la base.
+ */
+@Entity(
+    tableName = "pending_contribution",
+    foreignKeys = [
+        ForeignKey(
+            entity = AnalyzedMessageEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["analyzedMessageId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class PendingContributionEntity(
+    @PrimaryKey val analyzedMessageId: Long,
+    val queuedAtMillis: Long,
+)
+
+/** Lo que se lee de la cola: el registro y el texto del mensaje, que es de la persona y no se escribe en logs. */
+data class PendingRow(val analyzedMessageId: Long, val body: String) {
+    override fun toString() = "PendingRow(analyzedMessageId=$analyzedMessageId)"
+}

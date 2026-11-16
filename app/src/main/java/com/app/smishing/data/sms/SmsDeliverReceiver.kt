@@ -8,8 +8,7 @@ import android.util.Log
 import com.app.smishing.data.alerts.AndroidMessageNotifier
 import com.app.smishing.data.alerts.AndroidRiskAlertNotifier
 import com.app.smishing.data.analysis.AnalysisPipeline
-import com.app.smishing.data.history.HistoryDatabase
-import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.data.sharing.ContributionPipeline
 import com.app.smishing.data.settings.DataStoreMitigationSettings
 import com.app.smishing.domain.alerts.AnalyzeReceivedMessage
 import com.app.smishing.domain.sms.IncomingSms
@@ -73,7 +72,7 @@ internal fun analyzeIncoming(context: Context, messageId: Long, message: Incomin
     try {
         val outcome = AnalyzeReceivedMessage(
             assessor = AnalysisPipeline.assessor(context),
-            history = RoomAnalysisHistory(HistoryDatabase.get(context)),
+            history = ContributionPipeline.history(context),
             notifier = AndroidRiskAlertNotifier(context),
             messageNotifier = AndroidMessageNotifier(context),
             settings = DataStoreMitigationSettings(context),

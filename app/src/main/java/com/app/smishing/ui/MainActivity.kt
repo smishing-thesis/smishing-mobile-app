@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
+import com.app.smishing.data.sharing.ContributionScheduler
 import com.app.smishing.data.settings.AndroidPermissionStatusReader
 import com.app.smishing.data.settings.DataStoreOnboardingProgress
 import com.app.smishing.domain.history.AnalysisHistory
@@ -76,6 +77,8 @@ class MainActivity : ComponentActivity() {
         onboarding = DataStoreOnboardingProgress(this)
         permissionStatuses = AndroidPermissionStatusReader(this)
         history = RoomAnalysisHistory(HistoryDatabase.get(this))
+        // Si quedaron aportes pendientes de antes (#71), se retoma su envío; el sistema lo ejecuta cuando haya conexión.
+        ContributionScheduler.resume(this)
         refresh()
         pendingMessageId = messageIdOf(intent)
         pendingConversationMessageId = conversationMessageIdOf(intent)

@@ -2,6 +2,7 @@ package com.app.smishing.data.history
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 
@@ -38,6 +39,25 @@ abstract class HistoryDao {
     @Transaction
     @Query("SELECT * FROM analyzed_message WHERE messageId = :messageId ORDER BY id DESC LIMIT 1")
     abstract fun byMessageId(messageId: Long): MessageWithResult?
+
+    /** Los aportes pendientes (#71). Si el registro ya estaba en la cola, no cambia nada. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract fun insertPending(pending: PendingContributionEntity)
+
+    @Query(
+        "SELECT p.analyzedMessageId AS analyzedMessageId, m.body AS body FROM pending_contribution p " +
+            "JOIN analyzed_message m ON m.id = p.analyzedMessageId ORDER BY p.queuedAtMillis ASC, p.analyzedMessageId ASC LIMIT :limit",
+    )
+    abstract fun nextPending(limit: Int): List<PendingRow>
+
+    @Query("DELETE FROM pending_contribution WHERE analyzedMessageId IN (:ids)")
+    abstract fun deletePending(ids: List<Long>)
+
+    @Query("DELETE FROM pending_contribution")
+    abstract fun clearPending()
+
+    @Query("SELECT COUNT(*) FROM pending_contribution")
+    abstract fun countPending(): Int
 
     @Query("UPDATE analyzed_message SET markedSafeAtMillis = :nowMillis WHERE id = :id")
     abstract fun markSafe(id: Long, nowMillis: Long)

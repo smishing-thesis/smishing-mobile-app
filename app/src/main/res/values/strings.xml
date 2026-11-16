@@ -70,13 +70,15 @@
     <string name="delete_failed_title">No se pudo borrar</string>
     <string name="delete_failed_text">Para borrar mensajes, esta aplicación debe ser la de mensajería predeterminada. Revise Ajustes e inténtelo de nuevo.</string>
     <string name="delete_failed_ok">Entendido</string>
+    <string name="messages_search_hint">Buscar</string>
+    <string name="messages_search_empty">No hay conversaciones que coincidan.</string>
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 
     <!-- Redactar y enviar (#6) -->
     <string name="compose_action">Escribir</string>
     <string name="new_message_title">Nuevo mensaje</string>
     <string name="new_message_to">Para:</string>
-    <string name="new_message_recipient_hint">Número de teléfono</string>
+    <string name="new_message_recipient_hint">Nombre o número</string>
     <string name="new_message_body_hint">Escriba su mensaje aquí...</string>
     <string name="new_message_send">Enviar mensaje</string>
     <string name="conversation_input_hint">Escribir mensaje...</string>
@@ -172,8 +174,22 @@
     <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
     <string name="settings_privacy_title">Privacidad</string>
     <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
-    <string name="settings_contribution_title">Compartir mensajes de forma anónima</string>
+    <string name="settings_contribution_title">Ayúdanos a mejorar la aplicación</string>
     <string name="settings_contribution_off">Desactivado. Puede cambiarlo cuando quiera.</string>
+    <!-- Aviso al activar el aporte (#18): el texto es el del diseño. -->
+    <string name="contribution_dialog_title">Compartir datos de forma anónima</string>
+    <string name="contribution_dialog_intro">Al detectar un mensaje peligroso, anonimizamos el contenido y lo utilizamos para mejorar la detección de la aplicación. Toda la información se hace anónima dentro de la aplicación antes de enviarse.</string>
+    <string name="contribution_dialog_never">Lo que nunca compartimos:</string>
+    <string name="contribution_dialog_never_name">Su nombre</string>
+    <string name="contribution_dialog_never_phone">Su número de teléfono</string>
+    <string name="contribution_dialog_never_contacts">Sus contactos</string>
+    <string name="contribution_dialog_never_conversations">Sus conversaciones</string>
+    <string name="contribution_dialog_never_personal">Cualquier dato personal</string>
+    <string name="contribution_dialog_internet">Esta funcionalidad requiere conexión a internet. Puede deshabilitarla cuando desee.</string>
+    <string name="contribution_dialog_retry">Si se pierde la conexión, los mensajes que no se pudieron enviar se enviarán en cuanto el teléfono vuelva a tener internet.</string>
+    <string name="contribution_dialog_terms">Ver términos y condiciones</string>
+    <string name="contribution_dialog_deny">Denegar</string>
+    <string name="contribution_dialog_accept">Aceptar</string>
     <string name="settings_contribution_on">Activado. Puede cambiarlo cuando quiera.</string>
     <string name="settings_delete_history">Borrar todo el historial</string>
     <string name="delete_history_title">¿Borrar todo el historial?</string>
@@ -197,8 +213,6 @@
     <string name="welcome_body_one">Esta aplicación revisa sus mensajes de texto entrantes para protegerlo.</string>
     <string name="welcome_body_two">Le advertiremos inmediatamente si detectamos un intento de estafa.</string>
     <string name="welcome_next">Siguiente</string>
-    <string name="home_status_active">Activo</string>
-    <string name="home_status_inactive">Inactivo</string>
     <string name="home_active_title">Protección activa</string>
     <string name="home_active_message">La aplicación está revisando sus mensajes en este momento.</string>
     <string name="home_summary_title">Resumen de la semana</string>

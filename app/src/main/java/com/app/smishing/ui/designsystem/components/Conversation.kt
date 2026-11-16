@@ -67,6 +67,9 @@ fun ConversationRow(
     /** En modo de selección (#51) la fila lleva una casilla, marcada si está [selected]. */
     selectionMode: Boolean = false,
     selected: Boolean = false,
+    /** Con [showAvatar] la fila lleva la foto del contacto ([photoUri]) o, si no hay, una imagen por defecto. */
+    showAvatar: Boolean = false,
+    photoUri: String? = null,
 ) {
     val unread = unreadCount > 0
     Column(modifier = modifier.fillMaxWidth()) {
@@ -80,6 +83,10 @@ fun ConversationRow(
         ) {
             if (selectionMode) {
                 Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = SmishingPalette.Primary))
+                Spacer(Modifier.width(Spacing.Sm))
+            }
+            if (showAvatar) {
+                Avatar(photoUri)
                 Spacer(Modifier.width(Spacing.Sm))
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
