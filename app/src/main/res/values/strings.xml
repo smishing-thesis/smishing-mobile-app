@@ -195,7 +195,7 @@
     <string name="settings_contribution_on">Activado. Puede cambiarlo cuando quiera.</string>
     <string name="settings_delete_history">Borrar todo el historial</string>
     <string name="delete_history_title">¿Borrar todo el historial?</string>
-    <string name="delete_history_text">Se borran todos los análisis y el texto de los mensajes que guardan. Los mensajes siguen en su teléfono. Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
+    <string name="delete_history_text">Se borrarán todos los análisis de mensajes hechos por la aplicación. Si la aplicación retiró algún mensaje de su buzón, no podrá restaurarlo.</string>
     <string name="delete_history_confirm">Borrar todo</string>
     <string name="history_empty">Todavía no hay mensajes analizados.</string>
     <string name="history_chip_high">Posible estafa</string>

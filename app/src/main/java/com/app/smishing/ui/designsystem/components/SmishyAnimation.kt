@@ -12,10 +12,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -26,8 +28,12 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import kotlin.math.PI
+import kotlin.math.sin
 
 /** Un instante de la animación de Smishy investigando. */
 data class SmishyFrame(
@@ -121,29 +127,52 @@ fun SmishyInvestigating(modifier: Modifier = Modifier, onFinished: () -> Unit = 
     }
 }
 
-/** Tres puntos que se encienden uno tras otro. Con las animaciones desactivadas, quedan quietos. */
+/**
+ * Tres puntos que suben y bajan uno tras otro, como una ola, para decir que está cargando. Con las animaciones desactivadas, quedan
+ * quietos (más claros hacia la derecha, para que no parezcan una fila de puntos cualquiera).
+ */
 @Composable
 fun SmishyLoadingDots(modifier: Modifier = Modifier, color: Color = Color.White) {
     val animate = rememberAnimationsEnabled()
+    // Una vuelta completa de la ola (1,2 s). El punto i va 0,15 s detrás del anterior, es decir, 0,125 de vuelta.
     val phase = if (animate) {
         rememberInfiniteTransition(label = "dots").animateFloat(
             initialValue = 0f,
-            targetValue = 3f,
-            animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart),
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(LOADING_WAVE_MS, easing = LinearEasing), RepeatMode.Restart),
             label = "phase",
-        ).value
+        )
     } else {
-        0f
+        null
     }
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    val density = LocalDensity.current
+    val rise = with(density) { LOADING_WAVE_RISE.dp.toPx() }
+    // La fila mide lo que sube el punto más lo que mide un punto, para que el texto de arriba no se mueva con la ola.
+    Row(
+        modifier.height((LOADING_DOT + LOADING_WAVE_RISE).dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
         repeat(3) { i ->
-            // Cada punto es más claro cuanto más lejos va del que está encendido.
-            val distance = (((phase - i) % 3f) + 3f) % 3f
-            val alpha = if (animate) 1f - distance / 3f * 0.75f else listOf(1f, 0.6f, 0.3f)[i]
-            Canvas(Modifier.size(12.dp)) { drawCircle(color.copy(alpha = alpha)) }
+            Canvas(
+                Modifier
+                    .size(LOADING_DOT.dp)
+                    .graphicsLayer {
+                        val p = phase?.value
+                        // Sube durante el 60 % de la vuelta (con forma de seno) y descansa el resto.
+                        val t = if (p == null) 1f else ((p - i * 0.125f) % 1f + 1f) % 1f / 0.6f
+                        translationY = if (t < 1f) -rise * sin(PI.toFloat() * t) else 0f
+                    },
+            ) {
+                drawCircle(if (animate) color else color.copy(alpha = listOf(1f, 0.6f, 0.3f)[i]))
+            }
         }
     }
 }
+
+private const val LOADING_WAVE_MS = 1200
+private const val LOADING_DOT = 12
+private const val LOADING_WAVE_RISE = 14
 
 // --- Dibujo: las mismas formas de `designs/smishy/*.svg`, en un cuadro de 120 x 146. ---
 

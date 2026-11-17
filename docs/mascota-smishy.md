@@ -19,7 +19,8 @@ Son vectores (`VectorDrawable`), no imágenes, así que no pesan y se ven nítid
 
 - **Inicio:** la tarjeta de protección (`ProtectionCard`) muestra `smishy_active` si la protección está activa y `smishy_off` si está
   apagada. Reemplazó al primer escudo con candado (`img_protection_*`, ya retirado).
-- **Pantalla de carga:** `SmishySplashScreen` (Smishy a pantalla completa, sobre el azul de la marca, con su nombre y tres puntos).
+- **Pantalla de carga:** `SmishySplashScreen` (Smishy a pantalla completa, sobre el azul de la marca, con su nombre y tres puntos que suben y bajan
+  como una ola, de 14 dp y cada 1,2 s; quietos si las animaciones del sistema están desactivadas).
   Se ve mientras se lee lo guardado. **Smishy va quieto**: la carga es tan rápida que la animación no se alcanza a ver. La animación
   sigue en el código (`animated = true`) pero no se usa hoy. La fuente del nombre es provisional (`SmishingTypography.Wordmark`).
 

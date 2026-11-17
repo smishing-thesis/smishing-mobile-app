@@ -10,10 +10,11 @@ import android.graphics.Typeface
 import java.io.ByteArrayOutputStream
 import android.net.Uri
 import android.provider.ContactsContract
-import android.provider.Telephony
 import com.app.smishing.data.alerts.AndroidMessageNotifier
 import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.data.sms.TelephonySmsInbox
+import com.app.smishing.domain.sms.SmsRoleState
 import com.app.smishing.data.sms.analyzeIncoming
 import com.app.smishing.domain.sms.ReceiveIncomingSms
 import com.app.smishing.domain.sms.ReceiveOutcome
@@ -183,8 +184,10 @@ class DemoLoader(private val context: Context) {
     private fun saveTurns(turns: Map<String, Int>) =
         turnsFile.writeText(turns.entries.joinToString("\n") { "${it.key}=${it.value}" })
 
+    // Se pregunta por el rol igual que lo hace la app (Inicio, Ajustes): `Telephony.Sms.getDefaultSmsPackage` no coincidía en el emulador con
+    // Android 15 aunque la app tuviera el rol, y la demo decía que no era la predeterminada.
     private fun requireDefaultSmsApp() {
-        check(Telephony.Sms.getDefaultSmsPackage(context) == context.packageName) { "La app no es la de SMS predeterminada" }
+        check(AndroidSmsRoleRepository(context).state() == SmsRoleState.Held) { "La app no es la de SMS predeterminada" }
     }
 }
 
