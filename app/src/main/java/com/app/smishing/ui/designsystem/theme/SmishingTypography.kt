@@ -34,6 +34,9 @@ object SmishingTypography {
     val NoteBold = style(FontWeight.Bold, 14.sp, 20.sp)
     val Micro = style(FontWeight.Normal, 12.sp, 16.sp)
 
+    /** El nombre "Smishy" en la pantalla de carga. Provisional: la fuente del nombre se va a cambiar; se cambia solo aquí. */
+    val Wordmark = style(FontWeight.Bold, 38.sp, 46.sp)
+
     /** Los estilos de Material 3 que usan sus componentes (diálogos, campos) toman los equivalentes del diseño. */
     fun toMaterial() = Typography(
         titleLarge = TitleLarge,

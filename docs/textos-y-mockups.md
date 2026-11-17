@@ -16,7 +16,7 @@ el mockup, cuáles se apartan de él y por qué, y qué falta. Última revisión
 |---|---|---|---|
 | Aviso y detalle, nivel alto | "Mensaje Peligroso" | "Posible estafa" | certeza |
 | Historial, marcas | "Peligroso" / "Seguro" | "Posible estafa" / "Sin señales" ("Sospechoso" igual) | certeza |
-| Inicio, tarjeta activa | "Su teléfono está protegido contra mensajes maliciosos…" | "La aplicación está revisando sus mensajes en este momento." | certeza |
+| Inicio, tarjeta activa | "Su teléfono está protegido contra mensajes maliciosos…" | "La aplicación está protegiendo sus mensajes en este momento." | certeza (habla de lo que hace la app, no del estado del teléfono) |
 | Paso 3, privacidad | "Su privacidad está garantizada." | "Todo el análisis se hace en su teléfono." | no se puede garantizar (el historial guarda el texto sin cifrar) |
 | Detalle, razón de suplantación | "Finge ser de una entidad" | "Dice ser de una entidad" | afirma una intención que no se conoce |
 | Detalle, encabezado de las razones | "¿Por qué es riesgoso?" | "¿Por qué podría ser riesgoso?" | afirma que lo es |

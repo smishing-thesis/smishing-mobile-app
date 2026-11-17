@@ -89,7 +89,7 @@ ese momento; los actuales, con #3, están en [permisos-sms.md](permisos-sms.md).
 dejó de aceptar a la app (`expected:<Held> but was:<NotHeld>`) y fallaron las pruebas del rol. Se revirtió.
 
 **Revisión manual con el diálogo real del sistema** (capturas en el emulador): sin el rol aparece la explicación; al
-tocar el botón el sistema muestra "Set Smishing Detector as your default SMS app?" con la app junto a "Messages" (la
+tocar el botón el sistema muestra "Set Smishy as your default SMS app?" con la app junto a "Messages" (la
 actual); al aceptar, la app muestra la confirmación y `cmd role dump` lista `holders=com.app.smishing`; al quitar el
 rol y volver a la app, reaparece la explicación; "Omitir por ahora" lleva a "Protección apagada". Al quitar el rol, el
 sistema devolvió la función a Google Messages por su cuenta.

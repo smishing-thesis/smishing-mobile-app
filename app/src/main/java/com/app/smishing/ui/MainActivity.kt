@@ -9,12 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -22,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
@@ -41,7 +38,7 @@ import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.domain.sms.SmsPermissionState
 import com.app.smishing.domain.sms.SmsRoleState
 import com.app.smishing.ui.designsystem.components.ProtectionCard
-import com.app.smishing.ui.designsystem.theme.SmishingPalette
+import com.app.smishing.ui.designsystem.components.SmishySplashScreen
 import com.app.smishing.ui.designsystem.theme.SmishingTheme
 import com.app.smishing.ui.designsystem.theme.Spacing
 import com.app.smishing.ui.alerts.RequestNotificationPermission
@@ -71,6 +68,8 @@ class MainActivity : ComponentActivity() {
     private var pendingConversationMessageId by mutableStateOf<Long?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Antes de todo: cambia al tema normal cuando la app está lista y deja Smishy quieto en la pantalla de carga del sistema.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         roles = AndroidSmsRoleRepository(this)
         permissions = AndroidSmsPermissionRepository(this)
@@ -85,11 +84,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SmishingTheme {
-                var skipped by rememberSaveable { mutableStateOf(false) }
                 var blocked by rememberSaveable { mutableStateOf(false) }
-                // La bienvenida (paso 1) se muestra una sola vez; `null` mientras se lee lo guardado.
-                var welcomeSeen by remember { mutableStateOf<Boolean?>(null) }
-                LaunchedEffect(Unit) { welcomeSeen = withContext(Dispatchers.IO) { onboarding.welcomeSeen() } }
+                // Si la persona ya terminó el onboarding: aceptó el rol (paso 2) u omitió el paso 2. `null` mientras se lee lo guardado.
+                // Mientras no lo haya terminado, la bienvenida (paso 1) vuelve a salir cada vez que abre la app.
+                var onboardingDone by rememberSaveable { mutableStateOf<Boolean?>(null) }
+                // Si ya pasó del paso 1 en esta apertura de la app. No se guarda: al cerrar y volver a abrir, el paso 1 sale de nuevo.
+                var welcomeDismissed by rememberSaveable { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    if (onboardingDone == null) onboardingDone = withContext(Dispatchers.IO) { onboarding.onboardingDone() }
+                }
+                fun setOnboardingDone(done: Boolean) {
+                    onboardingDone = done
+                    lifecycleScope.launch(Dispatchers.IO) { onboarding.setOnboardingDone(done) }
+                }
 
                 val requestRole = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                     refresh()
@@ -102,25 +109,29 @@ class MainActivity : ComponentActivity() {
                     }
 
                 val ready = roleState == SmsRoleState.Held && permissionState == SmsPermissionState.Granted
+                // Con el rol y los permisos el onboarding está terminado: se guarda para que, si los quita después, la app abra Inicio.
+                LaunchedEffect(ready) { if (ready && onboardingDone != true) setOnboardingDone(true) }
                 when {
-                    // Con el rol y los permisos no se muestra la bienvenida: quien ya los tiene no la necesita.
-                    !ready && welcomeSeen == null -> Box(Modifier.fillMaxSize().background(SmishingPalette.Background))
-                    !ready && welcomeSeen == false -> WelcomeScreen(
-                        onNext = {
-                            welcomeSeen = true
-                            lifecycleScope.launch(Dispatchers.IO) { onboarding.setWelcomeSeen(true) }
-                        },
+                    // Mientras se lee lo guardado: Smishy quieto (la animación está en el código pero no se usa, la carga es muy rápida).
+                    !ready && onboardingDone == null -> SmishySplashScreen()
+                    // Paso 1: sale cada vez que se abre la app, hasta que se acepta u omite el paso 2.
+                    !ready && onboardingDone == false && !welcomeDismissed -> WelcomeScreen(
+                        onNext = { welcomeDismissed = true },
                     )
-                    // "Omitir" lleva a Inicio con la protección apagada (#17); "Activar protección" vuelve al onboarding.
-                    skipped && !ready -> HomeRoute(
+                    // Con el onboarding terminado (se omitió el paso 2), la app abre Inicio con la protección apagada (#17).
+                    // "Activar protección" vuelve al onboarding, directo al paso 2; si se cierra a medias, el paso 1 vuelve a salir.
+                    !ready && onboardingDone == true -> HomeRoute(
                         permissions = permissionStatuses,
                         history = history,
-                        onActivate = { skipped = false },
+                        onActivate = {
+                            welcomeDismissed = true
+                            setOnboardingDone(false)
+                        },
                     )
                     roleState != SmsRoleState.Held -> DefaultSmsRoleScreen(
                         state = roleState,
                         onRequest = { roles.requestIntent()?.let(requestRole::launch) },
-                        onSkip = { skipped = true },
+                        onSkip = { setOnboardingDone(true) },
                     )
                     // Los permisos se piden después del rol, nunca antes.
                     permissionState != SmsPermissionState.Granted -> SmsPermissionScreen(
@@ -128,7 +139,7 @@ class MainActivity : ComponentActivity() {
                         blocked = blocked,
                         onRequest = { requestPermissions.launch(permissions.missing().toTypedArray()) },
                         onOpenSettings = ::openAppSettings,
-                        onSkip = { skipped = true },
+                        onSkip = { setOnboardingDone(true) },
                     )
                     // Con el rol y los permisos, la app muestra los mensajes (#5).
                     else -> {

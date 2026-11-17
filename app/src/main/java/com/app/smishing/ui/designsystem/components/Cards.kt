@@ -1,5 +1,6 @@
 package com.app.smishing.ui.designsystem.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,9 +21,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.app.smishing.ui.designsystem.icons.SmishingIcons
+import com.app.smishing.R
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingShapes
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
@@ -56,15 +56,14 @@ fun ProtectionCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.Xs)) {
-            Icon(
-                imageVector = if (active) SmishingIcons.Shield else Icons.Outlined.Warning,
-                contentDescription = null,
-                tint = textColor,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(title, style = SmishingTypography.TitleSmall, color = textColor)
-        }
+        // Smishy contento si la protección está activa, dormido si está apagada. Es decorativo: el estado ya lo dice el título,
+        // así que no lleva descripción para el lector de pantalla.
+        Image(
+            painter = painterResource(if (active) R.drawable.smishy_active else R.drawable.smishy_off),
+            contentDescription = null,
+            modifier = Modifier.size(width = 105.dp, height = 128.dp),
+        )
+        Text(title, style = SmishingTypography.TitleSmall, color = textColor)
         Text(message, style = SmishingTypography.Note, color = textColor, textAlign = TextAlign.Center)
         if (actionLabel != null && onAction != null) {
             PrimaryButton(actionLabel, onAction, modifier = Modifier.fillMaxWidth().padding(top = Spacing.Xs))

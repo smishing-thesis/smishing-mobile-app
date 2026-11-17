@@ -109,7 +109,7 @@ class ExplanationWordingTest {
         assertEquals("No abra el enlace. Si tiene dudas, contacte directamente a la entidad.", strings.getValue("detail_recommendation"))
         assertEquals("Bloquear este número", strings.getValue("detail_button_block"))
         assertEquals("Borrar mensaje", strings.getValue("detail_button_remove"))
-        assertEquals("Su teléfono está desprotegido contra mensajes maliciosos.", strings.getValue("protection_off_message"))
+        assertEquals("La aplicación no está protegiendo sus mensajes en este momento.", strings.getValue("protection_off_message"))
     }
 
     @Test

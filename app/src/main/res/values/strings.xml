@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Smishing Detector</string>
+    <string name="app_name">Smishy</string>
 
     <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
     <string name="onboarding_step_one_of_two">PASO 1 DE 2</string>
@@ -24,7 +24,7 @@
 
     <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
     <string name="protection_off_title">Protección apagada</string>
-    <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
+    <string name="protection_off_message">La aplicación no está protegiendo sus mensajes en este momento.</string>
     <string name="protection_activate">Activar protección</string>
 
     <!-- Conversaciones (#5) -->
@@ -214,7 +214,7 @@
     <string name="welcome_body_two">Le advertiremos inmediatamente si detectamos un intento de estafa.</string>
     <string name="welcome_next">Siguiente</string>
     <string name="home_active_title">Protección activa</string>
-    <string name="home_active_message">La aplicación está revisando sus mensajes en este momento.</string>
+    <string name="home_active_message">La aplicación está protegiendo sus mensajes en este momento.</string>
     <string name="home_summary_title">Resumen de la semana</string>
     <string name="home_summary_reviewed">Mensajes revisados:</string>
     <string name="home_summary_scams">Posibles estafas:</string>
