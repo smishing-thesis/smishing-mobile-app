@@ -10,12 +10,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.history.WeeklySummary
 import com.app.smishing.domain.settings.PermissionStatus
 import com.app.smishing.domain.settings.ProtectionStatus
+import com.app.smishing.ui.designsystem.components.DayPart
 import com.app.smishing.ui.designsystem.components.ProtectionCard
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.SummaryCard
@@ -24,6 +26,7 @@ import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.icons.SmishingIcons
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.Spacing
+import java.time.LocalTime
 
 /**
  * "Inicio" (#17), con el diseño: si la protección está activa y el resumen de la semana. Qué falta (rol, permisos, notificaciones)
@@ -41,6 +44,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val protection = statuses?.let { ProtectionStatus.of(it) }
+    // El fondo de la tarjeta activa cambia con la hora del teléfono; se calcula al abrir la pantalla.
+    val dayPart = remember { DayPart.at(LocalTime.now()) }
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
         SmishingTopBar(title = stringResource(R.string.app_name), style = TopBarStyle.Primary)
         Column(
@@ -53,6 +58,7 @@ fun HomeScreen(
                     active = true,
                     title = stringResource(R.string.home_active_title),
                     message = stringResource(R.string.home_active_message),
+                    dayPart = dayPart,
                 )
                 else -> ProtectionCard(
                     active = false,

@@ -2,11 +2,12 @@ package com.app.smishing.ui.designsystem.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,7 +21,10 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,9 +34,20 @@ import com.app.smishing.ui.designsystem.theme.SmishingShapes
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
 
+/** Las tarjetas del Inicio no llevan borde: solo una sombra suave pero visible sobre el fondo blanco, con las esquinas redondeadas del diseño. */
+private fun Modifier.softShadow(): Modifier = shadow(
+    elevation = 10.dp,
+    shape = SmishingShapes.Lg,
+    ambientColor = Color(0x33000000),
+    spotColor = Color(0x4D000000),
+)
+
 /**
- * Estado de la protección en la pantalla de inicio. Activa: tarjeta tranquila. Apagada: fondo blanco con borde y título rojos (para
- * que el Smishy gris se vea bien, que no se ve sobre un fondo rojo) y una acción para encenderla ([actionLabel] y [onAction]).
+ * Estado de la protección en la pantalla de inicio: una escena ilustrada arriba con Smishy, y debajo el título, el mensaje y, si falta
+ * algo, una acción para encenderla ([actionLabel] y [onAction]).
+ *
+ * Activa: la escena cambia con la hora ([dayPart]: mañana, mediodía y tarde, atardecer o noche) y Smishy va contento. Apagada: siempre la
+ * ciudad de noche en blanco y negro, con Smishy dormido y el título en rojo. La tarjeta es blanca y sin borde, con una sombra suave.
  */
 @Composable
 fun ProtectionCard(
@@ -42,33 +57,40 @@ fun ProtectionCard(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    dayPart: DayPart = DayPart.Midday,
 ) {
-    val container = if (active) SmishingPalette.BackgroundSecondary else SmishingPalette.Background
-    val border = if (active) SmishingPalette.Border else SmishingPalette.Danger
-    val textColor = if (active) SmishingPalette.SafeOnBackground else SmishingPalette.DangerOnBackground
-    // El mensaje de la tarjeta apagada va en texto oscuro: en rojo y pequeño cansa la lectura; el título y el borde ya avisan.
-    val messageColor = if (active) textColor else SmishingPalette.TextPrimary
+    val titleColor = if (active) SmishingPalette.SafeOnBackground else SmishingPalette.DangerOnBackground
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(container, SmishingShapes.Lg)
-            .border(1.dp, border, SmishingShapes.Lg)
-            .padding(Spacing.Md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
+            .softShadow()
+            .background(SmishingPalette.Background),
     ) {
-        // Smishy contento si la protección está activa, dormido si está apagada. Es decorativo: el estado ya lo dice el título,
-        // así que no lleva descripción para el lector de pantalla.
-        Image(
-            painter = painterResource(if (active) R.drawable.smishy_active else R.drawable.smishy_off),
-            contentDescription = null,
-            modifier = Modifier.size(width = 105.dp, height = 128.dp),
-        )
-        Text(title, style = SmishingTypography.TitleSmall, color = textColor)
-        Text(message, style = SmishingTypography.Note, color = messageColor, textAlign = TextAlign.Center)
-        if (actionLabel != null && onAction != null) {
-            PrimaryButton(actionLabel, onAction, modifier = Modifier.fillMaxWidth().padding(top = Spacing.Xs))
+        // La escena y Smishy son decorativos: el estado ya lo dice el título, así que no llevan descripción para el lector de pantalla.
+        Box(Modifier.fillMaxWidth()) {
+            Image(
+                painter = painterResource(if (active) dayPart.scene else R.drawable.scene_off),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.FillWidth,
+            )
+            Image(
+                painter = painterResource(if (active) R.drawable.smishy_active else R.drawable.smishy_off),
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.27f).aspectRatio(120f / 146f),
+            )
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(Spacing.Md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Spacing.Xs),
+        ) {
+            Text(title, style = SmishingTypography.TitleSmall, color = titleColor)
+            Text(message, style = SmishingTypography.Note, color = SmishingPalette.TextPrimary, textAlign = TextAlign.Center)
+            if (actionLabel != null && onAction != null) {
+                PrimaryButton(actionLabel, onAction, modifier = Modifier.fillMaxWidth().padding(top = Spacing.Xs))
+            }
         }
     }
 }
@@ -85,8 +107,8 @@ fun SummaryCard(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (dimmed) 0.6f else 1f)
-            .background(SmishingPalette.BackgroundSecondary, SmishingShapes.Lg)
-            .border(1.dp, SmishingPalette.Border, SmishingShapes.Lg)
+            .softShadow()
+            .background(SmishingPalette.Background)
             .padding(Spacing.Md),
         verticalArrangement = Arrangement.spacedBy(Spacing.Sm),
     ) {

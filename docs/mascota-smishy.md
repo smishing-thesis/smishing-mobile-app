@@ -17,8 +17,11 @@ Son vectores (`VectorDrawable`), no imágenes, así que no pesan y se ven nítid
 
 ## Dónde se usa
 
-- **Inicio:** la tarjeta de protección (`ProtectionCard`) muestra `smishy_active` si la protección está activa y `smishy_off` si está
-  apagada. Reemplazó al primer escudo con candado (`img_protection_*`, ya retirado).
+- **Inicio:** la tarjeta de protección (`ProtectionCard`) lleva una escena ilustrada arriba con Smishy (`smishy_active` o `smishy_off`).
+  Activa: el fondo cambia con la hora del teléfono (`DayPart`): mañana 6:00 a 11:59 (`scene_morning`, montañas verdes), mediodía y tarde
+  12:00 a 16:59 (`scene_midday`, montañas azules, sol arriba al centro y pradera verde), atardecer 17:00 a 19:29 (`scene_sunset`, sol casi
+  oculto a la derecha) y noche 19:30 a 5:59 (`scene_night`, estrellas y luna). Apagada: siempre `scene_off` (ciudad de noche en blanco y
+  negro). Se calcula al abrir la pantalla; la galería de debug muestra los cuatro fondos. Los SVG de origen están en `designs/smishy/`.
 - **Pantalla de carga:** `SmishySplashScreen` (Smishy a pantalla completa, sobre el azul de la marca, con su nombre y tres puntos que suben y bajan
   como una ola, de 14 dp y cada 1,2 s; quietos si las animaciones del sistema están desactivadas).
   Se ve mientras se lee lo guardado. **Smishy va quieto**: la carga es tan rápida que la animación no se alcanza a ver. La animación

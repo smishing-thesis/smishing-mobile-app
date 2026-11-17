@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fondo de la tarjeta de protección activa por la mañana (6:00 a 11:59): montañas verdes en capas. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="176dp"
+    android:viewportWidth="300"
+    android:viewportHeight="176">
+    <path
+        android:fillColor="#FFEAF6D2"
+        android:pathData="M0,0 H300 V176 H0 Z" />
+    <path
+        android:fillColor="#FFF7F3B5"
+        android:fillAlpha="0.45"
+        android:pathData="M28,54 a44,44 0 1,0 88,0 a44,44 0 1,0 -88,0 Z" />
+    <path
+        android:fillColor="#FFFBF5A8"
+        android:fillAlpha="0.8"
+        android:pathData="M44,54 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0 Z" />
+    <path
+        android:fillColor="#FFFFF9C9"
+        android:pathData="M55,54 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0 Z" />
+    <path
+        android:fillColor="#FFBFE5B4"
+        android:pathData="M0 122 L58 70 L100 102 L152 54 L212 106 L256 76 L300 112 V176 H0Z" />
+    <path
+        android:fillColor="#FFD6F0CB"
+        android:pathData="M152 54 L178 90 L160 86 L148 104 L132 80Z" />
+    <path
+        android:fillColor="#FF8DD09C"
+        android:pathData="M0 142 L52 98 L96 130 L142 92 L202 136 L252 104 L300 132 V176 H0Z" />
+    <path
+        android:fillColor="#FFAADDB1"
+        android:pathData="M142 92 L170 124 L150 128Z" />
+    <path
+        android:fillColor="#FFAADDB1"
+        android:pathData="M52 98 L72 118 L46 120Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.35"
+        android:pathData="M-20,138 a170,13 0 1,0 340,0 a170,13 0 1,0 -340,0 Z" />
+    <path
+        android:fillColor="#FF55B183"
+        android:pathData="M0 162 L42 132 L92 156 L132 140 L192 160 L242 136 L300 158 V176 H0Z" />
+    <path
+        android:fillColor="#FF3F9C70"
+        android:pathData="M42 132 L62 152 L32 154Z" />
+    <path
+        android:fillColor="#FF3F9C70"
+        android:pathData="M242 136 L262 154 L232 156Z" />
+    <path
+        android:fillColor="#FF2D7A58"
+        android:pathData="M20,169.28 h4 v6.72 h-4 Z" />
+    <path
+        android:fillColor="#FF2D7A58"
+        android:pathData="M22,120 L33.2,148 H10.8 Z M22,134 L37.68,162 H6.32 Z M22,150.8 L41.04,176 H2.96 Z " />
+    <path
+        android:fillColor="#FF38906A"
+        android:pathData="M44,171.2 h4 v4.8 h-4 Z" />
+    <path
+        android:fillColor="#FF38906A"
+        android:pathData="M46,136 L54,156 H38 Z M46,146 L57.2,166 H34.8 Z M46,158 L59.6,176 H32.4 Z " />
+    <path
+        android:fillColor="#FF2D7A58"
+        android:pathData="M272,169.04 h4 v6.96 h-4 Z" />
+    <path
+        android:fillColor="#FF2D7A58"
+        android:pathData="M274,118 L285.6,147 H262.4 Z M274,132.5 L290.24,161.5 H257.76 Z M274,149.9 L293.72,176 H254.28 Z " />
+    <path
+        android:fillColor="#FF38906A"
+        android:pathData="M248,170.96 h4 v5.04 h-4 Z" />
+    <path
+        android:fillColor="#FF38906A"
+        android:pathData="M250,134 L258.4,155 H241.6 Z M250,144.5 L261.76,165.5 H238.24 Z M250,157.1 L264.28,176 H235.72 Z " />
+    <path
+        android:fillColor="#FF2F8F63"
+        android:pathData="M0 176 Q80 152 150 160 Q230 152 300 172 V176Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E7F5A"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M196,36 q4,-4 8,0 q4,-4 8,0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E7F5A"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M222,50 q4,-4 8,0 q4,-4 8,0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E7F5A"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M246,32 q4,-4 8,0 q4,-4 8,0" />
+</vector>

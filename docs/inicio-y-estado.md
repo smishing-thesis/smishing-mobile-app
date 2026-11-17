@@ -27,7 +27,7 @@ Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajuste
 
 - **Activa:** "Protección activa — La aplicación está protegiendo sus mensajes en este momento", con el indicador "Activo". No dice
   "su teléfono está protegido": no puede asegurarlo.
-- **Apagada:** tarjeta de fondo blanco con borde y título rojos (el fondo rojo del mockup no dejaba ver a Smishy) "Protección apagada — La aplicación no está protegiendo sus mensajes en este momento", el
+- **Apagada:** tarjeta de fondo blanco con el título en rojo y una escena de ciudad de noche arriba (el fondo rojo del mockup no dejaba ver a Smishy); las tarjetas del Inicio no llevan borde, solo una sombra suave "Protección apagada — La aplicación no está protegiendo sus mensajes en este momento", el
   indicador "Inactivo" y el botón "Activar protección". **Qué falta se ve en Ajustes, en "Permisos"** (#61 quitó de Inicio la lista de
   requisitos, que no está en el mockup). Si falta el rol o el permiso de SMS, el botón vuelve al onboarding; si solo faltan las
   notificaciones, abre los ajustes de notificaciones de la app.
