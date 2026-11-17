@@ -31,8 +31,8 @@ import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
 
 /**
- * Estado de la protección en la pantalla de inicio. Activa: tarjeta tranquila. Apagada: tarjeta roja con una
- * acción para encenderla ([actionLabel] y [onAction]).
+ * Estado de la protección en la pantalla de inicio. Activa: tarjeta tranquila. Apagada: fondo blanco con borde y título rojos (para
+ * que el Smishy gris se vea bien, que no se ve sobre un fondo rojo) y una acción para encenderla ([actionLabel] y [onAction]).
  */
 @Composable
 fun ProtectionCard(
@@ -43,9 +43,11 @@ fun ProtectionCard(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
-    val container = if (active) SmishingPalette.BackgroundSecondary else SmishingPalette.DangerBackground
+    val container = if (active) SmishingPalette.BackgroundSecondary else SmishingPalette.Background
     val border = if (active) SmishingPalette.Border else SmishingPalette.Danger
     val textColor = if (active) SmishingPalette.SafeOnBackground else SmishingPalette.DangerOnBackground
+    // El mensaje de la tarjeta apagada va en texto oscuro: en rojo y pequeño cansa la lectura; el título y el borde ya avisan.
+    val messageColor = if (active) textColor else SmishingPalette.TextPrimary
 
     Column(
         modifier = modifier
@@ -64,7 +66,7 @@ fun ProtectionCard(
             modifier = Modifier.size(width = 105.dp, height = 128.dp),
         )
         Text(title, style = SmishingTypography.TitleSmall, color = textColor)
-        Text(message, style = SmishingTypography.Note, color = textColor, textAlign = TextAlign.Center)
+        Text(message, style = SmishingTypography.Note, color = messageColor, textAlign = TextAlign.Center)
         if (actionLabel != null && onAction != null) {
             PrimaryButton(actionLabel, onAction, modifier = Modifier.fillMaxWidth().padding(top = Spacing.Xs))
         }

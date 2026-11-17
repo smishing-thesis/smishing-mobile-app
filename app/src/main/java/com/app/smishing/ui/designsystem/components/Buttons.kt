@@ -23,17 +23,27 @@ import com.app.smishing.ui.designsystem.theme.Spacing
 
 private val ButtonPadding = PaddingValues(horizontal = Spacing.Xl, vertical = Spacing.Sm)
 
-/** Acción principal de una pantalla: relleno azul. */
+/**
+ * Acción principal de una pantalla: relleno azul. El texto se parte en dos líneas si no cabe, y el botón crece con él.
+ * [containerColor] y [contentColor] cambian solo sobre fondos de color, como el onboarding.
+ */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = SmishingPalette.Primary,
+    contentColor: Color = Color.White,
+) {
     Button(
         onClick = onClick,
         modifier = modifier.heightIn(min = MinTouchTarget),
         enabled = enabled,
         shape = SmishingShapes.Xl,
         colors = ButtonDefaults.buttonColors(
-            containerColor = SmishingPalette.Primary,
-            contentColor = Color.White,
+            containerColor = containerColor,
+            contentColor = contentColor,
             disabledContainerColor = SmishingPalette.Border,
             disabledContentColor = SmishingPalette.TextSecondary,
         ),
@@ -64,11 +74,11 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
 
 /** Acción de baja prioridad, como "Omitir por ahora": texto azul subrayado. */
 @Composable
-fun LinkButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun LinkButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = SmishingPalette.Primary) {
     TextButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = MinTouchTarget),
-        colors = ButtonDefaults.textButtonColors(contentColor = SmishingPalette.Primary),
+        colors = ButtonDefaults.textButtonColors(contentColor = color),
     ) {
         Text(text, style = SmishingTypography.LabelMedium.copy(textDecoration = TextDecoration.Underline))
     }

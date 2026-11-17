@@ -4,6 +4,8 @@
     <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
     <string name="onboarding_step_one_of_two">PASO 1 DE 2</string>
     <string name="onboarding_step_two_of_two">PASO 2 DE 2</string>
+    <!-- Lo lee el lector de pantalla en los puntos del paso: tocar uno lleva a ese paso. -->
+    <string name="onboarding_go_to_step">Ir al paso %1$d</string>
     <string name="onboarding_skip">Omitir por ahora</string>
     <string name="default_sms_title">Aplicación principal</string>
     <string name="default_sms_explanation_replace">Para poder filtrar las estafas, esta aplicación necesita reemplazar a su aplicación de mensajería actual.</string>

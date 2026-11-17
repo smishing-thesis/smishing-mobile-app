@@ -23,6 +23,15 @@ Son vectores (`VectorDrawable`), no imágenes, así que no pesan y se ven nítid
   Se ve mientras se lee lo guardado. **Smishy va quieto**: la carga es tan rápida que la animación no se alcanza a ver. La animación
   sigue en el código (`animated = true`) pero no se usa hoy. La fuente del nombre es provisional (`SmishingTypography.Wordmark`).
 
+- **Onboarding (pasos 1 y 2):** `IllustratedOnboardingLayout` (en `Onboarding.kt`) con una ilustración vectorial arriba, los puntos del paso
+  encima, el título y el texto abajo y los botones. Paso 1 (`onboarding_welcome_art`): Smishy y dos mensajes, uno normal y uno peligroso
+  (cara enojada en rojo), sobre azul. Paso 2 (`onboarding_role_art`): la app de mensajes actual y Smishy, sobre azul claro; el texto del
+  botón se parte en dos líneas si no cabe y "Omitir por ahora" va debajo. "PASO N DE M" ya no se ve: solo los puntos, y el lector de
+  pantalla lo sigue leyendo. El texto es `BodyMedium` (16 sp); con letra grande en el teléfono, la pantalla se desplaza.
+  El paso 1 va **sin puntos** (avanza con "Siguiente"); los puntos solo salen en el paso 2, donde el primero vuelve al paso 1 ("Atrás"
+  del sistema también). El cambio entre pasos se desliza (350 ms; a la izquierda al avanzar, a la derecha al volver) y el
+  resto de cambios de pantalla (carga, Inicio, Mensajes) usan un fundido corto, todo en `MainActivity` (`AnimatedContent`).
+  La pantalla de recuperación del permiso de lectura sigue con el diseño anterior (`OnboardingStepLayout`), sin ilustración.
 - **Pantalla de carga del sistema** (la que Android muestra antes de que la app dibuje): `Theme.SmishingDetector.Splash`
   (`core-splashscreen`), con `smishy_splash_icon` quieto sobre el azul. Reemplaza al icono por defecto de Android.
 - **Icono de la app:** `ic_launcher_foreground` (Smishy) sobre `ic_launcher_background` (azul), en vez del robot de Android.
@@ -44,6 +53,8 @@ Con las animaciones del sistema desactivadas (accesibilidad), no se anima: se mu
 
 ## Pendiente
 
+- **Fuente:** sin decidir. El onboarding de los bocetos usaba Nunito (Google Fonts, pesos 600 y 800); la app sigue con la fuente del
+  sistema. Cuando se decida, se cambia solo en `SmishingTypography` (`family`).
 - Decidir dónde usar la animación (por ejemplo al cambiar un permiso, donde la persona sí se queda mirando la pantalla).
 - Ajustar la transición entre la pantalla de carga del sistema (Smishy quieto, centrado) y la de Compose (Smishy animado con el nombre
   debajo): hoy Smishy sube un poco al pasar de una a otra.
