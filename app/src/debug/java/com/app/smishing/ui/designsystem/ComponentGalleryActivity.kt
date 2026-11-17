@@ -256,7 +256,6 @@ private fun SettingsSection() {
         SectionLabel("Cuando llegue un mensaje peligroso")
         RadioOption("Protégeme automáticamente", "Bloqueamos el número y quitamos el mensaje de su buzón", mode == 0, { mode = 0 })
         RadioOption("Preguntarme antes de actuar", "Le mostraremos las opciones para que usted decida", mode == 1, { mode = 1 })
-        RadioOption("Solo avisarme", "Le avisaremos pero no tomaremos ninguna acción", mode == 2, { mode = 2 })
         SectionLabel("Ayudar a mejorar la aplicación")
         SwitchRow("Compartir reportes de estafas", "Enviar mensajes analizados de forma anónima, sin datos personales.", share, { share = it })
         SectionLabel("Permisos")

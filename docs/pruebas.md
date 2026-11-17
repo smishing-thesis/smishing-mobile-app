@@ -79,7 +79,7 @@ condición; **cuáles se omiten cambia entre corridas** porque cada una deja el 
 | Preferencias | — | `DataStoreMitigationSettingsInstrumentedTest` (7), `DataStoreContributionConsentInstrumentedTest` (4) |
 | Clasificación local | `LocalMessageClassifierTest` (8), `GatedMessageClassifierTest` (3), `PreprocessingVectorsTest` (4), `SignalDetectorTest` (27), `RiskPolicyTest` (11), `RiskAssessorTest` (2) | `LiteRtParityInstrumentedTest` (2, contra Keras), `OnDeviceClassifierInstrumentedTest` (2), `PreprocessingVectorsInstrumentedTest` (2), `SignalDetectorInstrumentedTest` (28), `RiskAssessmentInstrumentedTest` (1) |
 | Historial | `MessageRiskTest` (6), `HistoryMarksTest` (10), `WeeklySummaryTest` (6), `BackupRulesTest` (5) | `RoomAnalysisHistoryInstrumentedTest` (12), `HistoryMigrationTest` (3), `RoomMitigationLogInstrumentedTest` (6) |
-| Acciones de mitigación | `MitigationExecutorTest` (26), `MitigationPolicyTest` (7), `AnalyzeReceivedMessageTest` (24) | `SmsRoleInstrumentedTest` (automático, preguntar y solo avisarme) |
+| Acciones de mitigación | `MitigationExecutorTest` (24), `MitigationPolicyTest` (7), `AnalyzeReceivedMessageTest` (23) | `SmsRoleInstrumentedTest` (automático y preguntar) |
 
 - **Casos normales, permisos denegados y fallos de acción:** los fallos de acción están en `MitigationExecutorTest` (bloqueo no disponible, rechazado
   por el sistema, sin copia local, reintento, qué no se puede revertir); el permiso quitado, en `AnalysisGateTest` y `AnalysisSuspension…`.

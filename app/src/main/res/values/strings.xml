@@ -227,8 +227,6 @@
     <string name="settings_mode_automatic_description">Bloqueamos el número y quitamos el mensaje de su buzón</string>
     <string name="settings_mode_ask_title">Preguntarme antes de actuar</string>
     <string name="settings_mode_ask_description">Le mostraremos las opciones para que usted decida</string>
-    <string name="settings_mode_disabled_title">Solo avisarme</string>
-    <string name="settings_mode_disabled_description">Le avisaremos pero no tomaremos ninguna acción</string>
     <string name="settings_permissions_title">Permisos</string>
     <string name="settings_permission_default_sms">Aplicación de mensajería principal</string>
     <string name="settings_permission_read_sms">Permiso para leer mensajes</string>

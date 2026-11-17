@@ -521,7 +521,7 @@ class SmsRoleInstrumentedTest {
 
     /**
      * #13 de punta a punta: la persona elige el modo en Ajustes, queda guardado, y el receptor lo consulta **antes de actuar** sobre
-     * un mensaje de riesgo alto: "preguntar" muestra las opciones, "automático" actúa, "solo avisarme" no toca el mensaje. Con
+     * un mensaje de riesgo alto: "preguntar" muestra las opciones y "automático" actúa. Con
      * cualquier modo la alerta aparece, y un mensaje que no es de riesgo alto no dispara ninguna acción. El ejecutor se sustituye por
      * uno que anota la decisión (bloquear y retirar son #14 y #15). Datos sintéticos, que se borran al terminar.
      */
@@ -569,19 +569,13 @@ class SmsRoleInstrumentedTest {
                 waitUntil { alerts() == 2 }
                 assertEquals(listOf(MitigationDecision.AskUser, MitigationDecision.Act), decisions.toList())
 
-                // "Solo avisarme": avisa, pero no se toca el mensaje.
-                choose(MitigationMode.Disabled, R.string.settings_mode_disabled_title)
-                deliver(SENDER_F, risky, secondsAfterSentAt = 3)
-                waitUntil { alerts() == 3 }
-                assertEquals("Con «solo avisarme» no debía haber acción", 2, decisions.size)
-
                 // Con el modo automático, un mensaje que no es de riesgo alto no dispara nada (se espera a que ya esté evaluado).
                 choose(MitigationMode.Automatic, R.string.settings_mode_automatic_title)
                 deliver(SENDER_F, harmless)
-                waitUntil { history.all().size == 4 }
+                waitUntil { history.all().size == 3 }
                 Thread.sleep(700)
                 assertEquals("El de riesgo medio no debía disparar una acción", 2, decisions.size)
-                assertEquals("Ni avisar", 3, alerts())
+                assertEquals("Ni avisar", 2, alerts())
             }
             // La elección sigue guardada fuera de la pantalla.
             assertEquals(MitigationMode.Automatic, DataStoreMitigationSettings(context).mode())
@@ -888,10 +882,10 @@ class SmsRoleInstrumentedTest {
 
     /**
      * #14 y #15 a elección de la persona: en modo "preguntar" no se toca nada hasta que toca los botones del detalle, y cada acción
-     * se refleja en el sistema y en lo que se muestra; en "solo avisarme" no se actúa solo, pero el detalle ofrece las acciones y la persona puede pedirlas (#29). Datos sintéticos.
+     * se refleja en el sistema y en lo que se muestra. Datos sintéticos.
      */
     @Test
-    fun thenAskModeActsOnlyWhenThePersonChoosesAndTheOnlyNotifyModeNeverActs() {
+    fun thenAskModeActsOnlyWhenThePersonChooses() {
         if (roles.state() != SmsRoleState.Held) grantRole()
         assertEquals(SmsRoleState.Held, roles.state())
         val settings = DataStoreMitigationSettings(context)
@@ -938,29 +932,6 @@ class SmsRoleInstrumentedTest {
             val done = log.actionsOf(record.id).latest()
             assertEquals(ActionStatus.Completed, done.getValue(ActionType.BlockSender).status)
             assertEquals(ActionStatus.Completed, done.getValue(ActionType.RemoveMessage).status)
-
-            // Solo avisarme: llega otro, avisa, no se toca y el detalle no ofrece actuar.
-            finishOpenActivities()
-            manager.cancelAll()
-            unblock(SENDER_F)
-            settings.setMode(MitigationMode.Disabled)
-            deliver(SENDER_F, risky, secondsAfterSentAt = 3)
-            waitUntil { riskAlerts(manager).isNotEmpty() }
-            assertTrue(!isBlocked(SENDER_F))
-            assertEquals(1, inbox(SENDER_F).size)
-            assertEquals("Solo el primer análisis tiene acciones", 2, history.all().size)
-            assertEquals(0, log.actionsOf(history.all().first().id).size)
-
-            openDetailFromAlert(riskAlerts(manager).single(), risky, messageStillThere = true)
-            compose.waitUntil(TIMEOUT_MS) { count(context.getString(R.string.detail_title)) > 0 && count(risky) > 0 }
-            // #29: en «solo avisarme» no se actúa solo, pero el detalle ofrece las acciones y tocarlas es decisión de la persona.
-            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().assertIsDisplayed()
-            assertEquals(1, count(context.getString(R.string.detail_button_remove)))
-            assertEquals(0, count(context.getString(R.string.detail_actions_label).uppercase()))
-            compose.onNodeWithText(context.getString(R.string.detail_button_block)).performScrollTo().performClick()
-            waitUntil { isBlocked(SENDER_F) }
-            val manual = log.actionsOf(history.all().first().id).latest()
-            assertEquals(ActionStatus.Completed, manual.getValue(ActionType.BlockSender).status)
         } finally {
             manager.cancelAll()
             settings.setMode(MitigationMode.Ask)
@@ -987,7 +958,7 @@ class SmsRoleInstrumentedTest {
         database.clearAllTables()
         manager.cancelAll()
         deleteSyntheticMessages()
-        settings.setMode(MitigationMode.Disabled) // aquí solo se prueba recibir, clasificar y alertar
+        settings.setMode(MitigationMode.Ask) // preguntar no toca nada solo: aquí solo se prueba recibir, clasificar y alertar
         try {
             // La app no tiene cómo usar la red: no declara el permiso de internet.
             val requested = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
@@ -1053,7 +1024,7 @@ class SmsRoleInstrumentedTest {
         database.clearAllTables()
         manager.cancelAll()
         deleteSyntheticMessages()
-        settings.setMode(MitigationMode.Disabled) // no se bloquea ni se retira nada mientras se mide
+        settings.setMode(MitigationMode.Ask) // preguntar no bloquea ni retira nada solo mientras se mide
         val endToEnd = mutableListOf<Double>()
         val analysisOnly = mutableListOf<Double>()
         try {

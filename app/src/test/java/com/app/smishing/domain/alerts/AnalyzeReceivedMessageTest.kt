@@ -218,14 +218,6 @@ class AnalyzeReceivedMessageTest {
     }
 
     @Test
-    fun inDisabledModeNothingIsDoneToTheMessageButTheAlertStillShows() {
-        settings.current = MitigationMode.Disabled
-        assertEquals(AnalysisOutcome.Alerted, analyze(flagged, SignalType.Urgency))
-        assertTrue(applied.isEmpty())
-        assertEquals(1, alerts.size)
-    }
-
-    @Test
     fun mediumAndLowRiskNeverActWhateverTheModeAndTheModeIsNotEvenRead() {
         for (mode in MitigationMode.entries) {
             settings.current = mode
