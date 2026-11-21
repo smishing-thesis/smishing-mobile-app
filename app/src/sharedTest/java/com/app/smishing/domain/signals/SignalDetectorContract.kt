@@ -42,6 +42,8 @@ abstract class SignalDetectorContract {
         assertEquals(listOf("www.ejemplo.com"), fragments("Entre a www.ejemplo.com ahora", SignalType.Link))
         assertEquals(listOf("bit.ly/3kfj2"), fragments("Entra aquí bit.ly/3kfj2", SignalType.Link))
         assertEquals(listOf("interbank.pe"), fragments("Revísalo en interbank.pe", SignalType.Link))
+        // Terminaciones baratas que usan las estafas (el dominio es inventado).
+        assertEquals(listOf("abcdef.sbs/nc"), fragments("Actualice la dirección; abcdef.sbs/nc", SignalType.Link))
     }
 
     @Test

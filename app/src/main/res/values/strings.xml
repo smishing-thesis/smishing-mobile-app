@@ -180,8 +180,7 @@
     <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
     <string name="settings_privacy_title">Privacidad</string>
     <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
-    <string name="settings_contribution_title">Ayúdanos a mejorar la aplicación</string>
-    <string name="settings_contribution_off">Desactivado. Puede cambiarlo cuando quiera.</string>
+    <string name="settings_contribution_title">Compartir datos de forma anónima</string>
     <!-- Aviso al activar el aporte (#18): el texto es el del diseño. -->
     <string name="contribution_dialog_title">Compartir datos de forma anónima</string>
     <string name="contribution_dialog_intro">Al detectar un mensaje peligroso, anonimizamos el contenido y lo utilizamos para mejorar la detección de la aplicación. Toda la información se hace anónima dentro de la aplicación antes de enviarse.</string>
@@ -196,7 +195,6 @@
     <string name="contribution_dialog_terms">Ver términos y condiciones</string>
     <string name="contribution_dialog_deny">Denegar</string>
     <string name="contribution_dialog_accept">Aceptar</string>
-    <string name="settings_contribution_on">Activado. Puede cambiarlo cuando quiera.</string>
     <string name="settings_delete_history">Borrar todo el historial</string>
     <string name="delete_history_title">¿Borrar todo el historial?</string>
     <string name="delete_history_text">Se borrarán todos los análisis de mensajes hechos por la aplicación. Si la aplicación retiró algún mensaje de su buzón, no podrá restaurarlo.</string>

@@ -134,7 +134,7 @@ fun SettingsScreen(
             if (contribution != null) {
                 SwitchRow(
                     title = stringResource(R.string.settings_contribution_title),
-                    description = stringResource(if (contribution) R.string.settings_contribution_on else R.string.settings_contribution_off),
+                    description = null,
                     checked = contribution,
                     onCheckedChange = onContributionChange,
                 )

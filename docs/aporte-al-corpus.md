@@ -8,8 +8,8 @@ Registro de #18 (RF-13), #19 (RF-14) y #71 (envío pendiente). Última verificac
 
 ## Consentimiento (#18)
 
-- **Ajustes → Privacidad → "Ayúdanos a mejorar la aplicación".** Un interruptor, **desactivado por defecto**, con el texto "Desactivado.
-  Puede cambiarlo cuando quiera." (o "Activado. …"). La decisión se guarda en el teléfono (DataStore, `contribution_consent`) y sobrevive a
+- **Ajustes → Privacidad → "Compartir datos de forma anónima".** Un interruptor, **desactivado por defecto**, sin subtítulo (el
+  propio interruptor muestra si está activado). La decisión se guarda en el teléfono (DataStore, `contribution_consent`) y sobrevive a
   cerrar la app.
 - **Activarlo abre un aviso** («Compartir datos de forma anónima», con el texto del diseño): solo se activa con **Aceptar**; **Denegar** o tocar
   fuera lo deja apagado. Apagarlo es inmediato y no pregunta. El enlace «Ver términos y condiciones» **todavía no lleva a ninguna parte**
