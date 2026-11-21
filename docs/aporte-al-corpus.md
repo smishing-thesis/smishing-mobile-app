@@ -26,14 +26,55 @@ Registro de #18 (RF-13), #19 (RF-14) y #71 (envío pendiente). Última verificac
   desidentifica justo antes de enviarlo, y **borrar el mensaje del historial lo saca de la cola**.
 - **Cuándo se envía:** WorkManager lo ejecuta **cuando hay conexión**, aunque la app esté cerrada, y lo reintenta con espera creciente si
   falla. Al abrir la app se retoma lo que haya quedado. Si se pierde la conexión, lo pendiente sale en cuanto vuelve.
-- **Por lotes:** de 20 en 20 (`SendPendingContributions.BATCH_SIZE`). Si un lote falla se detiene y lo no enviado se conserva.
+- **Por lotes:** de 20 en 20 (`SendPendingContributions.BATCH_SIZE`, igual al máximo del backend). Si un lote falla se detiene y lo no
+  enviado se conserva.
 - **Antes de cada texto** se vuelve a leer el consentimiento y se desidentifica; lo que no quede anónimo se **descarta** de la cola. Si se
   revoca el consentimiento, se vacía la cola y se cancela el envío programado.
-- **El destino es una interfaz** (`ContributionSender`). Hoy es `NotConfiguredContributionSender`: no envía y todo se conserva. Se
-  reemplaza en #72, cuando el backend defina su esquema y endpoint; entonces hará falta `INTERNET`.
+- **El destino es una interfaz** (`ContributionSender`). Sin dirección del backend o sin clave en la compilación es
+  `NotConfiguredContributionSender`: no envía y todo se conserva. Con ellas es `HttpContributionSender` (#72, abajo).
 - **Permisos que agrega WorkManager** (se documentan porque la regla es pedir solo los que se justifican): `ACCESS_NETWORK_STATE` (saber si
   hay conexión), `RECEIVE_BOOT_COMPLETED` (retomar el envío tras reiniciar) y `WAKE_LOCK`. Son permisos normales: no se piden en pantalla.
   Los de servicio en primer plano que también trae se **quitan** en el manifiesto.
+
+## Envío al backend (#72)
+
+Contrato: [contrato-con-el-backend.md](contrato-con-el-backend.md) y el OpenAPI de `smishing-backend` (1.1.0).
+
+- **Una solicitud por lote:** `POST /api/v1/contributions/batch`, por HTTPS y con `X-API-Key`. Cuerpo
+  `{"contributions": [{"text", "label", "model_version"}]}`, de 1 a 20 aportes. **No lleva nada del dispositivo** ni la versión de las
+  reglas de desidentificación (el backend no la acepta). `label` es lo que decidió el modelo local sobre ese mensaje (hoy siempre
+  `smishing`: solo se encola el nivel alto) y `model_version`, la versión de ese modelo.
+- **Un resultado por aporte**, en el mismo orden (`BackendContract`): `accepted` y `duplicate` (reenviar es seguro) y `rejected` con un
+  código genérico (`not_anonymized`, `unknown_model_version`, `invalid_contribution`). **Los tres salen de la cola**: lo rechazado no se
+  reintenta sin fin. Si el número de resultados o su orden no coinciden con el lote, no se confía en la respuesta y se conserva todo.
+- **Reacción a cada respuesta:** `401` (la clave no sirve) y `400`, `413` o `422` (el lote no cumple el contrato) **detienen** el envío y
+  conservan la cola, sin reintentar sin fin; se retoma al llegar otro aporte o al abrir la app. `429` y `5xx` (también sin conexión o
+  sin red de confianza) **se reintentan** con espera creciente; el `Retry-After` del `429` llega hasta el resultado
+  (`UploadOutcome.Retry`), pero WorkManager solo ofrece su espera creciente, así que no se respeta al segundo.
+- **Dónde está la dirección y la clave:** en `local.properties` (que no va en Git), con `smishing.backendUrl` y `smishing.backendApiKey`;
+  se compilan en `BuildConfig`. **Sin ellas la app compila igual y no envía nada.** Solo se acepta `https://`. Una clave embebida en una
+  app se puede extraer: el backend lo dice y por eso tiene cuotas, reanonimización y cuarentena; la clave no se escribe en ningún log.
+- **Servidor local de pruebas (solo depuración):** el backend usa un certificado de prueba que el emulador no conoce. Con
+  `adb push cert.pem /storage/emulated/0/Android/data/com.app.smishing/files/dev-backend-cert.pem` (solo la parte **pública**) y
+  `adb reverse tcp:8443 tcp:8443`, la versión `debug` confía en ese certificado (`BackendTls`); `qa` y `release` no tienen esa excepción.
+- **Permiso `INTERNET`:** se declara por esto; motivo y prueba en [permisos-sms.md](permisos-sms.md).
+
+### Prueba contra el servidor local (2026-11-21)
+
+En el emulador de **API 35** (Android 15), con la variante `debug`, el backend local de `smishing-backend` (rama `feat/48-batch-contributions`,
+OpenAPI 1.1.0) por HTTPS en el puerto 8443 con `adb reverse`, y su certificado de prueba subido con `adb push`. Mensajes **sintéticos**.
+
+| Paso | Resultado |
+|---|---|
+| Aporte activado desde Ajustes; llega por el receptor un SMS sintético de riesgo alto | se clasifica, se alerta y queda en la cola |
+| El servidor corría **sin** la clave de pruebas | la app abre la conexión HTTPS y confía en el certificado de prueba; el backend contesta `401` y la app registra `Unauthorized`: **se detiene y conserva el mensaje en la cola**, sin reintentar sin fin. Un `curl` con la misma clave dio también `401`: no era la app |
+| El servidor reiniciado con la clave de pruebas | al abrir la app se retoma lo pendiente: `Done(sent=1, rejected=0)` y la cola queda vacía |
+| Llega otra vez el mismo SMS | `Done(sent=1, rejected=0)`. El registro de la app no distingue aceptado de duplicado (ambos cuentan en `sent`); con `curl`, el mismo lote dio primero `accepted` y luego `duplicate`, que es lo que el backend dice de reenviar |
+
+**Lo que esto no probó:** `429` con `Retry-After`, `5xx`, un rechazo (`rejected`) y un lote de más de un aporte contra el servidor real; esos casos
+solo están en las pruebas JVM con un transporte falso. Tampoco `qa`/`release` (no traen dirección ni clave por defecto), ni un teléfono real,
+ni una dirección pública con certificado válido: el backend aún no está desplegado (#19 y #20). La versión `1.0.0` del modelo tiene que estar
+registrada en el catálogo del backend; si no, cada aporte se rechaza con `unknown_model_version` y la app lo descarta.
 
 ## Desidentificación (#19)
 
@@ -92,9 +133,13 @@ dan lo mismo que la referencia **en la JVM y en el dispositivo**.
   consentimiento sale desidentificado, revocar detiene el siguiente porque se lee cada vez, sin consentimiento no se arma el
   desidentificador, un ejemplo aún no anónimo se rechaza, vacío se rechaza, `toString` no muestra el texto, los nombres de contactos se
   quitan palabra por palabra, un nombre que no está en la lista no se detecta, el texto crudo no es anónimo y el resultado sí).
-- Envío pendiente: `SendPendingContributionsTest` (6: lotes, fallo a mitad, sin destino, revocar a mitad, lo no anónimo se descarta, un
-  teléfono nunca sale en claro) y `QueueingAnalysisHistoryTest` (3: solo el nivel alto con consentimiento se encola; un fallo al encolar no
-  rompe el análisis). Dispositivo: `RoomPendingContributionsInstrumentedTest` (orden y límite, quitar y vaciar, borrar el historial).
+- Envío pendiente: `SendPendingContributionsTest` (12: lotes, fallo a mitad, sin destino, revocar a mitad, lo no anónimo se descarta, un
+  teléfono nunca sale en claro, etiqueta y versión del modelo, duplicados y rechazados, resultados que no coinciden, clave inválida y lote
+  rechazado) y `QueueingAnalysisHistoryTest` (3: solo el nivel alto con consentimiento se encola; un fallo al encolar no rompe el
+  análisis). Dispositivo: `RoomPendingContributionsInstrumentedTest` (orden y límite, etiqueta y versión del modelo, quitar y vaciar,
+  borrar el historial).
+- Envío al backend (#72): `BackendContractTest` (el cuerpo y cada respuesta) y `HttpContributionSenderTest` (la ruta, las cabeceras, sin
+  destino no se pide nada a la red, fallos de red y claves que no aparecen en ningún texto), con un transporte falso: sin red.
 - Dispositivo (API 29): `AnonymizationVectorsInstrumentedTest` (los mismos 29 vectores con el motor de Android) y
   `DataStoreContributionConsentInstrumentedTest` (4: desactivado por defecto, activar y revocar, sobrevive a reabrir el almacén, y
   revocar detiene el aporte siguiente con el almacén real).
@@ -102,6 +147,8 @@ dan lo mismo que la referencia **en la JVM y en el dispositivo**.
 
 ## Lo que no cubre
 
-- **No se envía nada** (falta el destino, #72) y no hay vista previa de lo que se compartiría. Entregar el texto a un destino es #27; el modo de reporte, #26.
-- Solo API 29 (emulador); no se probó en otras versiones de Android ni en un teléfono real.
+- **Vista previa:** no hay una pantalla que muestre lo que se compartiría. Entregar el texto a un destino con reporte es #27; el modo de reporte, #26.
+- **Backend real:** ver la prueba contra el servidor local, en "Envío al backend (#72)"; el despliegue público del backend (#19 y #20) no
+  existe, así que `release` no trae dirección. No se midió el tiempo de un lote.
+- Solo API 29 (emulador) para lo anterior a #72; no se probó en otras versiones de Android ni en un teléfono real.
 - No se midió el tiempo de desidentificar ni el de leer todos los contactos para la lista de nombres.

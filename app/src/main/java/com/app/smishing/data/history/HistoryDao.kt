@@ -45,8 +45,10 @@ abstract class HistoryDao {
     abstract fun insertPending(pending: PendingContributionEntity)
 
     @Query(
-        "SELECT p.analyzedMessageId AS analyzedMessageId, m.body AS body FROM pending_contribution p " +
-            "JOIN analyzed_message m ON m.id = p.analyzedMessageId ORDER BY p.queuedAtMillis ASC, p.analyzedMessageId ASC LIMIT :limit",
+        "SELECT p.analyzedMessageId AS analyzedMessageId, m.body AS body, r.modelFlagsIt AS modelFlagsIt, r.modelVersion AS modelVersion " +
+            "FROM pending_contribution p JOIN analyzed_message m ON m.id = p.analyzedMessageId " +
+            "JOIN analysis_result r ON r.analyzedMessageId = p.analyzedMessageId " +
+            "ORDER BY p.queuedAtMillis ASC, p.analyzedMessageId ASC LIMIT :limit",
     )
     abstract fun nextPending(limit: Int): List<PendingRow>
 

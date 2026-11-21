@@ -9,6 +9,11 @@
     <!-- Avisar de un mensaje riesgoso (#10). Solo Android 13 o superior lo pide en tiempo de ejecución. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--
+        Enviar los aportes anónimos al backend (#72, solo con el aporte activado, solo por HTTPS). Clasificar, alertar y mostrar los mensajes
+        no usan la red. Motivo y alcance en docs/permisos-sms.md.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--
         El envío de aportes pendientes (#71) usa WorkManager, que agrega ACCESS_NETWORK_STATE (saber si hay conexión), RECEIVE_BOOT_COMPLETED
         (retomar el envío tras reiniciar) y WAKE_LOCK. Los permisos de servicio en primer plano que también agrega no se usan: se quitan.
     -->

@@ -960,11 +960,8 @@ class SmsRoleInstrumentedTest {
         deleteSyntheticMessages()
         settings.setMode(MitigationMode.Ask) // preguntar no toca nada solo: aquí solo se prueba recibir, clasificar y alertar
         try {
-            // La app no tiene cómo usar la red: no declara el permiso de internet.
-            val requested = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
-                .requestedPermissions.orEmpty().toList()
-            assertTrue("La app no debe declarar INTERNET: $requested", "android.permission.INTERNET" !in requested)
-
+            // Desde #72 la app declara INTERNET, solo para enviar los aportes anónimos (docs/permisos-sms.md). Clasificar y alertar no la
+            // usan: eso es lo que prueba esta prueba, con todas las redes apagadas.
             Shell.run("svc wifi disable")
             Shell.run("svc data disable")
             // Apagarlas no es instantáneo, y mientras una cae la otra puede tomar el relevo un momento: se espera a que no haya

@@ -6,9 +6,13 @@ teléfono de gama baja**: #21 pide el dispositivo objetivo y eso aún no se midi
 
 ## #20: recibir, clasificar y alertar sin internet
 
-**La app no tiene cómo usar la red.** El manifiesto fusionado no declara `INTERNET` (ni `ACCESS_WIFI_STATE`): solo `ACCESS_NETWORK_STATE`,
-que llega de una biblioteca y no permite abrir conexiones. Se comprobó en el manifiesto de depuración, en el APK `qa` con `aapt` y,
-con una prueba, en lo que el sistema reporta como permisos pedidos por la app.
+**Cambio de #72 (2026-11-21): la app ya declara `INTERNET`**, solo para enviar los aportes anónimos al backend (ver
+[permisos-sms.md](permisos-sms.md)). Lo que sigue describe cómo era antes; lo que se prueba hoy es que **clasificar y alertar no
+dependen de la red**, con la prueba de abajo y todas las redes apagadas.
+
+Antes de #72, la app no tenía cómo usar la red: el manifiesto fusionado no declaraba `INTERNET` (ni `ACCESS_WIFI_STATE`): solo
+`ACCESS_NETWORK_STATE`, que llega de una biblioteca y no permite abrir conexiones. Se comprobó en el manifiesto de depuración, en el APK `qa`
+con `aapt` y, con una prueba, en lo que el sistema reporta como permisos pedidos por la app.
 
 **Prueba funcional** (`SmsRoleInstrumentedTest.thenWithoutAnyConnectionAMessageIsReceivedClassifiedAndAlerted`):
 
@@ -19,10 +23,12 @@ con una prueba, en lo que el sistema reporta como permisos pedidos por la app.
 3. Comprueba que el mensaje **está en el buzón**, que su análisis quedó guardado con **nivel alto** y que **aparece la alerta**, y que
    seguía sin haber red al terminar. Siempre vuelve a encender el Wi-Fi y los datos.
 
-Resultado: pasa. Si la app declarara `INTERNET`, la prueba falla (se comprobó añadiéndolo a propósito; se revirtió).
+Resultado (2026-11-10): pasa. Entonces, si la app declarara `INTERNET`, la prueba fallaba (se comprobó añadiéndolo a propósito; se
+revirtió). Desde #72 esa comprobación se quitó, porque el permiso existe a propósito; lo que sigue exigiendo la prueba es que el mensaje se
+reciba, se clasifique y se alerte sin red.
 
-El aporte opcional al corpus (#18, #26, #27) sí usará la red, solo con consentimiento activo; no está hecho. Cuando exista, esta prueba
-debe seguir pasando: clasificar y alertar no pueden depender de él.
+El aporte opcional al corpus usa la red solo con el consentimiento activo (#18, #71 y #72). Clasificar y alertar no pueden depender de
+él, y esta prueba sigue pasando.
 
 ## #21: demora desde la recepción hasta el nivel de riesgo
 
