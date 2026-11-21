@@ -47,7 +47,7 @@ fun HomeScreen(
     // El fondo de la tarjeta activa cambia con la hora del teléfono; se calcula al abrir la pantalla.
     val dayPart = remember { DayPart.at(LocalTime.now()) }
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
-        SmishingTopBar(title = stringResource(R.string.app_name), style = TopBarStyle.Primary)
+        SmishingTopBar(title = stringResource(R.string.nav_home), style = TopBarStyle.Primary)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.Md),
             verticalArrangement = Arrangement.spacedBy(Spacing.Md),

@@ -23,7 +23,7 @@ Solo si se cumplen **los tres** requisitos (`ProtectionStatus`, `domain.settings
 
 ## La pantalla "Inicio"
 
-Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajustes); la app se abre en ella.
+Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajustes); la app se abre en ella. La barra de arriba dice "Inicio" (como las otras pantallas dicen su nombre), no "Smishy".
 
 - **Activa:** "Protección activa — La aplicación está protegiendo sus mensajes en este momento", con el indicador "Activo". No dice
   "su teléfono está protegido": no puede asegurarlo.

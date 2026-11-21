@@ -36,10 +36,10 @@ import com.app.smishing.ui.designsystem.theme.Spacing
 
 /** Las tarjetas del Inicio no llevan borde: solo una sombra suave pero visible sobre el fondo blanco, con las esquinas redondeadas del diseño. */
 private fun Modifier.softShadow(): Modifier = shadow(
-    elevation = 10.dp,
+    elevation = 14.dp,
     shape = SmishingShapes.Lg,
-    ambientColor = Color(0x33000000),
-    spotColor = Color(0x4D000000),
+    ambientColor = Color(0x59000000),
+    spotColor = Color(0x80000000),
 )
 
 /**
