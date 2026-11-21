@@ -106,7 +106,7 @@ class ExplanationWordingTest {
         assertEquals("Le pide actuar con urgencia", strings.getValue("detail_reason_urgency"))
         assertEquals("Contiene un enlace", strings.getValue("detail_reason_link"))
         assertEquals("Le pide sus datos o claves", strings.getValue("detail_reason_data_request"))
-        assertEquals("No abra el enlace. Si tiene dudas, contacte directamente a la entidad.", strings.getValue("detail_recommendation"))
+        assertEquals("No abra el enlace. Si tiene dudas, contacte directamente a la entidad.", strings.getValue("detail_recommendation_link"))
         assertEquals("Bloquear este número", strings.getValue("detail_button_block"))
         assertEquals("Borrar mensaje", strings.getValue("detail_button_remove"))
         assertEquals("La aplicación no está protegiendo sus mensajes en este momento.", strings.getValue("protection_off_message"))

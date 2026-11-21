@@ -125,7 +125,11 @@
     <string name="detail_not_assessed_title">Análisis</string>
     <string name="detail_not_assessed">No pudimos analizar este mensaje: es muy corto o el análisis está apagado.</string>
     <string name="detail_recommendation_title">Recomendación</string>
-    <string name="detail_recommendation">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <!-- Una según lo que se encontró en el mensaje (Recommendation): no siempre hay un enlace. -->
+    <string name="detail_recommendation_link">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_recommendation_data">No comparta sus datos ni sus claves por mensaje. Si tiene dudas, contacte directamente a la persona o a la entidad por otro medio.</string>
+    <string name="detail_recommendation_link_and_data">No abra el enlace ni comparta sus datos o claves. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_recommendation_general">Si no esperaba este mensaje, no responda ni abra enlaces. Si tiene dudas, llame a la persona o a la entidad por otro medio.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
     <string name="detail_actions_label">Acciones realizadas</string>
     <string name="detail_actions_manual_label">Acciones</string>
@@ -222,7 +226,7 @@
     <string name="home_summary_scams">Posibles estafas:</string>
     <string name="home_summary_scams_value">%1$d detectadas</string>
     <string name="settings_title">Ajustes</string>
-    <string name="settings_mode_title">Cuando llegue un mensaje con posible estafa</string>
+    <string name="settings_mode_title">Modo de protección</string>
     <string name="settings_mode_automatic_title">Protegerme automáticamente</string>
     <string name="settings_mode_automatic_description">Bloqueamos el número y quitamos el mensaje de su buzón</string>
     <string name="settings_mode_ask_title">Preguntarme antes de actuar</string>

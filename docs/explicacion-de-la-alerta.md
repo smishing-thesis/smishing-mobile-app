@@ -22,7 +22,7 @@ entidad" atribuye una intención, y "¿Por qué es riesgoso?" da por hecho el ri
 | Detalle, suplantación | "Finge ser de una entidad" | "Nombra a una entidad conocida, pero el enlace no es el suyo o le pide datos" |
 | Detalle, enlace | "Contiene un enlace" | "Trae un enlace: no lo abra si no está seguro" |
 | Detalle, datos | "Le pide sus datos o claves" | "Le pide datos personales o claves" |
-| Detalle, recomendación | "No abra el enlace. Si tiene dudas, contacte directamente a la entidad." | "No abra enlaces ni responda con sus datos. Si tiene dudas, llame a la entidad a un número que ya conozca." |
+| Detalle, recomendación | "No abra el enlace. Si tiene dudas, contacte directamente a la entidad." | Depende de lo que se encontró (`Recommendation`): con enlace, el del mockup; si pide datos, "No comparta sus datos ni sus claves por mensaje…"; con ambos, las dos cosas; y si no hay ni enlace ni pedido de datos (por ejemplo, solo el modelo lo marcó), "Si no esperaba este mensaje, no responda ni abra enlaces…" (2026-11-21: antes salía siempre el texto del enlace, aunque no hubiera ninguno) |
 
 Y se agregó, en el detalle:
 - **Un resumen** bajo el nivel que dice lo que se sabe y lo que no. Alto: "Este mensaje tiene señales de las estafas por SMS. No

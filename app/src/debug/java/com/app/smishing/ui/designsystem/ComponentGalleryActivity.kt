@@ -253,7 +253,7 @@ private fun SettingsSection() {
     var mode by remember { mutableIntStateOf(0) }
     var share by remember { mutableStateOf(true) }
     Padded {
-        SectionLabel("Cuando llegue un mensaje peligroso")
+        SectionLabel("Modo de protección")
         RadioOption("Protégeme automáticamente", "Bloqueamos el número y quitamos el mensaje de su buzón", mode == 0, { mode = 0 })
         RadioOption("Preguntarme antes de actuar", "Le mostraremos las opciones para que usted decida", mode == 1, { mode = 1 })
         SectionLabel("Ayudar a mejorar la aplicación")

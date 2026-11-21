@@ -20,7 +20,7 @@ el mockup, cuáles se apartan de él y por qué, y qué falta. Última revisión
 | Paso 3, privacidad | "Su privacidad está garantizada." | "Todo el análisis se hace en su teléfono." | no se puede garantizar (el historial guarda el texto sin cifrar) |
 | Detalle, razón de suplantación | "Finge ser de una entidad" | "Dice ser de una entidad" | afirma una intención que no se conoce |
 | Detalle, encabezado de las razones | "¿Por qué es riesgoso?" | "¿Por qué podría ser riesgoso?" | afirma que lo es |
-| Ajustes, título del grupo | "Cuando llegue un mensaje peligroso" | "…con posible estafa" | certeza |
+| Ajustes, título del grupo | "Cuando llegue un mensaje peligroso" | "Modo de protección" (antes "…con posible estafa") | certeza; el nuevo título no habla del mensaje |
 | Onboarding, contador de pasos | "PASO 1 DE 3", "2 DE 3" y "3 DE 3" | "PASO 1 DE 2" y "2 DE 2"; el permiso de lectura no lleva contador | el rol concede ese permiso solo; la pantalla aparece únicamente si la persona lo quita después |
 | Nuevo mensaje, campo "Para" | "Número o nombre de contacto" | "Número de teléfono" | no hay contactos todavía (#53) |
 | Notificación de alerta, pantalla de bloqueo | muestra remitente y motivo | solo "Abra la aplicación para ver el detalle" | privacidad |
