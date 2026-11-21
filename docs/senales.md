@@ -181,7 +181,10 @@ alarmas (4 en desarrollo) son instrucciones como "ingrese el siguiente código".
 - **La solicitud de datos exige el verbo y el dato en la misma frase** y a menos de 40 caracteres. Se pierde, por ejemplo,
   "Su clave vence hoy. Actualícela" (el verbo viene después, con pronombre).
 - **Los dominios sueltos** se reconocen con una lista de terminaciones (`.com`, `.pe`, `.info`…): una palabra pegada a un punto
-  con una terminación de la lista ("hola.me") se tomaría por enlace.
+  con una terminación de la lista ("hola.me") se tomaría por enlace. **Una terminación que no esté en la lista no se ve** si no trae
+  `http://` ni `www.`: pasó con `.sbs` en una prueba a mano (#70) y se agregaron `sbs`, `cfd`, `cyou`, `bond`, `rest`, `quest`,
+  `monster`, `autos`, `homes`, `boats`, `yachts`, `lol` y `mom`. La lista seguirá incompleta: aparecen terminaciones nuevas. La versión de
+  las reglas no se cambió (sigue `1.1.0`).
 - Un mensaje legítimo con un enlace siempre produce la señal de **enlace**: es solo "hay un enlace". Qué pesa eso lo decide #9.
 - **No se midió el tiempo** de las reglas en un teléfono de gama baja.
 - Solo se probó en el emulador API 29 x86_64 y en la JVM.
