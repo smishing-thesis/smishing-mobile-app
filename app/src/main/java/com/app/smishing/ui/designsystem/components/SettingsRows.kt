@@ -77,7 +77,7 @@ fun RadioOption(
 @Composable
 fun SwitchRow(
     title: String,
-    description: String,
+    description: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -93,7 +93,7 @@ fun SwitchRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
-            Text(description, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+            if (description != null) Text(description, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
         }
         Switch(
             checked = checked,
