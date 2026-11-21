@@ -18,12 +18,15 @@ data class ProtectionStatus(val missing: List<AppPermission>) {
     }
 }
 
-/** Qué pasos de la bienvenida ya se mostraron. Se guarda en el teléfono. */
+/** Qué pasos de la bienvenida ya se cumplieron. Se guarda en el teléfono. */
 interface OnboardingProgress {
-    /** Si la persona ya vio la bienvenida (paso 1). Puede bloquear: no se llama desde el hilo principal. */
-    fun welcomeSeen(): Boolean
+    /**
+     * Si la persona ya terminó el onboarding: aceptó el rol de mensajería (paso 2) u omitió el paso 2. Mientras no lo termine, la
+     * bienvenida (paso 1) vuelve a salir cada vez que abre la app. Puede bloquear: no se llama desde el hilo principal.
+     */
+    fun onboardingDone(): Boolean
 
-    fun setWelcomeSeen(seen: Boolean)
+    fun setOnboardingDone(done: Boolean)
 
     /** Si ya se le explicó a la persona para qué se piden los contactos (#53), para no insistir. Puede bloquear. */
     fun contactsPromptSeen(): Boolean

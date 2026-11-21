@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Smishy con la protección activa: escudo azul contento. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="84dp"
+    android:height="102dp"
+    android:viewportWidth="120"
+    android:viewportHeight="146">
+    <path
+        android:fillColor="#4D000000"
+        android:pathData="M26,140 a34,4 0 1,0 68,0 a34,4 0 1,0 -68,0 Z" />
+    <path
+        android:fillColor="#FF1557B0"
+        android:pathData="M60,8 L12,26 V68 C12,100 34,122 60,134 Z" />
+    <path
+        android:fillColor="#FF1A73E8"
+        android:pathData="M60,8 L108,26 V68 C108,100 86,122 60,134 Z" />
+    <group
+        android:pivotX="60"
+        android:pivotY="72"
+        android:scaleX="0.84"
+        android:scaleY="0.84">
+        <path
+            android:fillColor="#FF4F94EE"
+            android:pathData="M60,8 L12,26 V68 C12,100 34,122 60,134 Z" />
+        <path
+            android:fillColor="#FF8AB4F8"
+            android:pathData="M60,8 L108,26 V68 C108,100 86,122 60,134 Z" />
+    </group>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,64 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M63,64 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" />
+    <path
+        android:fillColor="#FF202124"
+        android:pathData="M42.5,66 a5.5,5.5 0 1,0 11.0,0 a5.5,5.5 0 1,0 -11.0,0 Z" />
+    <path
+        android:fillColor="#FF202124"
+        android:pathData="M70.5,66 a5.5,5.5 0 1,0 11.0,0 a5.5,5.5 0 1,0 -11.0,0 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M50,86 Q60,96 70,86" />
+</vector>

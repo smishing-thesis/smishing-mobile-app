@@ -3,39 +3,30 @@ package com.app.smishing.ui.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import com.app.smishing.R
 import com.app.smishing.domain.history.WeeklySummary
-import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
 import com.app.smishing.domain.settings.ProtectionStatus
-import com.app.smishing.ui.designsystem.components.PermissionRow
+import com.app.smishing.ui.designsystem.components.DayPart
 import com.app.smishing.ui.designsystem.components.ProtectionCard
-import com.app.smishing.ui.designsystem.components.SectionLabel
+import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.SummaryCard
 import com.app.smishing.ui.designsystem.components.SummaryRow
+import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.icons.SmishingIcons
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
-import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
+import java.time.LocalTime
 
 /**
  * "Inicio" (#17), con el diseño: si la protección está activa y el resumen de la semana. Qué falta (rol, permisos, notificaciones)
@@ -53,50 +44,31 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val protection = statuses?.let { ProtectionStatus.of(it) }
-    Column(
-        modifier = modifier.fillMaxSize().background(SmishingPalette.Background).verticalScroll(rememberScrollState()).padding(Spacing.Md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.Md),
-    ) {
-        Header(protection)
-        when {
-            protection == null -> Unit
-            protection.active -> ProtectionCard(
-                active = true,
-                title = stringResource(R.string.home_active_title),
-                message = stringResource(R.string.home_active_message),
-            )
-            else -> ProtectionCard(
-                active = false,
-                title = stringResource(R.string.protection_off_title),
-                message = stringResource(R.string.protection_off_message),
-                actionLabel = stringResource(R.string.protection_activate),
-                onAction = onActivate,
-            )
-        }
-        Summary(summary, dimmed = protection?.active != true)
-    }
-}
-
-@Composable
-private fun Header(protection: ProtectionStatus?) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(R.string.app_name), style = SmishingTypography.TitleMedium, color = SmishingPalette.TextPrimary)
-        if (protection != null) {
-            val active = protection.active
-            val tint = if (active) SmishingPalette.TextPrimary else SmishingPalette.TextSecondary
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
-                Icon(
-                    if (active) SmishingIcons.Shield else Icons.Outlined.Warning,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(20.dp),
+    // El fondo de la tarjeta activa cambia con la hora del teléfono; se calcula al abrir la pantalla.
+    val dayPart = remember { DayPart.at(LocalTime.now()) }
+    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
+        SmishingTopBar(title = stringResource(R.string.nav_home), style = TopBarStyle.Primary)
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Spacing.Md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.Md),
+        ) {
+            when {
+                protection == null -> Unit
+                protection.active -> ProtectionCard(
+                    active = true,
+                    title = stringResource(R.string.home_active_title),
+                    message = stringResource(R.string.home_active_message),
+                    dayPart = dayPart,
                 )
-                Text(
-                    stringResource(if (active) R.string.home_status_active else R.string.home_status_inactive),
-                    style = SmishingTypography.BodyMediumBold,
-                    color = tint,
+                else -> ProtectionCard(
+                    active = false,
+                    title = stringResource(R.string.protection_off_title),
+                    message = stringResource(R.string.protection_off_message),
+                    actionLabel = stringResource(R.string.protection_activate),
+                    onAction = onActivate,
                 )
             }
+            Summary(summary, dimmed = protection?.active != true)
         }
     }
 }

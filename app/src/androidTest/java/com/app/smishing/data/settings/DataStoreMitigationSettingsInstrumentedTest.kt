@@ -69,16 +69,23 @@ class DataStoreMitigationSettingsInstrumentedTest {
     fun theChoiceSurvivesReopeningTheStore() {
         val first = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val store = PreferenceDataStoreFactory.create(scope = first) { file }
-        DataStoreMitigationSettings(store).setMode(MitigationMode.Disabled)
+        DataStoreMitigationSettings(store).setMode(MitigationMode.Automatic)
         first.cancel() // cierra el primero antes de abrir otro sobre el mismo archivo
 
-        assertEquals(MitigationMode.Disabled, DataStoreMitigationSettings(open()).mode())
+        assertEquals(MitigationMode.Automatic, DataStoreMitigationSettings(open()).mode())
     }
 
     @Test
     fun anUnknownSavedValueFallsBackToAsk() {
         val store = open()
         runBlocking { store.edit { it[stringPreferencesKey("mitigation_mode")] = "valor-que-ya-no-existe" } }
+        assertEquals(MitigationMode.Ask, DataStoreMitigationSettings(store).mode())
+    }
+
+    @Test
+    fun theRemovedOnlyNotifyChoiceFromAnOlderVersionFallsBackToAsk() {
+        val store = open()
+        runBlocking { store.edit { it[stringPreferencesKey("mitigation_mode")] = "disabled" } }
         assertEquals(MitigationMode.Ask, DataStoreMitigationSettings(store).mode())
     }
 
@@ -112,7 +119,7 @@ class DataStoreMitigationSettingsInstrumentedTest {
         var calls = 0
         settings.onChange { calls++ }.close()
         Thread.sleep(200)
-        settings.setMode(MitigationMode.Disabled)
+        settings.setMode(MitigationMode.Automatic)
         Thread.sleep(500)
         assertEquals(0, calls)
     }

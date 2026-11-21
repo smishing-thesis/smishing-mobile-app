@@ -61,6 +61,20 @@ donde `SettingsRoute` pone `DemoSection()`.
 - Versiones anteriores que se descartaron: "Cargar como mensajes anteriores" (sin análisis) y "Comenzar demo", que entregaba los 25 juntos
   (las notificaciones se amontonaban y no se podían apreciar).
 
+## Contactos de ejemplo (#70)
+
+El botón **Agregar contactos de ejemplo** (Ajustes → Demo) agrega al teléfono 5 contactos **inventados** (nombres y números de ejemplo,
+no de nadie) y entrega un mensaje inventado de cada uno, para ver cómo salen los nombres en la lista, las conversaciones y los avisos.
+**Borrar mensajes de demo** también los quita.
+Tres de ellos (Carla, Lucía y Mamá) llevan una foto inventada (un fondo de color con su inicial); los otros dos no, para ver la imagen por
+defecto, la misma que usa un número sin contacto.
+
+- **Permiso nuevo, solo en `debug`:** `WRITE_CONTACTS`, declarado en `app/src/debug/AndroidManifest.xml` (no existe en `qa` ni en
+  `release`). Motivo: escribir los contactos de ejemplo. Se pide al tocar el botón.
+- Para ver los nombres la app necesita además `READ_CONTACTS` (en Android 10 lo concede el rol de SMS).
+- Si no se concede `WRITE_CONTACTS` al borrar, los contactos quedan y se quitan a mano desde Contactos.
+- Probado en el emulador API 29: los 5 contactos y mensajes salieron con su nombre. No se probó el borrado de los contactos.
+
 ## Lo que no cubre
 
 - **No desbloquea números.** Si se simula con el modo automático, la app bloquea los remitentes de los mensajes riesgosos; al borrar

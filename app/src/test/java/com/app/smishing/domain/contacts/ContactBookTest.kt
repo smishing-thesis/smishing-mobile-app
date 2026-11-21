@@ -62,4 +62,13 @@ class ContactBookTest {
         assertFalse(book.toString().contains("Contacto"))
         assertEquals("ContactBook(<oculto>)", book.toString())
     }
+
+    @Test
+    fun searchFindsContactsByNameIgnoringCaseAndAccentsAndGivesTheSavedNumber() {
+        val people = ContactBook.of(listOf("+51900000101" to "María Ríos", "900000102" to "Mario Vega", "900000103" to "Luz"))
+        assertEquals(listOf("María Ríos" to "+51900000101", "Mario Vega" to "900000102"), people.search("mari"))
+        assertEquals(listOf("María Ríos" to "+51900000101"), people.search("RIOS"))
+        // Con menos de 2 letras no sugiere nada.
+        assertEquals(emptyList<Pair<String, String>>(), people.search("m"))
+    }
 }

@@ -7,14 +7,12 @@ import com.app.smishing.domain.risk.RiskLevel
  * Qué hace la app con un mensaje de riesgo alto (#13), según el diseño de Ajustes:
  * - [Automatic] "Protegerme automáticamente": bloquea el número y retira el mensaje del buzón.
  * - [Ask] "Preguntarme antes de actuar": muestra las opciones para que la persona decida.
- * - [Disabled] "Solo avisarme": avisa pero no toma ninguna acción.
  *
  * El [id] es lo que se guarda en las preferencias: es estable aunque cambien los textos.
  */
 enum class MitigationMode(val id: String) {
     Automatic("automatic"),
-    Ask("ask"),
-    Disabled("disabled");
+    Ask("ask");
 
     companion object {
         /**
@@ -23,7 +21,7 @@ enum class MitigationMode(val id: String) {
          */
         val DEFAULT = Ask
 
-        /** El modo guardado con ese id; si falta o no se reconoce, el [DEFAULT]. */
+        /** El modo guardado con ese id; si falta o no se reconoce (también el antiguo «solo avisarme», que ya no existe), el [DEFAULT]. */
         fun fromId(id: String?): MitigationMode = entries.firstOrNull { it.id == id } ?: DEFAULT
     }
 }
@@ -49,8 +47,7 @@ object MitigationPolicy {
     fun decide(level: RiskLevel, mode: MitigationMode): MitigationDecision = when {
         level !in ACTIONABLE_LEVELS -> MitigationDecision.DoNothing
         mode == MitigationMode.Automatic -> MitigationDecision.Act
-        mode == MitigationMode.Ask -> MitigationDecision.AskUser
-        else -> MitigationDecision.DoNothing
+        else -> MitigationDecision.AskUser
     }
 }
 

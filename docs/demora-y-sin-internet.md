@@ -30,7 +30,7 @@ debe seguir pasando: clasificar y alertar no pueden depender de él.
 receptor real hasta que **el análisis con su nivel de riesgo queda guardado**, pasando por guardar el mensaje en el buzón, analizarlo
 (modelo y señales) y guardar el resultado. La alerta se publica justo después. Se usan los mensajes del conjunto controlado que el
 modelo evalúa (77, sintéticos), tres veces cada uno: **231 mediciones**. Los mensajes
-con tildes, signos o más de 70 caracteres se arman en UCS-2 y en varias partes (ver `SmsPdu`). Se mide con el modo "solo avisarme", para
+con tildes, signos o más de 70 caracteres se arman en UCS-2 y en varias partes (ver `SmsPdu`). Se mide con el modo preguntar, que no bloquea ni retira nada solo, para
 que bloquear o retirar no cuente. La resolución es de aproximadamente 1 ms.
 
 **Objetivo:** P95 menor a 1 segundo. La prueba **falla** si no se cumple (se comprobó metiendo a propósito 1,1 s de espera en el análisis:

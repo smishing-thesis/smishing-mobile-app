@@ -23,11 +23,11 @@ Solo si se cumplen **los tres** requisitos (`ProtectionStatus`, `domain.settings
 
 ## La pantalla "Inicio"
 
-Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajustes); la app se abre en ella.
+Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajustes); la app se abre en ella. La barra de arriba dice "Inicio" (como las otras pantallas dicen su nombre), no "Smishy".
 
-- **Activa:** "Protección activa — La aplicación está revisando sus mensajes en este momento", con el indicador "Activo". No dice
-  "protegido": no puede asegurarlo.
-- **Apagada:** tarjeta roja "Protección apagada — Su teléfono está desprotegido contra mensajes maliciosos" (texto del mockup), el
+- **Activa:** "Protección activa — La aplicación está protegiendo sus mensajes en este momento", con el indicador "Activo". No dice
+  "su teléfono está protegido": no puede asegurarlo.
+- **Apagada:** tarjeta de fondo blanco con el título en rojo y una escena de ciudad de noche arriba (el fondo rojo del mockup no dejaba ver a Smishy); las tarjetas del Inicio no llevan borde, solo una sombra suave "Protección apagada — La aplicación no está protegiendo sus mensajes en este momento", el
   indicador "Inactivo" y el botón "Activar protección". **Qué falta se ve en Ajustes, en "Permisos"** (#61 quitó de Inicio la lista de
   requisitos, que no está en el mockup). Si falta el rol o el permiso de SMS, el botón vuelve al onboarding; si solo faltan las
   notificaciones, abre los ajustes de notificaciones de la app.
@@ -39,8 +39,11 @@ Primera pestaña de la barra inferior (Inicio · Mensajes · Historial · Ajuste
 
 `WelcomeScreen`: "¡Bienvenido!", qué hace la app y que el análisis se hace en el teléfono, sin internet. **No promete protección**
 ("ayudarle a detectar", "le avisaremos si un mensaje tiene señales"): se cambió el texto del mockup, que decía "protegerlo" y
-"inmediatamente". Se muestra **una sola vez** (la marca `welcome_seen` está en el DataStore de preferencias) y **solo si la app aún
-no tiene el rol y los permisos**: quien ya los tiene no la ve. "Omitir" en el paso 2 o 3 lleva a Inicio con la protección apagada.
+"inmediatamente". **Nunca se omite hasta que se termina el onboarding**: sale cada vez que se abre la app, también si se cerró a medias
+(sin aceptar ni omitir el paso 2). El onboarding se termina al aceptar el rol (paso 2) o al omitir ese paso; entonces se guarda
+`onboarding_done` en el DataStore de preferencias y la app abre directo en Inicio (con la protección apagada si se omitió) o en
+Mensajes (si se aceptó). "Activar protección" en Inicio vuelve al paso 2 (sin repetir el paso 1); si se cierra a medias, el paso 1 vuelve
+a salir. Pasar del paso 1 no se guarda. Quien ya tiene el rol y los permisos no ve la bienvenida.
 
 ## Código
 

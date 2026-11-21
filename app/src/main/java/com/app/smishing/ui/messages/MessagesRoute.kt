@@ -63,8 +63,7 @@ import com.app.smishing.domain.alerts.AnalysisOutcome
 import com.app.smishing.domain.history.isAnalyzed
 import kotlinx.coroutines.CancellationException
 import com.app.smishing.domain.history.AnalysisHistory
-import com.app.smishing.data.history.RoomAnalysisHistory
-import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.sharing.ContributionPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.ui.alerts.MessageDetailScreen
@@ -386,6 +385,7 @@ fun MessagesRoute(
                 composing -> NewMessageScreen(
                     recipient = recipient,
                     onRecipientChange = { recipient = it },
+                    contacts = contacts,
                     body = body,
                     onBodyChange = { body = it },
                     onSend = {
@@ -458,6 +458,7 @@ fun MessagesRoute(
                         risks = risks,
                         listState = conversationListState,
                         displayName = contacts::display,
+                        photoOf = contacts::photoOf,
                         selecting = selectingConversations,
                         selected = selectedThreads,
                         onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
@@ -671,7 +672,7 @@ private fun rememberPermissionStatuses(): PermissionStatusReader {
 @Composable
 private fun rememberHistory(): AnalysisHistory {
     val context = LocalContext.current.applicationContext
-    return remember(context) { RoomAnalysisHistory(HistoryDatabase.get(context)) }
+    return remember(context) { ContributionPipeline.history(context) }
 }
 
 @Composable

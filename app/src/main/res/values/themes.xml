@@ -6,4 +6,12 @@
         <item name="android:windowBackground">@color/design_background</item>
         <item name="android:statusBarColor">@color/design_primary_dark</item>
     </style>
+
+    <!-- Pantalla de carga del sistema, la que Android muestra antes de que la app dibuje: Smishy quieto sobre el azul de la marca.
+         Es solo de MainActivity; al terminar, la app sigue con el tema de arriba. La animación de Smishy es la de Compose. -->
+    <style name="Theme.SmishingDetector.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/design_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/smishy_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.SmishingDetector</item>
+    </style>
 </resources>

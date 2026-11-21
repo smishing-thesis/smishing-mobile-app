@@ -6,7 +6,7 @@ Registro del entorno de build del prototipo (issue #1, RNF-08). Última verifica
 
 | Elemento | Valor |
 |---|---|
-| Nombre / paquete | Smishing Detector / `com.app.smishing` |
+| Nombre / paquete | Smishy / `com.app.smishing` |
 | minSdk | 29 |
 | targetSdk | 34 |
 | compileSdk | 37 (lo exigen `androidx.core` 1.19 y Compose 1.12; AGP 9.5 admite hasta 37) |

@@ -73,7 +73,7 @@ enum class AnalysisOutcome {
  * 1. **Guarda el registro** antes de actuar o avisar, así el detalle de la alerta lo encuentra. Si guardar falla, sigue
  *    ([onHistoryError] lo anota): nada depende del historial.
  * 2. **Consulta el modo antes de cualquier acción** sobre el mensaje. Solo si el modo pide actuar o preguntar se llama al
- *    [mitigator]; con "solo avisarme", o con un nivel que no es alto, no se toca el mensaje. Si no se puede leer el modo, no se
+ *    [mitigator]; con un nivel que no es alto no se toca el mensaje. Si no se puede leer el modo, no se
  *    actúa ([onMitigationError] lo anota).
  * 3. **Avisa**, pase lo que pase con lo anterior.
  * 4. **Un mensaje que no es de riesgo alto** (de riesgo medio o bajo, o que no se evaluó, o cuyo análisis falló) se avisa como un SMS

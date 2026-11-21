@@ -126,18 +126,6 @@ class MitigationExecutorTest {
     // --- Solo si la configuración lo permite (#14) ---
 
     @Test
-    fun withTheOnlyNotifyModeNothingIsDoneAndNothingIsRecorded() {
-        settings.current = MitigationMode.Disabled
-        val record = saved()
-        assertNull(executor.perform(record, ActionType.BlockSender))
-        assertNull(executor.perform(record, ActionType.RemoveMessage))
-        executor.act(record)
-        assertTrue(log.rows.isEmpty())
-        assertEquals(0, blocker.blockCalls)
-        assertEquals(0, inbox.removeCalls)
-    }
-
-    @Test
     fun ifTheModeCannotBeReadNothingIsDone() {
         settings.failing = true
         val record = saved()
@@ -157,8 +145,8 @@ class MitigationExecutorTest {
     // --- Lo que la persona pide a mano (#29) ---
 
     @Test
-    fun whatThePersonAsksForIsDoneWithAnyModeEvenTheOnlyNotifyOne() {
-        settings.current = MitigationMode.Disabled
+    fun whatThePersonAsksForIsDoneWithAnyMode() {
+        settings.current = MitigationMode.Ask
         val record = saved()
         assertEquals(ActionStatus.Completed, executor.performManual(record, ActionType.BlockSender))
         assertEquals(ActionStatus.Completed, executor.performManual(record, ActionType.RemoveMessage))
@@ -170,19 +158,8 @@ class MitigationExecutorTest {
     }
 
     @Test
-    fun theAutomaticActionStillRespectsTheModeAndOnlyTheManualOneDoesNot() {
-        settings.current = MitigationMode.Disabled
-        val record = saved()
-        executor.act(record)
-        assertTrue(log.rows.isEmpty())
-        assertEquals(0, blocker.blockCalls)
-        executor.performManual(record, ActionType.BlockSender)
-        assertEquals(1, blocker.blockCalls)
-    }
-
-    @Test
     fun aManualBlockThatCannotBeDoneIsRecordedAsFailedWithItsCause() {
-        settings.current = MitigationMode.Disabled
+        settings.current = MitigationMode.Ask
         blocker.available = false
         val record = saved()
         assertEquals(ActionStatus.Failed, executor.performManual(record, ActionType.BlockSender))

@@ -14,7 +14,6 @@ class MitigationPolicyTest {
     fun aHighRiskMessageFollowsTheChosenMode() {
         assertEquals(Act, MitigationPolicy.decide(RiskLevel.High, MitigationMode.Automatic))
         assertEquals(AskUser, MitigationPolicy.decide(RiskLevel.High, MitigationMode.Ask))
-        assertEquals(DoNothing, MitigationPolicy.decide(RiskLevel.High, MitigationMode.Disabled))
     }
 
     @Test
@@ -54,7 +53,7 @@ class MitigationPolicyTest {
 
     @Test
     fun theStoredIdsAreStableAndUnique() {
-        assertEquals(listOf("automatic", "ask", "disabled"), MitigationMode.entries.map { it.id })
+        assertEquals(listOf("automatic", "ask"), MitigationMode.entries.map { it.id })
         assertEquals(MitigationMode.entries.size, MitigationMode.entries.map { it.id }.toSet().size)
     }
 }

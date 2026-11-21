@@ -1,9 +1,11 @@
 <resources>
-    <string name="app_name">Smishing Detector</string>
+    <string name="app_name">Smishy</string>
 
     <!-- Onboarding, paso 2: aplicación de mensajería predeterminada (#2) -->
     <string name="onboarding_step_one_of_two">PASO 1 DE 2</string>
     <string name="onboarding_step_two_of_two">PASO 2 DE 2</string>
+    <!-- Lo lee el lector de pantalla en los puntos del paso: tocar uno lleva a ese paso. -->
+    <string name="onboarding_go_to_step">Ir al paso %1$d</string>
     <string name="onboarding_skip">Omitir por ahora</string>
     <string name="default_sms_title">Aplicación principal</string>
     <string name="default_sms_explanation_replace">Para poder filtrar las estafas, esta aplicación necesita reemplazar a su aplicación de mensajería actual.</string>
@@ -24,7 +26,7 @@
 
     <!-- Provisional: destino de "Omitir por ahora" hasta que exista la pantalla de inicio (#17) -->
     <string name="protection_off_title">Protección apagada</string>
-    <string name="protection_off_message">Su teléfono está desprotegido contra mensajes maliciosos.</string>
+    <string name="protection_off_message">La aplicación no está protegiendo sus mensajes en este momento.</string>
     <string name="protection_activate">Activar protección</string>
 
     <!-- Conversaciones (#5) -->
@@ -70,13 +72,15 @@
     <string name="delete_failed_title">No se pudo borrar</string>
     <string name="delete_failed_text">Para borrar mensajes, esta aplicación debe ser la de mensajería predeterminada. Revise Ajustes e inténtelo de nuevo.</string>
     <string name="delete_failed_ok">Entendido</string>
+    <string name="messages_search_hint">Buscar</string>
+    <string name="messages_search_empty">No hay conversaciones que coincidan.</string>
     <string name="messages_empty">Todavía no tiene conversaciones.</string>
 
     <!-- Redactar y enviar (#6) -->
     <string name="compose_action">Escribir</string>
     <string name="new_message_title">Nuevo mensaje</string>
     <string name="new_message_to">Para:</string>
-    <string name="new_message_recipient_hint">Número de teléfono</string>
+    <string name="new_message_recipient_hint">Nombre o número</string>
     <string name="new_message_body_hint">Escriba su mensaje aquí...</string>
     <string name="new_message_send">Enviar mensaje</string>
     <string name="conversation_input_hint">Escribir mensaje...</string>
@@ -121,7 +125,11 @@
     <string name="detail_not_assessed_title">Análisis</string>
     <string name="detail_not_assessed">No pudimos analizar este mensaje: es muy corto o el análisis está apagado.</string>
     <string name="detail_recommendation_title">Recomendación</string>
-    <string name="detail_recommendation">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <!-- Una según lo que se encontró en el mensaje (Recommendation): no siempre hay un enlace. -->
+    <string name="detail_recommendation_link">No abra el enlace. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_recommendation_data">No comparta sus datos ni sus claves por mensaje. Si tiene dudas, contacte directamente a la persona o a la entidad por otro medio.</string>
+    <string name="detail_recommendation_link_and_data">No abra el enlace ni comparta sus datos o claves. Si tiene dudas, contacte directamente a la entidad.</string>
+    <string name="detail_recommendation_general">Si no esperaba este mensaje, no responda ni abra enlaces. Si tiene dudas, llame a la persona o a la entidad por otro medio.</string>
     <string name="detail_missing">Este mensaje ya no está en el buzón.</string>
     <string name="detail_actions_label">Acciones realizadas</string>
     <string name="detail_actions_manual_label">Acciones</string>
@@ -172,12 +180,26 @@
     <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
     <string name="settings_privacy_title">Privacidad</string>
     <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
-    <string name="settings_contribution_title">Compartir mensajes de forma anónima</string>
+    <string name="settings_contribution_title">Ayúdanos a mejorar la aplicación</string>
     <string name="settings_contribution_off">Desactivado. Puede cambiarlo cuando quiera.</string>
+    <!-- Aviso al activar el aporte (#18): el texto es el del diseño. -->
+    <string name="contribution_dialog_title">Compartir datos de forma anónima</string>
+    <string name="contribution_dialog_intro">Al detectar un mensaje peligroso, anonimizamos el contenido y lo utilizamos para mejorar la detección de la aplicación. Toda la información se hace anónima dentro de la aplicación antes de enviarse.</string>
+    <string name="contribution_dialog_never">Lo que nunca compartimos:</string>
+    <string name="contribution_dialog_never_name">Su nombre</string>
+    <string name="contribution_dialog_never_phone">Su número de teléfono</string>
+    <string name="contribution_dialog_never_contacts">Sus contactos</string>
+    <string name="contribution_dialog_never_conversations">Sus conversaciones</string>
+    <string name="contribution_dialog_never_personal">Cualquier dato personal</string>
+    <string name="contribution_dialog_internet">Esta funcionalidad requiere conexión a internet. Puede deshabilitarla cuando desee.</string>
+    <string name="contribution_dialog_retry">Si se pierde la conexión, los mensajes que no se pudieron enviar se enviarán en cuanto el teléfono vuelva a tener internet.</string>
+    <string name="contribution_dialog_terms">Ver términos y condiciones</string>
+    <string name="contribution_dialog_deny">Denegar</string>
+    <string name="contribution_dialog_accept">Aceptar</string>
     <string name="settings_contribution_on">Activado. Puede cambiarlo cuando quiera.</string>
     <string name="settings_delete_history">Borrar todo el historial</string>
     <string name="delete_history_title">¿Borrar todo el historial?</string>
-    <string name="delete_history_text">Se borran todos los análisis y el texto de los mensajes que guardan. Los mensajes siguen en su teléfono. Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
+    <string name="delete_history_text">Se borrarán todos los análisis de mensajes hechos por la aplicación. Si la aplicación retiró algún mensaje de su buzón, no podrá restaurarlo.</string>
     <string name="delete_history_confirm">Borrar todo</string>
     <string name="history_empty">Todavía no hay mensajes analizados.</string>
     <string name="history_chip_high">Posible estafa</string>
@@ -197,22 +219,18 @@
     <string name="welcome_body_one">Esta aplicación revisa sus mensajes de texto entrantes para protegerlo.</string>
     <string name="welcome_body_two">Le advertiremos inmediatamente si detectamos un intento de estafa.</string>
     <string name="welcome_next">Siguiente</string>
-    <string name="home_status_active">Activo</string>
-    <string name="home_status_inactive">Inactivo</string>
     <string name="home_active_title">Protección activa</string>
-    <string name="home_active_message">La aplicación está revisando sus mensajes en este momento.</string>
+    <string name="home_active_message">La aplicación está protegiendo sus mensajes en este momento.</string>
     <string name="home_summary_title">Resumen de la semana</string>
     <string name="home_summary_reviewed">Mensajes revisados:</string>
     <string name="home_summary_scams">Posibles estafas:</string>
     <string name="home_summary_scams_value">%1$d detectadas</string>
     <string name="settings_title">Ajustes</string>
-    <string name="settings_mode_title">Cuando llegue un mensaje con posible estafa</string>
+    <string name="settings_mode_title">Modo de protección</string>
     <string name="settings_mode_automatic_title">Protegerme automáticamente</string>
     <string name="settings_mode_automatic_description">Bloqueamos el número y quitamos el mensaje de su buzón</string>
     <string name="settings_mode_ask_title">Preguntarme antes de actuar</string>
     <string name="settings_mode_ask_description">Le mostraremos las opciones para que usted decida</string>
-    <string name="settings_mode_disabled_title">Solo avisarme</string>
-    <string name="settings_mode_disabled_description">Le avisaremos pero no tomaremos ninguna acción</string>
     <string name="settings_permissions_title">Permisos</string>
     <string name="settings_permission_default_sms">Aplicación de mensajería principal</string>
     <string name="settings_permission_read_sms">Permiso para leer mensajes</string>

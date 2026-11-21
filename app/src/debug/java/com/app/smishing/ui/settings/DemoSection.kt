@@ -1,5 +1,8 @@
 package com.app.smishing.ui.settings
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +42,7 @@ fun DemoSection() {
     val scope = rememberCoroutineScope()
     var file by remember { mutableStateOf<Result<List<DemoMessage>>?>(null) }
     var loaded by remember { mutableIntStateOf(0) }
+    var hasContacts by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     // Solo para errores: cuando todo sale bien, la llegada del mensaje y su aviso son la respuesta.
     var error by remember { mutableStateOf<String?>(null) }
@@ -47,6 +51,7 @@ fun DemoSection() {
         withContext(Dispatchers.IO) {
             file = loader.read()
             loaded = loader.loaded()
+            hasContacts = loader.hasSampleContacts()
         }
     }
 
@@ -61,8 +66,14 @@ fun DemoSection() {
                 error = if (e is IllegalStateException) e.message.orEmpty() else "No se pudo: ${e.javaClass.simpleName}"
             }
             loaded = loader.loaded()
+            hasContacts = loader.hasSampleContacts()
             busy = false
         }
+    }
+
+    // Agregar contactos necesita WRITE_CONTACTS (solo debug): se pide al tocar el botón y, si se concede, se agregan.
+    val requestWriteContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) run { loader.addSampleContacts() } else error = "Sin permiso para escribir contactos"
     }
 
     HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
@@ -92,6 +103,12 @@ fun DemoSection() {
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        SecondaryButton(
+            "Agregar contactos de ejemplo",
+            onClick = { requestWriteContacts.launch(Manifest.permission.WRITE_CONTACTS) },
+            enabled = !busy && !hasContacts,
+            modifier = Modifier.fillMaxWidth(),
+        )
         SecondaryButton(
             "Borrar mensajes de demo ($loaded)",
             onClick = { run { loader.deleteAll() } },

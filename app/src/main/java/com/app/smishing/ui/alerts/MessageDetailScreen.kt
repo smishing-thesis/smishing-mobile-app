@@ -28,6 +28,7 @@ import com.app.smishing.domain.mitigation.ActionNote
 import com.app.smishing.domain.mitigation.ActionStatus
 import com.app.smishing.domain.mitigation.ActionType
 import com.app.smishing.domain.mitigation.MitigationAction
+import com.app.smishing.domain.risk.Recommendation
 import com.app.smishing.domain.risk.RiskAssessment
 import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.risk.RiskResult
@@ -146,7 +147,10 @@ private fun Loaded(state: MessageDetailState.Loaded, actions: DetailActions) {
             )
             state.protection?.let { ActionsSection(it, actions) }
             if (assessment.level != RiskLevel.Low) {
-                InfoPanel(stringResource(R.string.detail_recommendation_title), stringResource(R.string.detail_recommendation))
+                InfoPanel(
+                    stringResource(R.string.detail_recommendation_title),
+                    stringResource(recommendationText(Recommendation.of(assessment.signals.types))),
+                )
             }
             if (state.protection != null && assessment.level != RiskLevel.Low) {
                 SecondaryButton(
@@ -197,6 +201,13 @@ private fun Reasons(assessment: RiskAssessment) {
             detail = stringResource(R.string.detail_found_in_message, fragment),
         )
     }
+}
+
+private fun recommendationText(recommendation: Recommendation) = when (recommendation) {
+    Recommendation.LinkAndData -> R.string.detail_recommendation_link_and_data
+    Recommendation.Link -> R.string.detail_recommendation_link
+    Recommendation.Data -> R.string.detail_recommendation_data
+    Recommendation.General -> R.string.detail_recommendation_general
 }
 
 private fun statusOf(level: RiskLevel) = when (level) {

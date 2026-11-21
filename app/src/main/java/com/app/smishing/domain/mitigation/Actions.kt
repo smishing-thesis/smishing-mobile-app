@@ -121,9 +121,8 @@ data class RevertResult(val notReverted: Set<ActionType>) {
 /**
  * Hace, anota y deshace las acciones sobre un mensaje (#14, #15, #16, #28).
  *
- * - **Lo automático solo si la configuración lo permite:** con el modo "solo avisarme" (o si no se puede leer el modo) no se hace
- *   nada y no se anota nada. **Lo manual** ([performManual], cuando la persona toca el botón en el detalle, #29) **no consulta el modo**:
- *   es su decisión explícita y es lo que ese modo deja en sus manos.
+ * - **Lo automático solo si se puede leer la configuración:** si no se puede leer el modo no se hace nada y no se anota nada.
+ *   **Lo manual** ([performManual], cuando la persona toca el botón en el detalle, #29) **no consulta el modo**: es su decisión explícita.
  * - **Solo si hay registro local:** sin el registro guardado no se actúa, porque no habría de dónde explicar ni revertir.
  * - **Lo que falla se anota como fallido**, con su causa, y nunca como hecho. Ninguna operación lanza: el resultado se lee en
  *   el estado.
@@ -145,7 +144,7 @@ class MitigationExecutor(
     }
 
     /**
-     * Hace la acción **automática** y devuelve en qué quedó, o `null` si no se hizo porque la configuración no lo permite o no hay
+     * Hace la acción **automática** y devuelve en qué quedó, o `null` si no se hizo porque no se pudo leer la configuración o no hay
      * registro local. Si ya estaba completada no la repite.
      */
     fun perform(record: AnalysisRecord, type: ActionType): ActionStatus? = if (allowed()) run(record, type) else null
@@ -222,8 +221,10 @@ class MitigationExecutor(
         } != null
     }
 
+    // Solo se actúa si se puede leer el modo: lo que no se pudo comprobar no se da por permitido.
     private fun allowed(): Boolean = try {
-        settings.mode() != MitigationMode.Disabled
+        settings.mode()
+        true
     } catch (e: Exception) {
         false
     }

@@ -147,13 +147,11 @@ fun SettingsScreen(
 private fun titleOf(mode: MitigationMode) = when (mode) {
     MitigationMode.Automatic -> R.string.settings_mode_automatic_title
     MitigationMode.Ask -> R.string.settings_mode_ask_title
-    MitigationMode.Disabled -> R.string.settings_mode_disabled_title
 }
 
 private fun descriptionOf(mode: MitigationMode) = when (mode) {
     MitigationMode.Automatic -> R.string.settings_mode_automatic_description
     MitigationMode.Ask -> R.string.settings_mode_ask_description
-    MitigationMode.Disabled -> R.string.settings_mode_disabled_description
 }
 
 private fun labelOf(permission: AppPermission) = when (permission) {

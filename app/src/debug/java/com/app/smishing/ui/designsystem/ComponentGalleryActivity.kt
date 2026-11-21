@@ -45,6 +45,7 @@ import com.app.smishing.ui.designsystem.components.OnboardingStepLayout
 import com.app.smishing.ui.designsystem.components.OriginalMessageBox
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.PrimaryButton
+import com.app.smishing.ui.designsystem.components.DayPart
 import com.app.smishing.ui.designsystem.components.ProtectionCard
 import com.app.smishing.ui.designsystem.components.RadioOption
 import com.app.smishing.ui.designsystem.components.RiskReasonRow
@@ -177,7 +178,10 @@ private fun ButtonsSection() = Padded {
 
 @Composable
 private fun HomeSection() = Padded {
-    ProtectionCard(true, "Protección activa", "Su teléfono está protegido contra mensajes maliciosos en este momento.")
+    // Una tarjeta activa por momento del día, para ver todos los fondos sin esperar a que cambie la hora.
+    DayPart.entries.forEach { part ->
+        ProtectionCard(true, "Protección activa", "La aplicación está protegiendo sus mensajes en este momento.", dayPart = part)
+    }
     SummaryCard("Resumen de la semana") {
         SummaryRow(Icons.Outlined.Email, "Mensajes revisados:", "47")
         SummaryRow(SmishingIcons.ErrorOutline, "Posibles estafas:", "2 detectadas")
@@ -249,10 +253,9 @@ private fun SettingsSection() {
     var mode by remember { mutableIntStateOf(0) }
     var share by remember { mutableStateOf(true) }
     Padded {
-        SectionLabel("Cuando llegue un mensaje peligroso")
+        SectionLabel("Modo de protección")
         RadioOption("Protégeme automáticamente", "Bloqueamos el número y quitamos el mensaje de su buzón", mode == 0, { mode = 0 })
         RadioOption("Preguntarme antes de actuar", "Le mostraremos las opciones para que usted decida", mode == 1, { mode = 1 })
-        RadioOption("Solo avisarme", "Le avisaremos pero no tomaremos ninguna acción", mode == 2, { mode = 2 })
         SectionLabel("Ayudar a mejorar la aplicación")
         SwitchRow("Compartir reportes de estafas", "Enviar mensajes analizados de forma anónima, sin datos personales.", share, { share = it })
         SectionLabel("Permisos")

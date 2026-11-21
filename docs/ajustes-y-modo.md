@@ -5,19 +5,21 @@ Registro de #13 (modo de mitigación), #25 (revisar permisos) y la parte hecha d
 
 ## El modo
 
-Tres modos, los del diseño de Ajustes, para un mensaje de **riesgo alto**:
+Dos modos, los del diseño de Ajustes, para un mensaje de **riesgo alto**:
 
 | Modo | Texto en pantalla | Qué hace con un mensaje de riesgo alto |
 |---|---|---|
 | `Automatic` | Protegerme automáticamente | actúa sin preguntar (bloquear el número y retirar el mensaje) |
 | `Ask` | Preguntarme antes de actuar | muestra las opciones para que la persona decida |
-| `Disabled` | Solo avisarme | avisa y no toca el mensaje |
 
 - **Por defecto es `Ask`.** El modo automático retira mensajes del buzón: no debe activarse sin que la persona lo elija.
 - **Solo el nivel alto actúa** (`MitigationPolicy.ACTIONABLE_LEVELS`). Medio y bajo no disparan ninguna acción, sea cual sea el modo.
 - **La alerta (#10) aparece con cualquier modo.** El modo solo decide qué se hace con el mensaje.
 - Se guarda en un **DataStore de Jetpack** (archivo `settings`), como define la arquitectura, con un `id` estable (`automatic`,
-  `ask`, `disabled`) y no el nombre del enumerado. Si falta o no se reconoce, vale el modo por defecto.
+  `ask`) y no el nombre del enumerado. Si falta o no se reconoce, vale el modo por defecto.
+- **«Solo avisarme» se quitó** (2026-11-17): no se distinguía bien de «Preguntarme antes de actuar», que tampoco toca nada solo, y la
+  persona puede bloquear o borrar a mano desde el detalle con cualquiera. Quien lo tenía guardado (`disabled`) vuelve al modo por
+  defecto, `Ask`.
 
 ## Cuándo se consulta
 
@@ -26,7 +28,7 @@ Tres modos, los del diseño de Ajustes, para un mensaje de **riesgo alto**:
 si la acción falla, se avisa igual. Ambos errores se anotan sin el texto del mensaje.
 
 Quien ejecuta la decisión es un `Mitigator`. Con `Act` bloquea al remitente y retira el mensaje (`ApplyMitigation`, #14 y #15; ver
-[mitigacion.md](mitigacion.md)); con `AskUser` el detalle ofrece los botones y con `DoNothing` no se toca nada.
+[mitigacion.md](mitigacion.md)); con `AskUser` el detalle ofrece los botones y con `DoNothing` (nivel medio o bajo) no se toca nada.
 
 ## La pantalla
 
@@ -51,7 +53,7 @@ No se pide ningún permiso nuevo. **Falta "Compartir reportes de estafas"** (el 
 ## Pruebas
 
 - JVM: `MitigationPolicyTest` (tabla modo × nivel, modo por defecto, ids estables) y `AnalyzeReceivedMessageTest` (el modo se lee
-  después de guardar y antes de actuar o avisar; con `Disabled` o con nivel medio/bajo no se llama al ejecutor; un modo ilegible o
+  después de guardar y antes de actuar o avisar; con nivel medio/bajo no se llama al ejecutor; un modo ilegible o
   una acción que falla no impiden la alerta). 162 pruebas, 0 fallos (1 omitida por diseño).
 - Dispositivo: `DataStoreMitigationSettingsInstrumentedTest` (por defecto `Ask`, se lee lo guardado, sobrevive a reabrir el
   almacén, valor desconocido → `Ask`, avisa de cambios), `SettingsScreenTest` (quitada: ver [pruebas.md](pruebas.md)) (modos, permisos, explicaciones, "Abrir ajustes") y,
@@ -61,7 +63,7 @@ No se pide ningún permiso nuevo. **Falta "Compartir reportes de estafas"** (el 
   rol ya estaba concedido tras la revisión a mano).
 - A mano en el emulador: la pestaña muestra el modo por defecto y los permisos; con `pm revoke` de `SEND_SMS` aparece "no concedido"
   con su explicación, y "Abrir ajustes" abre los detalles de la app.
-- Mutación: hacer que `Disabled` actúe hace fallar 3 pruebas JVM (revertido).
+- Mutación (cuando existía «solo avisarme», ya quitado): hacer que `Disabled` actuara hacía fallar 3 pruebas JVM (revertido).
 
 ## Lo que no se verificó
 

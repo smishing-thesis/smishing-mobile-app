@@ -25,6 +25,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
+import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.history.RoomPendingContributions
+import com.app.smishing.data.sharing.ContributionScheduler
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.sharing.ContributionConsent
 import com.app.smishing.domain.mitigation.MitigationMode
@@ -58,6 +61,7 @@ fun SettingsRoute(
     var confirmDeleteHistory by remember { mutableStateOf(false) }
     // El consentimiento del aporte al corpus (#18); `null` mientras se lee.
     var contribution by remember { mutableStateOf<Boolean?>(null) }
+    var askContribution by remember { mutableStateOf(false) }
     // Si se negó el permiso de contactos en esta pantalla, el botón pasa a abrir los ajustes de la app (Android deja de preguntar).
     var contactsDenied by rememberSaveable { mutableStateOf(false) }
     val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -100,12 +104,32 @@ fun SettingsRoute(
         },
         contribution = contribution,
         onContributionChange = { granted ->
-            contribution = granted
-            scope.launch(Dispatchers.IO) { contributionConsent.setGranted(granted) }
+            // Activarlo pide primero el aviso (#18): solo se activa con "Aceptar". Apagarlo es inmediato y no pregunta nada.
+            if (granted) {
+                askContribution = true
+            } else {
+                contribution = false
+                scope.launch(Dispatchers.IO) {
+                    contributionConsent.setGranted(false)
+                    // Sin consentimiento no queda nada por enviar (#71): se vacía la cola y se cancela el envío programado.
+                    RoomPendingContributions(HistoryDatabase.get(context)).clear()
+                    ContributionScheduler.cancel(context)
+                }
+            }
         },
         onDeleteHistory = { confirmDeleteHistory = true },
         extra = { DemoSection() },
     )
+    if (askContribution) {
+        ContributionDialog(
+            onAccept = {
+                askContribution = false
+                contribution = true
+                scope.launch(Dispatchers.IO) { contributionConsent.setGranted(true) }
+            },
+            onDeny = { askContribution = false },
+        )
+    }
     if (confirmDeleteHistory) {
         ConfirmDialog(
             title = stringResource(R.string.delete_history_title),

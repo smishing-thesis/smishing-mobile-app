@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.core.content.ContextCompat
 import com.app.smishing.domain.contacts.ContactBook
+import com.app.smishing.domain.contacts.ContactEntry
 
 /**
  * Lee los contactos del teléfono (#53), con `READ_CONTACTS`. Sin el permiso, o si falla la lectura, devuelve una libreta vacía y la
@@ -22,14 +23,20 @@ class AndroidContacts(private val context: Context) {
         return try {
             context.contentResolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME),
+                arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI,
+                ),
                 null,
                 null,
                 // Contactos con nombre primero y en orden estable: si un número está repetido, gana siempre el mismo.
                 "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} ASC",
             )?.use { cursor ->
-                ContactBook.of(
-                    generateSequence { if (cursor.moveToNext()) cursor.getString(0).orEmpty() to cursor.getString(1).orEmpty() else null }.toList(),
+                ContactBook.ofContacts(
+                    generateSequence {
+                        if (cursor.moveToNext()) ContactEntry(cursor.getString(0).orEmpty(), cursor.getString(1).orEmpty(), cursor.getString(2)) else null
+                    }.toList(),
                 )
             } ?: ContactBook()
         } catch (_: SecurityException) {

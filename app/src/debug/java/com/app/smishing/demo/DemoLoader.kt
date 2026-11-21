@@ -1,12 +1,20 @@
 package com.app.smishing.demo
 
+import android.content.ContentProviderOperation
 import android.content.ContentUris
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
+import java.io.ByteArrayOutputStream
 import android.net.Uri
-import android.provider.Telephony
+import android.provider.ContactsContract
 import com.app.smishing.data.alerts.AndroidMessageNotifier
 import com.app.smishing.data.history.HistoryDatabase
+import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.data.sms.TelephonySmsInbox
+import com.app.smishing.domain.sms.SmsRoleState
 import com.app.smishing.data.sms.analyzeIncoming
 import com.app.smishing.domain.sms.ReceiveIncomingSms
 import com.app.smishing.domain.sms.ReceiveOutcome
@@ -23,6 +31,7 @@ class DemoLoader(private val context: Context) {
 
     private val ids = File(context.filesDir, "demo-ids.txt")
     private val turnsFile = File(context.filesDir, "demo-turns.txt")
+    private val contactsFile = File(context.filesDir, "demo-contacts.txt")
 
     /** Dónde se espera el archivo. */
     fun file(): File = File(context.getExternalFilesDir(null), "demo-messages.csv")
@@ -50,14 +59,92 @@ class DemoLoader(private val context: Context) {
         check(pool.isNotEmpty()) { "El archivo no tiene mensajes de tipo $label" }
         val turn = turns()[label] ?: 0
         val index = turn % pool.size
-        val m = pool[index]
-        val result = ReceiveIncomingSms(TelephonySmsInbox(context)).receive(listOf(SmsPart(m.sender, m.body, nowMillis)))
+        deliver(pool[index].sender, pool[index].body, nowMillis)
+        saveTurns(turns() + (label to turn + 1))
+    }
+
+    /** Si ya se agregaron los contactos de ejemplo. */
+    fun hasSampleContacts(): Boolean = contactsFile.exists()
+
+    /**
+     * Agrega al teléfono unos contactos **inventados** y entrega un mensaje (inventado, legítimo) de cada uno, para ver cómo salen los
+     * nombres en la lista y en las conversaciones. Los números son de ejemplo, no de nadie. Hace falta `WRITE_CONTACTS` (solo en debug)
+     * y que la app sea la de SMS predeterminada. Para ver los nombres, la app también necesita `READ_CONTACTS`.
+     */
+    fun addSampleContacts(nowMillis: Long = System.currentTimeMillis()) {
+        requireDefaultSmsApp()
+        check(!hasSampleContacts()) { "Los contactos de ejemplo ya están agregados" }
+        val rawIds = ArrayList<Long>()
+        for (c in SAMPLE_CONTACTS) {
+            val ops = arrayListOf<ContentProviderOperation>(
+                ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build(),
+                ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, c.name).build(),
+                ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, c.number)
+                    .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE).build(),
+            )
+            // Solo algunos llevan foto: así se ve la diferencia con la imagen por defecto.
+            c.photoColor?.let { color ->
+                ops.add(
+                    ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.Photo.PHOTO, samplePhoto(c.name.first().toString(), color)).build(),
+                )
+            }
+            val uri = context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops).first().uri
+            rawIds.add(ContentUris.parseId(checkNotNull(uri)))
+        }
+        contactsFile.writeText(rawIds.joinToString("\n"))
+        SAMPLE_CONTACTS.forEachIndexed { i, c -> deliver(c.number, c.text, nowMillis - (SAMPLE_CONTACTS.size - i) * 60_000L) }
+    }
+
+    /** Guarda un mensaje en el buzón y lo analiza, como uno real; recuerda su id para poder borrarlo. */
+    private fun deliver(sender: String, body: String, nowMillis: Long) {
+        val result = ReceiveIncomingSms(TelephonySmsInbox(context)).receive(listOf(SmsPart(sender, body, nowMillis)))
         val id = result.messageId
         val message = result.message
         check(result.outcome == ReceiveOutcome.Stored && id != null && message != null) { "El mensaje no se pudo entregar" }
         remember(id)
-        saveTurns(turns() + (label to turn + 1))
         analyzeIncoming(context, id, message)
+    }
+
+    /** Una foto de ejemplo inventada: un fondo de color con la inicial del nombre, en PNG. */
+    private fun samplePhoto(initial: String, color: Int): ByteArray {
+        val size = 256
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(color)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = 0xFFFFFFFF.toInt()
+            textSize = 140f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+        }
+        canvas.drawText(initial, size / 2f, size / 2f - (paint.descent() + paint.ascent()) / 2f, paint)
+        return ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+    }
+
+    /** Quita los contactos de ejemplo. Sin el permiso de escribir contactos no puede, y los deja. */
+    private fun deleteSampleContacts() {
+        if (!contactsFile.exists()) return
+        try {
+            for (raw in contactsFile.readLines().mapNotNull { it.trim().toLongOrNull() }) {
+                val uri = ContactsContract.RawContacts.CONTENT_URI.buildUpon()
+                    .appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").build()
+                context.contentResolver.delete(uri, "${ContactsContract.RawContacts._ID} = ?", arrayOf(raw.toString()))
+            }
+            contactsFile.delete()
+        } catch (_: SecurityException) {
+            // Sin WRITE_CONTACTS: se quedan; se pueden borrar a mano desde Contactos.
+        }
     }
 
     /**
@@ -80,6 +167,7 @@ class DemoLoader(private val context: Context) {
         AndroidMessageNotifier.dismiss(context, loadedIds)
         ids.delete()
         turnsFile.delete()
+        deleteSampleContacts()
         return removed
     }
 
@@ -96,7 +184,20 @@ class DemoLoader(private val context: Context) {
     private fun saveTurns(turns: Map<String, Int>) =
         turnsFile.writeText(turns.entries.joinToString("\n") { "${it.key}=${it.value}" })
 
+    // Se pregunta por el rol igual que lo hace la app (Inicio, Ajustes): `Telephony.Sms.getDefaultSmsPackage` no coincidía en el emulador con
+    // Android 15 aunque la app tuviera el rol, y la demo decía que no era la predeterminada.
     private fun requireDefaultSmsApp() {
-        check(Telephony.Sms.getDefaultSmsPackage(context) == context.packageName) { "La app no es la de SMS predeterminada" }
+        check(AndroidSmsRoleRepository(context).state() == SmsRoleState.Held) { "La app no es la de SMS predeterminada" }
     }
 }
+
+private class SampleContact(val name: String, val number: String, val text: String, val photoColor: Int? = null)
+
+/** Contactos y textos **inventados**: ningún nombre, número ni texto es de una persona real. */
+private val SAMPLE_CONTACTS = listOf(
+    SampleContact("Carla Ríos", "+51900000101", "Hola, ¿ya llegaste a casa?", 0xFF7B1FA2.toInt()),
+    SampleContact("Mateo Vargas", "+51900000102", "Te paso la dirección en un rato."),
+    SampleContact("Lucía Paredes", "+51900000103", "Gracias por ayer, quedó muy rico.", 0xFF00897B.toInt()),
+    SampleContact("Mamá", "+51900000104", "Avísame cuando salgas.", 0xFFE64A19.toInt()),
+    SampleContact("Tío Beto", "+51900000105", "Mañana paso a recogerte a las ocho."),
+)

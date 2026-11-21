@@ -1,6 +1,7 @@
 package com.app.smishing.ui.messages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,11 +18,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.app.smishing.R
+import com.app.smishing.domain.contacts.ContactBook
 import com.app.smishing.domain.messaging.SendOutcome
 import com.app.smishing.ui.designsystem.components.PrimaryButton
 import com.app.smishing.ui.designsystem.components.SmishingTextField
@@ -36,7 +39,8 @@ import com.app.smishing.ui.designsystem.theme.Spacing
  * [error] es el motivo por el que el último intento no se envió.
  *
  * El "+" abre el selector de contactos del sistema y pone el número del elegido (#53); eso no necesita `READ_CONTACTS`. Se sigue
- * pudiendo escribir un número a mano. Escribir el nombre de un contacto no está hecho.
+ * pudiendo escribir un número a mano. El teclado admite letras y números: al escribir un nombre se sugieren los contactos que lo
+ * contienen y, al tocar uno, su número pasa al campo (hace falta `READ_CONTACTS` para leerlos; sin él no hay sugerencias).
  */
 @Composable
 fun NewMessageScreen(
@@ -50,7 +54,11 @@ fun NewMessageScreen(
     modifier: Modifier = Modifier,
     /** El "+" del diseño (#53): abre el selector de contactos del sistema. */
     onPickContact: () -> Unit = {},
+    /** Los contactos del teléfono, para sugerir por nombre. */
+    contacts: ContactBook = ContactBook(),
 ) {
+    val hasLetters = recipient.any(Char::isLetter)
+    val suggestions = remember(recipient, contacts) { if (hasLetters) contacts.search(recipient) else emptyList() }
     Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).imePadding()) {
         SmishingTopBar(
             title = stringResource(R.string.new_message_title),
@@ -69,10 +77,18 @@ fun NewMessageScreen(
                     onValueChange = onRecipientChange,
                     placeholder = stringResource(R.string.new_message_recipient_hint),
                     modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 )
                 IconButton(onClick = onPickContact) {
                     Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.new_message_pick_contact), tint = SmishingPalette.Primary)
+                }
+            }
+            suggestions.forEach { (name, number) ->
+                Column(
+                    modifier = Modifier.fillMaxWidth().clickable { onRecipientChange(number) }.padding(vertical = Spacing.Xs, horizontal = Spacing.Xs),
+                ) {
+                    Text(name, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
+                    Text(number, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
                 }
             }
             SmishingTextField(
