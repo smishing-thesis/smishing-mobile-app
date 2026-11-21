@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// La dirección del backend y su clave (#72) salen de `local.properties`, que no va en Git: `smishing.backendUrl` y `smishing.backendApiKey`.
+// Sin ellas, la app compila igual y no envía aportes (se quedan en la cola).
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun stringField(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.app.smishing"
@@ -16,6 +27,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "BACKEND_URL", stringField(localProperties.getProperty("smishing.backendUrl", "")))
+        buildConfigField("String", "BACKEND_API_KEY", stringField(localProperties.getProperty("smishing.backendApiKey", "")))
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.risk.RiskPolicy
+import com.app.smishing.domain.sharing.ContributionLabel
 import com.app.smishing.domain.signals.SignalAnalysis
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,6 +50,9 @@ class RoomPendingContributionsInstrumentedTest {
         assertEquals(3, queue.count())
         assertEquals(listOf(ids[0], ids[1]), queue.next(2).map { it.analyzedMessageId })
         assertEquals("Mensaje sintético 1", queue.next(1).single().body)
+        // Con lo que decidió el modelo local, que el backend pide junto al texto.
+        assertEquals(ContributionLabel.Smishing, queue.next(1).single().label)
+        assertEquals("1.0.0", queue.next(1).single().modelVersion)
     }
 
     @Test

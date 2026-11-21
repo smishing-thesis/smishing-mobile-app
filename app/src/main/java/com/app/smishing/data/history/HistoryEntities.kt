@@ -152,7 +152,10 @@ data class PendingContributionEntity(
     val queuedAtMillis: Long,
 )
 
-/** Lo que se lee de la cola: el registro y el texto del mensaje, que es de la persona y no se escribe en logs. */
-data class PendingRow(val analyzedMessageId: Long, val body: String) {
+/**
+ * Lo que se lee de la cola: el registro, el texto del mensaje (que es de la persona y no se escribe en logs) y lo que decidió el modelo
+ * local (si lo marcó y con qué versión), que el backend pide junto al texto.
+ */
+data class PendingRow(val analyzedMessageId: Long, val body: String, val modelFlagsIt: Boolean, val modelVersion: String) {
     override fun toString() = "PendingRow(analyzedMessageId=$analyzedMessageId)"
 }

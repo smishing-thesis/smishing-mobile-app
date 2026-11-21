@@ -5,8 +5,8 @@ import com.app.smishing.domain.sharing.ContributionSendResult
 import com.app.smishing.domain.sharing.ContributionSender
 
 /**
- * El envío de aportes mientras no exista el destino (#72): no envía nada y deja todo en la cola. Se reemplaza por el envío real al
- * backend cuando se defina su esquema y su endpoint; entonces la app también necesitará el permiso `INTERNET`, que hoy no declara.
+ * El envío de aportes cuando la compilación no trae la dirección del backend o su clave: no envía nada y deja todo en la cola. Con ellas,
+ * el [ContributionWorker] usa [HttpContributionSender] (#72).
  */
 object NotConfiguredContributionSender : ContributionSender {
     override fun send(batch: List<Contribution>): ContributionSendResult = ContributionSendResult.NotConfigured

@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.app.smishing.BuildConfig
 import com.app.smishing.data.contacts.AndroidContacts
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomAnalysisHistory
@@ -17,6 +18,7 @@ import com.app.smishing.data.history.RoomPendingContributions
 import com.app.smishing.data.settings.DataStoreContributionConsent
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.sharing.Anonymizer
+import com.app.smishing.domain.sharing.ContributionSender
 import com.app.smishing.domain.sharing.PrepareContribution
 import com.app.smishing.domain.sharing.QueueingAnalysisHistory
 import com.app.smishing.domain.sharing.SendPendingContributions
@@ -24,9 +26,10 @@ import com.app.smishing.domain.sharing.UploadOutcome
 import java.util.concurrent.TimeUnit
 
 /**
- * Envía los aportes pendientes (#71). El sistema lo ejecuta **cuando hay conexión** (aunque la app esté cerrada) y lo reintenta, con
- * espera creciente, si el envío falla. Sin consentimiento, vacía la cola y termina. Con el destino sin definir (#72) no envía nada y los
- * pendientes se conservan.
+ * Envía los aportes pendientes (#71) al backend (#72). El sistema lo ejecuta **cuando hay conexión** (aunque la app esté cerrada) y lo
+ * reintenta, con espera creciente, si el envío falla por red, por demasiadas solicitudes o por un error del servidor. Sin consentimiento,
+ * vacía la cola y termina. Sin backend configurado, con una clave que el backend no reconoce o con un lote que no cumple el contrato, no
+ * reintenta sin fin: se detiene y conserva los pendientes (se retoma al llegar otro aporte o al abrir la app).
  */
 class ContributionWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
@@ -40,7 +43,8 @@ class ContributionWorker(context: Context, params: WorkerParameters) : Worker(co
         }
         // Los nombres de los contactos se leen una sola vez por pasada, no por mensaje.
         val anonymizer by lazy { Anonymizer.fromContactNames(AndroidContacts(app).book().displayNames()) }
-        val outcome = SendPendingContributions(queue, PrepareContribution(consent) { anonymizer }, NotConfiguredContributionSender).run()
+        val sender = backendSender(app)
+        val outcome = SendPendingContributions(queue, PrepareContribution(consent) { anonymizer }, sender).run()
         // El resultado solo lleva cuántos se enviaron: nunca texto.
         Log.i(TAG, "Aportes pendientes: $outcome")
         return if (outcome is UploadOutcome.Retry) Result.retry() else Result.success()
@@ -49,6 +53,13 @@ class ContributionWorker(context: Context, params: WorkerParameters) : Worker(co
     private companion object {
         const val TAG = "ContributionWorker"
     }
+}
+
+/** El envío al backend con la dirección y la clave de la compilación; sin ellas (o sin HTTPS), no envía nada y todo se conserva. */
+internal fun backendSender(context: Context): ContributionSender {
+    val config = BackendConfig(BuildConfig.BACKEND_URL, BuildConfig.BACKEND_API_KEY)
+    if (!config.isConfigured) return NotConfiguredContributionSender
+    return HttpContributionSender(config, UrlConnectionTransport { BackendTls.apply(context, it) })
 }
 
 /** Programa y cancela el envío de los aportes pendientes (#71). */

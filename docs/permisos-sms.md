@@ -11,6 +11,7 @@ análisis si se revocan. Última verificación: 2026-11-08.
 | `SEND_SMS` | enviar los SMS que la persona redacta (#6) | el rol lo concede; si falta, la app lo pide al enviar | **comprobado en API 29** con el rol concedido: Android lo otorga solo (`GRANTED_BY_ROLE`) y el envío funciona; ver [enviar-sms.md](enviar-sms.md). **No** forma parte de la compuerta del análisis: analizar no necesita enviar |
 | `POST_NOTIFICATIONS` | mostrar la alerta de un mensaje riesgoso (#10) | solo Android 13 (API 33) o superior lo pide en tiempo de ejecución, al abrir los mensajes | **no se verificó**: el emulador es API 29 y ahí el permiso no existe. En API 29 la alerta se mostró sin pedirlo; ver [alerta-de-riesgo.md](alerta-de-riesgo.md). No forma parte de la compuerta del análisis |
 | `READ_CONTACTS` | mostrar el nombre del contacto en lugar del número (#53): en la lista de mensajes, la conversación, el historial y las notificaciones. **Es opcional**: no cuenta para la protección | la primera vez que la persona llega a Mensajes con el rol y los permisos de SMS, un cuadro explica el motivo ("¿Mostrar el nombre de sus contactos?", con "Permitir" y "Ahora no"); no se repite. También en Ajustes, en la fila "Nombres de contactos" | **comprobado en API 29**: con el rol de SMS el sistema **ya concede** `READ_CONTACTS` (`GRANTED_BY_ROLE`), así que ahí el cuadro no aparece; apareció al quitarlo con `pm revoke`. En una instalación donde el rol no lo conceda (otras versiones de Android) no se probó |
+| `INTERNET` | enviar al backend los aportes anónimos (#72), **solo con el aporte activado** y **solo por HTTPS** (`https://`; la dirección se arma al compilar). Clasificar, alertar y mostrar los mensajes no usan la red | no se pide en pantalla: es un permiso normal, se concede al instalar | la prueba de dispositivo `thenWithoutAnyConnectionAMessageIsReceivedClassifiedAndAlerted` comprueba que, con todas las redes apagadas, el mensaje se recibe, se clasifica y se alerta. Antes de #72 la app no lo declaraba y esa prueba lo exigía |
 | `RECEIVE_SMS` | recibir los SMS entrantes | después del rol | **comprobado en API 29**: el sistema declara `requiredPermissions=[RECEIVE_SMS]` en la difusión `SMS_DELIVER`. Con el permiso quitado, el receptor aparece como `Skipped`; al devolverlo, se entrega de nuevo |
 
 El estado de estos permisos y de las notificaciones se ve, con lo que queda limitado si faltan, en la pestaña Ajustes (#25; ver
@@ -20,8 +21,8 @@ El estado de estos permisos y de las notificaciones se ve, con lo que queda limi
 
 El manifiesto fusionado trae, además de los de la tabla, permisos que **declara una biblioteca** (la de LiteRT: su soporte de paquetes de
 modelos y de la NPU) y que la app **no usa**: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`,
-`RECEIVE_BOOT_COMPLETED` y `ACCESS_NETWORK_STATE`. **Ninguno es `INTERNET`**, así que la app no puede abrir conexiones (ver
-[demora-y-sin-internet.md](demora-y-sin-internet.md)). No se quitaron con `tools:node="remove"` porque no se sabe qué ruta de la
+`RECEIVE_BOOT_COMPLETED` y `ACCESS_NETWORK_STATE`. **Ninguno es `INTERNET`**: ese lo declara la propia app desde #72, para el envío de
+aportes (ver la tabla de arriba y [demora-y-sin-internet.md](demora-y-sin-internet.md)). No se quitaron con `tools:node="remove"` porque no se sabe qué ruta de la
 biblioteca los usaría y no hay forma de probar todas; queda como decisión pendiente, porque la regla del proyecto es no pedir más
 permisos de los que una historia justifique.
 
