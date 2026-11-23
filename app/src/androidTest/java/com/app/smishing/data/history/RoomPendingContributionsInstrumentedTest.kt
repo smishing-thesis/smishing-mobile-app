@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.app.smishing.domain.classification.ClassificationResult
 import com.app.smishing.domain.history.AnalysisRecord
+import com.app.smishing.domain.risk.RiskLevel
 import com.app.smishing.domain.risk.RiskPolicy
 import com.app.smishing.domain.sharing.ContributionLabel
 import com.app.smishing.domain.signals.SignalAnalysis
@@ -50,9 +51,22 @@ class RoomPendingContributionsInstrumentedTest {
         assertEquals(3, queue.count())
         assertEquals(listOf(ids[0], ids[1]), queue.next(2).map { it.analyzedMessageId })
         assertEquals("Mensaje sintético 1", queue.next(1).single().body)
-        // Con lo que decidió el modelo local, que el backend pide junto al texto.
+        // Con la etiqueta y la versión del modelo, que el backend pide junto al texto.
         assertEquals(ContributionLabel.Smishing, queue.next(1).single().label)
         assertEquals("1.0.0", queue.next(1).single().modelVersion)
+    }
+
+    @Test
+    fun aSuspiciousMessageOfMediumRiskAlsoTravelsAsSmishing() {
+        // El modelo lo marca pero ninguna señal lo respalda: nivel medio (risk.model_only).
+        val assessment = RiskPolicy.decide(
+            ClassificationResult.Classified(0.97f, true, 0.9034745693206787, "1.0.0", "1.1.0"),
+            SignalAnalysis("1.1.0", emptyList()),
+        )
+        assertEquals(RiskLevel.Medium, assessment.level)
+        val id = history.save(AnalysisRecord(0, 9L, "+10000000001", "Mensaje sospechoso sintético", 1_000L, 1_050L, assessment))
+        queue.add(id, 1)
+        assertEquals(ContributionLabel.Smishing, queue.next(1).single().label)
     }
 
     @Test
