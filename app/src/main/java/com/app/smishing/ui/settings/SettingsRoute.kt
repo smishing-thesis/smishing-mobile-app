@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
+import com.app.smishing.BuildConfig
 import com.app.smishing.R
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomPendingContributions
@@ -127,6 +128,7 @@ fun SettingsRoute(
             }
         },
         onDeleteHistory = { confirmDeleteHistory = true },
+        appVersion = BuildConfig.VERSION_NAME,
         versions = versions,
         extra = { DemoSection() },
     )
