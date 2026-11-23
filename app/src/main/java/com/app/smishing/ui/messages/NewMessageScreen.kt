@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -59,7 +60,7 @@ fun NewMessageScreen(
 ) {
     val hasLetters = recipient.any(Char::isLetter)
     val suggestions = remember(recipient, contacts) { if (hasLetters) contacts.search(recipient) else emptyList() }
-    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).imePadding()) {
+    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).navigationBarsPadding().imePadding()) {
         SmishingTopBar(
             title = stringResource(R.string.new_message_title),
             style = TopBarStyle.Primary,

@@ -1,11 +1,17 @@
 package com.app.smishing.ui.designsystem.components
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -23,11 +29,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import com.app.smishing.ui.designsystem.theme.Elevation
 import com.app.smishing.ui.designsystem.theme.MinTouchTarget
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -44,8 +53,29 @@ enum class TopBarStyle {
 }
 
 /**
+ * Los iconos de la barra de estado del sistema: oscuros ([darkIcons] en `true`) sobre fondo claro, claros sobre el azul. Con la app
+ * dibujada bajo las barras (#63), cada pantalla dice de qué color es lo que queda detrás.
+ */
+@Composable
+internal fun StatusBarIcons(darkIcons: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    SideEffect {
+        val window = view.context.findActivity()?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkIcons
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+/**
  * Barra superior. Con [onBack] muestra la flecha de volver ([backDescription] es lo que lee el lector de
- * pantalla). [actions] va a la derecha.
+ * pantalla). [actions] va a la derecha. El color de la barra llega hasta arriba, bajo la barra de estado del sistema (#63), y su
+ * contenido empieza debajo.
  */
 @Composable
 fun SmishingTopBar(
@@ -61,10 +91,12 @@ fun SmishingTopBar(
     val content = if (style == TopBarStyle.Primary) Color.White else SmishingPalette.TextPrimary
     val secondary = if (style == TopBarStyle.Primary) Color.White else SmishingPalette.TextSecondary
 
+    StatusBarIcons(darkIcons = style == TopBarStyle.Plain)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(container)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .heightIn(min = 56.dp)
             .padding(horizontal = Spacing.X2s),
         verticalAlignment = Alignment.CenterVertically,

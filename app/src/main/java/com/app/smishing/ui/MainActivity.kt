@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -81,6 +83,13 @@ class MainActivity : ComponentActivity() {
         // Antes de todo: cambia al tema normal cuando la app está lista y deja Smishy quieto en la pantalla de carga del sistema.
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Con targetSdk 36 (#63) Android dibuja la app bajo las barras del sistema y ya no se puede evitar: cada pantalla deja su lugar a la
+        // barra de estado (`SmishingTopBar`, el onboarding) y a la de navegación. Barra de estado con iconos claros, como sobre el azul; la
+        // de navegación, con iconos oscuros porque el diseño es solo claro. `StatusBarIcons` los cambia en las barras blancas.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+        )
         roles = AndroidSmsRoleRepository(this)
         permissions = AndroidSmsPermissionRepository(this)
         onboarding = DataStoreOnboardingProgress(this)

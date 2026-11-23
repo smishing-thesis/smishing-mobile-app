@@ -31,12 +31,15 @@
         android:theme="@style/Theme.SmishingDetector"
         tools:targetApi="31">
 
-        <!-- singleTop: tocar una alerta con la app abierta abre el detalle en la misma pantalla, no en otra copia. -->
+        <!-- singleTop: tocar una alerta con la app abierta abre el detalle en la misma pantalla, no en otra copia.
+             adjustResize (#63): con la app dibujada bajo las barras, el teclado lo maneja `imePadding`; sin esto el sistema además
+             desplazaba la ventana y la barra superior quedaba fuera de la pantalla al escribir. -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.SmishingDetector.Splash">
+            android:theme="@style/Theme.SmishingDetector.Splash"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

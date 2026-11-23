@@ -161,7 +161,7 @@ dan lo mismo que la referencia **en la JVM y en el dispositivo**.
 ## Lo que no cubre
 
 - **Vista previa:** no hay una pantalla que muestre lo que se compartiría. Entregar el texto a un destino con reporte es #27; el modo de reporte, #26.
-- **#76 sin verificar en dispositivo:** las pruebas de dispositivo de la cola (nivel medio) compilan pero no se corrieron, y no se vio en el
+- **#76:** las pruebas de dispositivo de la cola (nivel medio) se corrieron en el emulador API 36 (2026-11-23) y pasan. Sigue sin verse en el
   emulador que un mensaje de nivel medio llegue al backend ni que el aviso de consentimiento se lea bien con el texto nuevo.
 - **Backend real:** ver la prueba contra el servidor local, en "Envío al backend (#72)"; el despliegue público del backend (#19 y #20) no
   existe, así que `release` no trae dirección. No se midió el tiempo de un lote.

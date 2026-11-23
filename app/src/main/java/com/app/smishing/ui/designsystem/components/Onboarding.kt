@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -144,6 +145,8 @@ fun IllustratedOnboardingLayout(
     showSteps: Boolean = true,
     body: @Composable ColumnScope.(textColor: Color) -> Unit,
 ) {
+    // Iconos oscuros si el fondo de este paso es claro (el del paso 2 y el 3); claros sobre el azul de la marca.
+    StatusBarIcons(darkIcons = colors.background.luminance() > 0.5f)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -229,10 +232,14 @@ fun OnboardingStepLayout(
     onSkip: (() -> Unit)? = null,
     body: @Composable ColumnScope.() -> Unit,
 ) {
+    // Fondo blanco: iconos oscuros, y el contenido deja lugar a las barras del sistema (#63).
+    StatusBarIcons(darkIcons = true)
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(SmishingPalette.Background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(Spacing.Xl),
     ) {
