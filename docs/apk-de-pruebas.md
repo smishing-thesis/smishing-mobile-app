@@ -31,17 +31,46 @@ Se crean una sola vez en **Settings > Secrets and variables > Actions**:
 |---|---|---|
 | Dirección del backend (`https://...`) | `SMISHING_BACKEND_URL` | pestaña *Variables* |
 | Clave del backend | `SMISHING_BACKEND_API_KEY` | pestaña *Secrets* |
+| Keystore de depuración compartido, en base64 (#84) | `ANDROID_DEBUG_KEYSTORE_BASE64` | pestaña *Secrets* |
 
-Si falta alguna, el workflow falla con un mensaje claro y no genera APK (así no se entrega uno que no envía aportes).
+La versión de la aplicación (`versionName`, por ejemplo `1.0-qa`) se ve al final de **Ajustes > Acerca de**, para saber de un vistazo qué
+compilación está instalada.
+
+Si falta alguna, el workflow falla con un mensaje claro y no genera APK (así no se entrega uno que no envía aportes ni uno con otra firma).
 
 **Cambiar la clave:**
 1. Cambiarla en el backend (variable `SMISHING_API_KEY`) y reiniciarlo.
 2. Cambiar el secreto `SMISHING_BACKEND_API_KEY` de este repositorio, con el mismo valor.
-3. Lanzar el workflow y reinstalar el APK nuevo.
+3. Lanzar el workflow e instalar el APK nuevo (con la firma fija se instala encima del anterior sin desinstalar).
 
 **Las apps ya instaladas conservan la clave con la que se compilaron** (va dentro del APK). Tras el cambio, el backend las rechaza con 401: siguen
 clasificando, alertando y mostrando todo, pero el envío de aportes se detiene y lo pendiente queda en la cola, sin perderse, hasta instalar el
 APK nuevo.
+
+### Firma fija del APK de GitHub (#84)
+
+El tipo `qa` se firma con la clave de **depuración**. Sin más, el runner de GitHub genera una nueva en cada ejecución, y Android no deja instalar
+un APK sobre otro de distinta firma (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`): habría que desinstalar, y se perderían el historial y la cola de
+aportes. Se comprobó que el APK de GitHub y el compilado en local tenían certificados distintos. Por eso el workflow escribe en
+`~/.android/debug.keystore` un keystore fijo, guardado como secreto, antes de compilar, y al final muestra la huella SHA-256 del certificado.
+
+Se genera una sola vez (la huella no es secreta; el archivo sí) y se guarda **fuera de Git** (`*.keystore` está en `.gitignore`):
+
+```powershell
+keytool -genkeypair -keystore debug-github.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+```
+
+El secreto se crea con el archivo en base64, desde tu terminal (el valor no pasa por ningún otro lado):
+
+```powershell
+gh secret set ANDROID_DEBUG_KEYSTORE_BASE64 --repo smishing-thesis/smishing-mobile-app --body ([Convert]::ToBase64String([IO.File]::ReadAllBytes("debug-github.keystore")))
+```
+
+- **Guardar una copia del archivo** en un lugar seguro del equipo. Si se pierde, se genera otro, se actualiza el secreto y todos los teléfonos de prueba
+  deben desinstalar la app una vez.
+- **Compilaciones locales:** para que un APK compilado en tu computador se pueda actualizar con uno de GitHub (y al revés), copia ese mismo
+  archivo a `~/.android/debug.keystore`. Cambia la clave de depuración de todas tus apps de Android Studio, que se reinstalarán una vez.
+- Es solo para pruebas internas: la clave de distribución es la de #24 y no tiene nada que ver con esta.
 
 **Quién ve la clave:** el APK la lleva dentro, así que quien descargue el artefacto puede extraerla; el repositorio es privado y el artefacto dura
 pocos días. En el computador, una variable de entorno `SMISHING_BACKEND_API_KEY` olvidada gana sobre `local.properties`.
