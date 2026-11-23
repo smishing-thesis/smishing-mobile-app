@@ -1,0 +1,53 @@
+name: APK de pruebas (qa)
+
+# Compila el APK `qa` con la dirección y la clave del backend tomadas de GitHub (#82), para cambiarlas sin un pull request. Se lanza a mano
+# (pestaña Actions); no corre en pull requests ni en cada push, así la clave no entra en cada compilación.
+#   - Variable del repositorio: SMISHING_BACKEND_URL      (Settings > Secrets and variables > Actions > Variables)
+#   - Secreto del repositorio:  SMISHING_BACKEND_API_KEY  (Settings > Secrets and variables > Actions > Secrets)
+# El APK lleva la clave dentro: quien descargue el artefacto puede extraerla. El repositorio es privado y el artefacto dura pocos días.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-qa
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: android-apk-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SMISHING_BACKEND_URL: ${{ vars.SMISHING_BACKEND_URL }}
+      SMISHING_BACKEND_API_KEY: ${{ secrets.SMISHING_BACKEND_API_KEY }}
+    steps:
+      - name: Check the backend values
+        run: |
+          if [ -z "$SMISHING_BACKEND_URL" ]; then
+            echo "::error::Falta la variable SMISHING_BACKEND_URL del repositorio. Sin ella el APK no enviaría aportes."
+            exit 1
+          fi
+          if [ -z "$SMISHING_BACKEND_API_KEY" ]; then
+            echo "::error::Falta el secreto SMISHING_BACKEND_API_KEY del repositorio. Sin él el APK no enviaría aportes."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Build the qa APK
+        run: ./gradlew assembleQa --warning-mode fail --stacktrace
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-qa-apk
+          path: app/build/outputs/apk/qa/app-qa.apk
+          retention-days: 7
+          if-no-files-found: error

@@ -19,6 +19,33 @@ Se comprobó con `aapt`: paquete `com.app.smishing`, versión `1.0-qa`, `minSdk`
 nativas de `arm64-v8a`, `armeabi-v7a`, `x86` y `x86_64`. Pesa unos **54 MB**, casi todo bibliotecas nativas del modelo para las cuatro
 arquitecturas; no se redujo. No se minifica (`isMinifyEnabled = false`).
 
+## Generar el APK en GitHub (#82)
+
+El workflow **APK de pruebas (qa)** compila el mismo APK en GitHub con la dirección y la clave del backend guardadas en el repositorio, para
+cambiarlas sin un pull request. Se lanza a mano: pestaña **Actions** > *APK de pruebas (qa)* > *Run workflow*. No corre en pull requests ni
+en cada push. El APK queda como artefacto `app-qa-apk` durante 7 días.
+
+Se crean una sola vez en **Settings > Secrets and variables > Actions**:
+
+| Qué | Nombre | Dónde |
+|---|---|---|
+| Dirección del backend (`https://...`) | `SMISHING_BACKEND_URL` | pestaña *Variables* |
+| Clave del backend | `SMISHING_BACKEND_API_KEY` | pestaña *Secrets* |
+
+Si falta alguna, el workflow falla con un mensaje claro y no genera APK (así no se entrega uno que no envía aportes).
+
+**Cambiar la clave:**
+1. Cambiarla en el backend (variable `SMISHING_API_KEY`) y reiniciarlo.
+2. Cambiar el secreto `SMISHING_BACKEND_API_KEY` de este repositorio, con el mismo valor.
+3. Lanzar el workflow y reinstalar el APK nuevo.
+
+**Las apps ya instaladas conservan la clave con la que se compilaron** (va dentro del APK). Tras el cambio, el backend las rechaza con 401: siguen
+clasificando, alertando y mostrando todo, pero el envío de aportes se detiene y lo pendiente queda en la cola, sin perderse, hasta instalar el
+APK nuevo.
+
+**Quién ve la clave:** el APK la lleva dentro, así que quien descargue el artefacto puede extraerla; el repositorio es privado y el artefacto dura
+pocos días. En el computador, una variable de entorno `SMISHING_BACKEND_API_KEY` olvidada gana sobre `local.properties`.
+
 ## Instalar
 
 Con el teléfono por USB y la depuración USB activada:
