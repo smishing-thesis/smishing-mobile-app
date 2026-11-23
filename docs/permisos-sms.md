@@ -19,12 +19,13 @@ El estado de estos permisos y de las notificaciones se ve, con lo que queda limi
 
 ## Permisos que llegan de bibliotecas
 
-El manifiesto fusionado trae, además de los de la tabla, permisos que **declara una biblioteca** (la de LiteRT: su soporte de paquetes de
-modelos y de la NPU) y que la app **no usa**: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`,
-`RECEIVE_BOOT_COMPLETED` y `ACCESS_NETWORK_STATE`. **Ninguno es `INTERNET`**: ese lo declara la propia app desde #72, para el envío de
-aportes (ver la tabla de arriba y [demora-y-sin-internet.md](demora-y-sin-internet.md)). No se quitaron con `tools:node="remove"` porque no se sabe qué ruta de la
-biblioteca los usaría y no hay forma de probar todas; queda como decisión pendiente, porque la regla del proyecto es no pedir más
-permisos de los que una historia justifique.
+El manifiesto fusionado del release (revisado el 2026-11-23, para la declaración de Google Play: ver [google-play.md](google-play.md)) trae, además de los
+de la tabla, permisos que **agrega una biblioteca**: WorkManager, que se usa para el envío de aportes pendientes (#71). Son `ACCESS_NETWORK_STATE`
+(saber si hay conexión), `RECEIVE_BOOT_COMPLETED` (retomar el envío tras reiniciar) y `WAKE_LOCK`. Los usa el envío de aportes, así que se
+dejan. Los permisos de servicio en primer plano que la misma biblioteca también agrega, `FOREGROUND_SERVICE` y `FOREGROUND_SERVICE_DATA_SYNC`,
+la app **no los usa** y se quitan con `tools:node="remove"` en el manifiesto (#71). Androidx suma además un permiso propio de la app
+(`com.app.smishing.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`) que no es de acceso a datos. Ninguno de estos es `INTERNET`: ese lo declara la propia
+app desde #72, para el envío de aportes (ver la tabla de arriba y [demora-y-sin-internet.md](demora-y-sin-internet.md)).
 
 No se piden otros. Tampoco se pide `RECEIVE_MMS` ni `RECEIVE_WAP_PUSH`: no hay historia que reciba MMS. Cada permiso nuevo debe llegar con su
 motivo en esta tabla.
