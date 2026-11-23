@@ -79,7 +79,11 @@ android {
     buildTypes {
         // Se declara antes que `qa`, que parte de él con `initWith`.
         release {
-            isMinifyEnabled = false
+            // R8 (#24): recorta el código que no se usa, acorta los nombres y quita los recursos sin usar. Reduce el tamaño y dificulta leer el
+            // código, pero no protege secretos: la clave del backend dentro del APK sigue pudiéndose extraer. `qa` parte de este tipo, así que
+            // se prueba lo mismo que se publica. El `mapping.txt` de cada compilación sirve para leer los errores del release.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
