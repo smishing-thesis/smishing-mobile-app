@@ -1,8 +1,11 @@
 package com.app.smishing.data.classification
 
 import com.app.smishing.domain.classification.ModelInfo
+import com.app.smishing.domain.classification.UnsupportedModelException
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.security.MessageDigest
@@ -37,6 +40,30 @@ class ModelInfoParserTest {
     @Test
     fun scoreEqualToTheThresholdIsNotSmishing() {
         assertFalse(info.isSmishing(info.threshold.toFloat()))
+    }
+
+    // --- Compatibilidad de la versión del modelo (#35) ---
+
+    /** El JSON empaquetado, pero declarando otra versión de modelo. */
+    private fun jsonWithModelVersion(version: String): String =
+        JSONObject(resource("preprocessing_config.json").decodeToString())
+            .apply { getJSONObject("model").put("version", version) }
+            .toString()
+
+    @Test
+    fun aMinorOrPatchVersionOfTheSameMajorIsAccepted() {
+        for (version in listOf("1.0.0", "1.0.1", "1.4.0", "1.12.30")) {
+            assertEquals(version, ModelInfoParser.parse(jsonWithModelVersion(version)).version)
+        }
+    }
+
+    @Test
+    fun aDifferentMajorOrAnUnreadableVersionIsRejected() {
+        for (version in listOf("2.0.0", "0.9.0", "10.0.0", "1.0", "1", "v1.0.0", "1.0.0-beta", "", "abc")) {
+            assertThrows("Versión $version", UnsupportedModelException::class.java) {
+                ModelInfoParser.parse(jsonWithModelVersion(version))
+            }
+        }
     }
 
     private fun resource(name: String): ByteArray =

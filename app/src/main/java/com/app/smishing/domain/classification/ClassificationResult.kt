@@ -24,6 +24,9 @@ sealed interface ClassificationResult {
 
             /** Falta el rol de SMS o algún permiso: el análisis está suspendido (#3). */
             ANALYSIS_SUSPENDED,
+
+            /** El modelo empaquetado se rechazó al arrancar (versión incompatible o archivo que no es el declarado): no se analiza (#35). */
+            MODEL_UNAVAILABLE,
         }
     }
 }
