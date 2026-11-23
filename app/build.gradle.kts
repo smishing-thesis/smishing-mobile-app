@@ -6,12 +6,23 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-// La dirección del backend y su clave (#72) salen de `local.properties`, que no va en Git: `smishing.backendUrl` y `smishing.backendApiKey`.
-// Sin ellas, la app compila igual y no envía aportes (se quedan en la cola).
+// La dirección del backend y su clave (#72, #82) no van en Git. Se leen en este orden, y un valor vacío no pisa a los siguientes:
+//   1. la propiedad de Gradle `-Psmishing.backendUrl=...` / `-Psmishing.backendApiKey=...`,
+//   2. la variable de entorno `SMISHING_BACKEND_URL` / `SMISHING_BACKEND_API_KEY` (así las pasa el workflow de GitHub desde sus secretos),
+//   3. `local.properties`, con `smishing.backendUrl` y `smishing.backendApiKey`.
+// Sin ellas, la app compila igual y no envía aportes (se quedan en la cola). Cuidado: una variable de entorno olvidada en el computador
+// gana sobre `local.properties`.
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
+
+fun backendSetting(property: String, environmentVariable: String): String =
+    listOf(
+        project.findProperty(property) as String?,
+        System.getenv(environmentVariable),
+        localProperties.getProperty(property),
+    ).firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) } ?: ""
 
 fun stringField(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -28,8 +39,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BACKEND_URL", stringField(localProperties.getProperty("smishing.backendUrl", "")))
-        buildConfigField("String", "BACKEND_API_KEY", stringField(localProperties.getProperty("smishing.backendApiKey", "")))
+        buildConfigField("String", "BACKEND_URL", stringField(backendSetting("smishing.backendUrl", "SMISHING_BACKEND_URL")))
+        buildConfigField("String", "BACKEND_API_KEY", stringField(backendSetting("smishing.backendApiKey", "SMISHING_BACKEND_API_KEY")))
     }
 
     buildFeatures {
