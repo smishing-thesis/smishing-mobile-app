@@ -61,8 +61,10 @@ Contrato: [contrato-con-el-backend.md](contrato-con-el-backend.md) y el OpenAPI 
   (`Retry-After`, entre 1 y 3 600 segundos): el trabajo termina y `ContributionScheduler.scheduleAfter` programa el siguiente con ese
   retraso inicial, encadenado a continuación (#76). Lo que llegue mientras tanto se encadena detrás y no adelanta la espera. Sin
   `Retry-After` en el `429`, se usa la espera creciente.
-- **Dónde está la dirección y la clave:** en `local.properties` (que no va en Git), con `smishing.backendUrl` y `smishing.backendApiKey`;
-  se compilan en `BuildConfig`. **Sin ellas la app compila igual y no envía nada.** Solo se acepta `https://`. Una clave embebida en una
+- **Dónde está la dirección y la clave:** no van en Git. Se leen al compilar, en este orden: `-Psmishing.backendUrl` y
+  `-Psmishing.backendApiKey`; las variables de entorno `SMISHING_BACKEND_URL` y `SMISHING_BACKEND_API_KEY`; y `local.properties`
+  (`smishing.backendUrl`, `smishing.backendApiKey`). Se compilan en `BuildConfig` (#82). El APK de GitHub las toma de la variable y el
+  secreto del repositorio: ver [apk-de-pruebas.md](apk-de-pruebas.md). **Sin ellas la app compila igual y no envía nada.** Solo se acepta `https://`. Una clave embebida en una
   app se puede extraer: el backend lo dice y por eso tiene cuotas, reanonimización y cuarentena; la clave no se escribe en ningún log.
 - **Servidor local de pruebas (solo depuración):** el backend usa un certificado de prueba que el emulador no conoce. Con
   `adb push cert.pem /storage/emulated/0/Android/data/com.app.smishing/files/dev-backend-cert.pem` (solo la parte **pública**) y
