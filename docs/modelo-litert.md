@@ -71,7 +71,8 @@ Casos más cercanos al umbral, que son los que podrían cambiar de decisión: `l
 ## Versiones y actualización del modelo (#35)
 
 **Qué se registra.** Cada análisis del historial guarda la versión del modelo (`model.version` del JSON) y la del preprocesamiento
-(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Detección", las que están en uso.
+(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Acerca de la detección", las que están en uso ("Detección 1.0.0 · Preparación del texto 1.1.0": el
+texto evita las palabras técnicas porque `ExplanationWordingTest` revisa todas las cadenas de Ajustes).
 
 **Qué acepta la app.** Solo el modelo y el JSON empaquetados que cumplan todo esto:
 
@@ -83,7 +84,7 @@ Casos más cercanos al umbral, que son los que podrían cambiar de decisión: `l
 
 Si algo no se cumple, la app **no se cierra**: el clasificador queda "no disponible" (`UnavailableMessageClassifier`), los mensajes se
 siguen recibiendo y mostrando sin analizar, no se ofrece "Analizar" y se registra solo el tipo de error. No hay aviso en pantalla y la
-sección "Detección" de Ajustes no aparece.
+sección "Acerca de la detección" de Ajustes no aparece.
 
 **Cómo llega una versión nueva.** El `.tflite` y su JSON son `assets` de la app y no hay otra ruta de carga: la app no descarga ni
 lee modelos de otro lugar (la red solo se usa para el aporte opcional, #72). Por eso una versión nueva solo llega con una versión nueva
@@ -96,7 +97,11 @@ de la app, que va firmada (el paquete firmado es #24, aún no hecho). Pasos:
 3. Si cambió la versión mayor del modelo, o la del preprocesamiento, revisar el cambio (entrada, salida, reglas) y recién entonces ampliar
    `SUPPORTED_MAJOR` o `SUPPORTED_VERSIONS` en el código. Una versión que la app no conoce no se activa sola.
 4. Volver a pasar las pruebas de vectores (JVM) y de paridad (dispositivo, ver "Cómo verificar") y actualizar este documento.
-5. Subir `versionCode` y `versionName`, y generar el paquete firmado.
+5. Registrar la versión nueva del modelo en el backend (`python -m smishing_backend.catalog --release <etiqueta>`, en `smishing-backend`)
+   **antes** de publicar la app. El backend rechaza con `unknown_model_version` un aporte cuya versión no conoce, y la app no reintenta
+   los rechazados: los saca de la cola, así que se perderían. La versión debe tener la forma `mayor.menor.parche` (el contrato rechaza,
+   por ejemplo, `1.0.0.0`).
+6. Subir `versionCode` y `versionName`, y generar el paquete firmado.
 
 ## Lo que no cubre
 
