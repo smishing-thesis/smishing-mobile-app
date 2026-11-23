@@ -15,9 +15,10 @@ para distribuir: el App Bundle firmado es #24.
 
 El APK queda en `app/build/outputs/apk/qa/app-qa.apk` (no se versiona: `*.apk` está en `.gitignore`).
 
-Se comprobó con `aapt`: paquete `com.app.smishing`, versión `1.0-qa`, `minSdk` 29, `targetSdk` 34, **no depurable**, con las bibliotecas
-nativas de `arm64-v8a`, `armeabi-v7a`, `x86` y `x86_64`. Pesa unos **54 MB**, casi todo bibliotecas nativas del modelo para las cuatro
-arquitecturas; no se redujo. No se minifica (`isMinifyEnabled = false`).
+Se comprobó con `aapt` (2026-11-10, con `targetSdk` 34; hoy es 36): paquete `com.app.smishing`, versión `1.0-qa`, `minSdk` 29, **no depurable**, con las
+bibliotecas nativas de `arm64-v8a`, `armeabi-v7a`, `x86` y `x86_64`. **Desde #24 se compila con R8** (minificado): pesa unos **23 MB**; antes,
+sin minificar, pesaba unos 54 MB. Ver [google-play.md](google-play.md). Un error del APK minificado se lee con su `mapping.txt`; el workflow de
+GitHub lo sube como el artefacto `app-qa-mapping`.
 
 ## Generar el APK en GitHub (#82)
 

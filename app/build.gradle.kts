@@ -24,6 +24,20 @@ fun backendSetting(property: String, environmentVariable: String): String =
         localProperties.getProperty(property),
     ).firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) } ?: ""
 
+// La clave de subida del App Bundle (#24) tampoco va en Git. Con ella se firma `bundleRelease`; Google Play vuelve a firmar con su propia clave
+// (Play App Signing). Se lee de las variables de entorno `SMISHING_UPLOAD_STORE_FILE`, `SMISHING_UPLOAD_STORE_PASSWORD`,
+// `SMISHING_UPLOAD_KEY_ALIAS` y `SMISHING_UPLOAD_KEY_PASSWORD` y, si no están, de `keystore.properties` (`storeFile`, `storePassword`, `keyAlias`,
+// `keyPassword`; la ruta del archivo es relativa a la raíz del proyecto o absoluta). Si falta alguna, el bundle sale **sin firmar**: compila
+// igual (el CI no tiene la clave), pero Google Play no lo acepta.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun uploadKeySetting(property: String, environmentVariable: String): String? =
+    listOf(System.getenv(environmentVariable), keystoreProperties.getProperty(property))
+        .firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) }
+
 fun stringField(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
@@ -47,21 +61,43 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        val storeFile = uploadKeySetting("storeFile", "SMISHING_UPLOAD_STORE_FILE")
+        val storePassword = uploadKeySetting("storePassword", "SMISHING_UPLOAD_STORE_PASSWORD")
+        val keyAlias = uploadKeySetting("keyAlias", "SMISHING_UPLOAD_KEY_ALIAS")
+        val keyPassword = uploadKeySetting("keyPassword", "SMISHING_UPLOAD_KEY_PASSWORD")
+        if (storeFile != null && storePassword != null && keyAlias != null && keyPassword != null) {
+            create("release") {
+                this.storeFile = rootProject.file(storeFile)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
     buildTypes {
+        // Se declara antes que `qa`, que parte de él con `initWith`.
+        release {
+            // R8 (#24): recorta el código que no se usa, acorta los nombres y quita los recursos sin usar. Reduce el tamaño y dificulta leer el
+            // código, pero no protege secretos: la clave del backend dentro del APK sigue pudiéndose extraer. `qa` parte de este tipo, así que
+            // se prueba lo mismo que se publica. El `mapping.txt` de cada compilación sirve para leer los errores del release.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Sin la clave de subida (`signingConfigs` sin "release"), queda sin firmar.
+            signingConfig = signingConfigs.findByName("release")
+        }
         // APK de pruebas internas (#32): como el de producción (sin depuración), pero firmado con la clave de depuración para poder
-        // instalarlo en un teléfono. No es para distribuir: eso es el App Bundle firmado de #24. Sin minificar, por ahora.
+        // instalarlo en un teléfono. No es para distribuir: eso es el App Bundle firmado de #24.
         create("qa") {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             versionNameSuffix = "-qa"
             matchingFallbacks += "release"
-        }
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
     }
     compileOptions {

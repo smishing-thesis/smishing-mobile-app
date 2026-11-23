@@ -12,10 +12,6 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Los errores del release (#24) llevan el número de línea y un nombre de archivo genérico; el `mapping.txt` de la compilación los traduce.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
