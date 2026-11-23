@@ -2,6 +2,7 @@ package com.app.smishing.ui.designsystem
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -79,6 +80,7 @@ import com.app.smishing.ui.designsystem.theme.Status
 class ComponentGalleryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         val only = intent.getIntExtra(EXTRA_SECTION, -1).takeIf { it >= 0 }
         setContent { SmishingTheme { ComponentGallery(only) } }
     }

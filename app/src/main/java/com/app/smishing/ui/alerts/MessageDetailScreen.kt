@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -100,7 +101,7 @@ fun MessageDetailScreen(
     modifier: Modifier = Modifier,
     actions: DetailActions = DetailActions(),
 ) {
-    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background)) {
+    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).navigationBarsPadding()) {
         SmishingTopBar(
             title = stringResource(R.string.detail_title),
             style = TopBarStyle.Primary,

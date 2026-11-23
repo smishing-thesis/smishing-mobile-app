@@ -31,6 +31,7 @@ import com.app.smishing.ui.designsystem.theme.Spacing
  */
 @Composable
 fun SmishySplashScreen(modifier: Modifier = Modifier, animated: Boolean = false, onFinished: () -> Unit = {}) {
+    StatusBarIcons(darkIcons = false)
     Column(
         modifier = modifier.fillMaxSize().background(SmishingPalette.Primary),
         horizontalAlignment = Alignment.CenterHorizontally,

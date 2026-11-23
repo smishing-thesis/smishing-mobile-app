@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -103,7 +104,7 @@ fun ConversationScreen(
 
     val received = stringResource(R.string.message_received)
     val sent = stringResource(R.string.message_sent)
-    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).imePadding()) {
+    Column(modifier = modifier.fillMaxSize().background(SmishingPalette.Background).navigationBarsPadding().imePadding()) {
         if (selecting) {
             SelectionTopBar(
                 count = selected.size,

@@ -220,7 +220,7 @@ private fun DrawScope.drawSmishy(frame: SmishyFrame) {
             drawLine(c, Offset(32f, 62f), Offset(23f, 58f), strokeWidth = 3.5f, cap = StrokeCap.Round)
             drawLine(c, Offset(88f, 62f), Offset(97f, 58f), strokeWidth = 3.5f, cap = StrokeCap.Round)
             // Una ceja alta y arqueada y la otra baja: pensativo.
-            drawPath(Path().apply { moveTo(35f, 41f); quadraticBezierTo(46f, 34f, 57f, 40f) }, c, style = lineStroke)
+            drawPath(Path().apply { moveTo(35f, 41f); quadraticTo(46f, 34f, 57f, 40f) }, c, style = lineStroke)
             drawLine(c, Offset(64f, 46f), Offset(85f, 42f), strokeWidth = 3.5f, cap = StrokeCap.Round)
         }
         // Boca: de recta a sonrisa.
@@ -228,7 +228,7 @@ private fun DrawScope.drawSmishy(frame: SmishyFrame) {
         val mouthY = 89f - 3f * frame.smile
         val mouthControlY = 89f + 7f * frame.smile
         drawPath(
-            Path().apply { moveTo(mouthX, mouthY); quadraticBezierTo(60f, mouthControlY, VIEW_WIDTH - mouthX, mouthY) },
+            Path().apply { moveTo(mouthX, mouthY); quadraticTo(60f, mouthControlY, VIEW_WIDTH - mouthX, mouthY) },
             Ink,
             style = lineStroke,
         )
