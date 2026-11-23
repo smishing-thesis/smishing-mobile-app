@@ -27,7 +27,9 @@ import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.data.history.HistoryDatabase
 import com.app.smishing.data.history.RoomPendingContributions
+import com.app.smishing.data.preprocessing.PreprocessingConfigLoader
 import com.app.smishing.data.sharing.ContributionScheduler
+import com.app.smishing.domain.classification.ActiveVersions
 import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.sharing.ContributionConsent
 import com.app.smishing.domain.mitigation.MitigationMode
@@ -62,6 +64,8 @@ fun SettingsRoute(
     // El consentimiento del aporte al corpus (#18); `null` mientras se lee.
     var contribution by remember { mutableStateOf<Boolean?>(null) }
     var askContribution by remember { mutableStateOf(false) }
+    // Las versiones del modelo y del preprocesamiento en uso (#35); `null` si no hay modelo activo.
+    var versions by remember { mutableStateOf<ActiveVersions?>(null) }
     // Si se negó el permiso de contactos en esta pantalla, el botón pasa a abrir los ajustes de la app (Android deja de preguntar).
     var contactsDenied by rememberSaveable { mutableStateOf(false) }
     val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -85,6 +89,11 @@ fun SettingsRoute(
             mode = settings.mode()
             statuses = permissions.statuses()
             contribution = contributionConsent.isGranted()
+            versions = try {
+                PreprocessingConfigLoader(context).activeVersions()
+            } catch (e: Exception) {
+                null // El modelo se rechazó al arrancar: no hay versión activa que mostrar.
+            }
         }
     }
 
@@ -118,6 +127,7 @@ fun SettingsRoute(
             }
         },
         onDeleteHistory = { confirmDeleteHistory = true },
+        versions = versions,
         extra = { DemoSection() },
     )
     if (askContribution) {

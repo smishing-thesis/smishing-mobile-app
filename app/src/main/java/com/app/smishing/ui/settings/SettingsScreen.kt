@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.app.smishing.R
+import com.app.smishing.domain.classification.ActiveVersions
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
@@ -55,6 +56,8 @@ fun SettingsScreen(
     onContacts: (granted: Boolean) -> Unit = {},
     /** "Borrar todo el historial" (#52): pedir confirmación. */
     onDeleteHistory: () -> Unit = {},
+    /** Las versiones del modelo y del preprocesamiento en uso (#35), o `null` si no hay modelo activo (no se muestra nada). */
+    versions: ActiveVersions? = null,
     /** Al final de la pantalla: en depuración, las herramientas de demostración (#65); en `qa` y `release`, nada. */
     extra: @Composable () -> Unit = {},
 ) {
@@ -137,6 +140,15 @@ fun SettingsScreen(
                     description = null,
                     checked = contribution,
                     onCheckedChange = onContributionChange,
+                )
+            }
+            if (versions != null) {
+                HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
+                SectionLabel(stringResource(R.string.settings_detection_title))
+                Text(
+                    stringResource(R.string.settings_detection_versions, versions.model, versions.preprocessing),
+                    style = SmishingTypography.Note,
+                    color = SmishingPalette.TextSecondary,
                 )
             }
             extra()

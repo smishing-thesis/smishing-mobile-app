@@ -178,6 +178,8 @@
     </plurals>
     <string name="delete_records_text">Se borran el análisis y el texto del mensaje que guarda el historial. Los mensajes siguen en su teléfono.</string>
     <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
+    <string name="settings_detection_title">Detección</string>
+    <string name="settings_detection_versions">Modelo %1$s · Preprocesamiento %2$s</string>
     <string name="settings_privacy_title">Privacidad</string>
     <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
     <string name="settings_contribution_title">Compartir datos de forma anónima</string>
