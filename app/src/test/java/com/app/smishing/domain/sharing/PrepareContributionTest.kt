@@ -71,6 +71,27 @@ class PrepareContributionTest {
     }
 
     @Test
+    fun aTextLongerThanTheBackendAcceptsIsRejectedAndOneAtTheLimitIsNot() {
+        val prepare = PrepareContribution(FakeConsent(true))
+        assertTrue(prepare.prepare("a".repeat(PrepareContribution.MAX_TEXT_LENGTH)) is ContributionResult.Ready)
+        assertEquals(
+            ContributionResult.Rejected(ContributionRejection.TooLong),
+            prepare.prepare("a".repeat(PrepareContribution.MAX_TEXT_LENGTH + 1)),
+        )
+    }
+
+    @Test
+    fun theLimitCountsUnicodeCharactersNotUtf16UnitsSoAnEmojiCountsAsOne() {
+        // 2 048 emojis son 4 096 unidades de UTF-16 pero 2 048 caracteres: caben. Con 2 049 emojis no.
+        val prepare = PrepareContribution(FakeConsent(true))
+        assertTrue(prepare.prepare("😀".repeat(PrepareContribution.MAX_TEXT_LENGTH)) is ContributionResult.Ready)
+        assertEquals(
+            ContributionResult.Rejected(ContributionRejection.TooLong),
+            prepare.prepare("😀".repeat(PrepareContribution.MAX_TEXT_LENGTH + 1)),
+        )
+    }
+
+    @Test
     fun theResultNeverShowsTheTextInToString() {
         val ready = PrepareContribution(FakeConsent(true)).prepare("Llame al 912345678 hoy") as ContributionResult.Ready
         assertFalse(ready.toString().contains("hoy"))

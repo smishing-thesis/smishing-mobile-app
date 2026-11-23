@@ -47,6 +47,11 @@ Contrato: [contrato-con-el-backend.md](contrato-con-el-backend.md) y el OpenAPI 
 - **Un resultado por aporte**, en el mismo orden (`BackendContract`): `accepted` y `duplicate` (reenviar es seguro) y `rejected` con un
   código genérico (`not_anonymized`, `unknown_model_version`, `invalid_contribution`). **Los tres salen de la cola**: lo rechazado no se
   reintenta sin fin. Si el número de resultados o su orden no coinciden con el lote, no se confía en la respuesta y se conserva todo.
+- **Texto largo (#76):** el backend limita `text` a **2048 caracteres** (`ContributionInput.text.maxLength`, OpenAPI 1.1.0); si un aporte lo
+  supera rechaza el **lote entero** con `422`, y un solo mensaje largo detendría el envío de todos los demás. Por eso, tras desidentificar,
+  `PrepareContribution` descarta de la cola el texto de más de 2048 caracteres (`MAX_TEXT_LENGTH`, `ContributionRejection.TooLong`). Se cuentan
+  caracteres Unicode, como hace el backend, no unidades de UTF-16: un emoji cuenta como uno. Es una constante tomada del OpenAPI; si el
+  backend la cambia, hay que actualizarla a mano.
 - **Reacción a cada respuesta:** `401` (la clave no sirve) y `400`, `413` o `422` (el lote no cumple el contrato) **detienen** el envío y
   conservan la cola, sin reintentar sin fin; se retoma al llegar otro aporte o al abrir la app. `429` y `5xx` (también sin conexión o
   sin red de confianza) **se reintentan** con espera creciente; el `Retry-After` del `429` llega hasta el resultado

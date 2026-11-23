@@ -102,6 +102,16 @@ class SendPendingContributionsTest {
     }
 
     @Test
+    fun aTextTooLongForTheBackendIsDroppedAndDoesNotBlockTheOthers() {
+        // Si saliera, el backend rechazaría el lote entero (422) y la cola quedaría detenida por un solo mensaje.
+        val queue = FakeQueue(listOf(1L to "a".repeat(PrepareContribution.MAX_TEXT_LENGTH + 1), 2L to "Mensaje de prueba"))
+        val sender = FakeSender()
+        assertEquals(UploadOutcome.Done(1), uploader(queue, FakeConsent(), sender, batchSize = 5).run())
+        assertEquals(listOf("Mensaje de prueba"), sender.batches.single().map { it.text })
+        assertEquals(0, queue.count())
+    }
+
+    @Test
     fun aPhoneNumberNeverLeavesInTheClear() {
         val queue = FakeQueue(listOf(1L to "Llame al 912345678 hoy"))
         val sender = FakeSender()
