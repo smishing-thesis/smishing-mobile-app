@@ -53,9 +53,11 @@ Contrato: [contrato-con-el-backend.md](contrato-con-el-backend.md) y el OpenAPI 
   caracteres Unicode, como hace el backend, no unidades de UTF-16: un emoji cuenta como uno. Es una constante tomada del OpenAPI; si el
   backend la cambia, hay que actualizarla a mano.
 - **Reacción a cada respuesta:** `401` (la clave no sirve) y `400`, `413` o `422` (el lote no cumple el contrato) **detienen** el envío y
-  conservan la cola, sin reintentar sin fin; se retoma al llegar otro aporte o al abrir la app. `429` y `5xx` (también sin conexión o
-  sin red de confianza) **se reintentan** con espera creciente; el `Retry-After` del `429` llega hasta el resultado
-  (`UploadOutcome.Retry`), pero WorkManager solo ofrece su espera creciente, así que no se respeta al segundo.
+  conservan la cola, sin reintentar sin fin; se retoma al llegar otro aporte o al abrir la app. `5xx` (también sin conexión o sin red de
+  confianza) **se reintentan** con la espera creciente de WorkManager. El `429` se reintenta **tras la espera que pide el backend**
+  (`Retry-After`, entre 1 y 3 600 segundos): el trabajo termina y `ContributionScheduler.scheduleAfter` programa el siguiente con ese
+  retraso inicial, encadenado a continuación (#76). Lo que llegue mientras tanto se encadena detrás y no adelanta la espera. Sin
+  `Retry-After` en el `429`, se usa la espera creciente.
 - **Dónde está la dirección y la clave:** en `local.properties` (que no va en Git), con `smishing.backendUrl` y `smishing.backendApiKey`;
   se compilan en `BuildConfig`. **Sin ellas la app compila igual y no envía nada.** Solo se acepta `https://`. Una clave embebida en una
   app se puede extraer: el backend lo dice y por eso tiene cuotas, reanonimización y cuarentena; la clave no se escribe en ningún log.
@@ -76,7 +78,8 @@ OpenAPI 1.1.0) por HTTPS en el puerto 8443 con `adb reverse`, y su certificado d
 | El servidor reiniciado con la clave de pruebas | al abrir la app se retoma lo pendiente: `Done(sent=1, rejected=0)` y la cola queda vacía |
 | Llega otra vez el mismo SMS | `Done(sent=1, rejected=0)`. El registro de la app no distingue aceptado de duplicado (ambos cuentan en `sent`); con `curl`, el mismo lote dio primero `accepted` y luego `duplicate`, que es lo que el backend dice de reenviar |
 
-**Lo que esto no probó:** `429` con `Retry-After`, `5xx`, un rechazo (`rejected`) y un lote de más de un aporte contra el servidor real; esos casos
+**Lo que esto no probó:** `429` con `Retry-After` (tampoco la reprogramación de #76: solo se verificó que compila; no se midió que el
+siguiente envío salga después de la espera pedida), `5xx`, un rechazo (`rejected`) y un lote de más de un aporte contra el servidor real; esos casos
 solo están en las pruebas JVM con un transporte falso. Tampoco `qa`/`release` (no traen dirección ni clave por defecto), ni un teléfono real,
 ni una dirección pública con certificado válido: el backend aún no está desplegado (#19 y #20). La versión `1.0.0` del modelo tiene que estar
 registrada en el catálogo del backend; si no, cada aporte se rechaza con `unknown_model_version` y la app lo descarta.

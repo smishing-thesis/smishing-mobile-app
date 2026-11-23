@@ -27,7 +27,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Envía los aportes pendientes (#71) al backend (#72). El sistema lo ejecuta **cuando hay conexión** (aunque la app esté cerrada) y lo
- * reintenta, con espera creciente, si el envío falla por red, por demasiadas solicitudes o por un error del servidor. Sin consentimiento,
+ * reintenta, con espera creciente, si el envío falla por red o por un error del servidor; si el backend pide esperar (429 con
+ * `Retry-After`), reprograma el envío para después de esa espera. Sin consentimiento,
  * vacía la cola y termina. Sin backend configurado, con una clave que el backend no reconoce o con un lote que no cumple el contrato, no
  * reintenta sin fin: se detiene y conserva los pendientes (se retoma al llegar otro aporte o al abrir la app).
  */
@@ -47,7 +48,12 @@ class ContributionWorker(context: Context, params: WorkerParameters) : Worker(co
         val outcome = SendPendingContributions(queue, PrepareContribution(consent) { anonymizer }, sender).run()
         // El resultado solo lleva cuántos se enviaron: nunca texto.
         Log.i(TAG, "Aportes pendientes: $outcome")
-        return if (outcome is UploadOutcome.Retry) Result.retry() else Result.success()
+        if (outcome !is UploadOutcome.Retry) return Result.success()
+        // Si el backend pidió una espera (429 con Retry-After), el reintento se programa para después de ella: `Result.retry()` solo conoce
+        // la espera creciente de WorkManager (#76). Sin esa petición (sin conexión, 5xx), se usa la espera creciente.
+        val wait = outcome.retryAfterSeconds ?: return Result.retry()
+        ContributionScheduler.scheduleAfter(app, wait)
+        return Result.success()
     }
 
     private companion object {
@@ -66,14 +72,24 @@ internal fun backendSender(context: Context): ContributionSender {
 object ContributionScheduler {
     private const val NAME = "contribution-upload"
 
-    private fun request() = OneTimeWorkRequest.Builder(ContributionWorker::class.java)
+    private fun request(delaySeconds: Long = 0) = OneTimeWorkRequest.Builder(ContributionWorker::class.java)
         .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
+        .apply { if (delaySeconds > 0) setInitialDelay(delaySeconds, TimeUnit.SECONDS) }
         .build()
 
     /** Hay algo nuevo en la cola: se envía cuando haya conexión, a continuación del envío que ya estuviera programado. */
     fun schedule(context: Context) {
         WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request())
+    }
+
+    /**
+     * El backend pidió esperar [seconds] (429 con `Retry-After`, #76): el siguiente envío se programa tras esa espera, a continuación del
+     * que está terminando. Lo que llegue mientras tanto se encadena detrás, así que tampoco adelanta la espera.
+     */
+    fun scheduleAfter(context: Context, seconds: Long) {
+        WorkManager.getInstance(context.applicationContext)
+            .enqueueUniqueWork(NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request(delaySeconds = seconds))
     }
 
     /** Al abrir la app: si quedaron pendientes de antes, se retoma el envío. No duplica uno ya programado. */
