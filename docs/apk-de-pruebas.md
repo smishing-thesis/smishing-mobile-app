@@ -52,7 +52,8 @@ APK nuevo.
 El tipo `qa` se firma con la clave de **depuración**. Sin más, el runner de GitHub genera una nueva en cada ejecución, y Android no deja instalar
 un APK sobre otro de distinta firma (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`): habría que desinstalar, y se perderían el historial y la cola de
 aportes. Se comprobó que el APK de GitHub y el compilado en local tenían certificados distintos. Por eso el workflow escribe en
-`~/.android/debug.keystore` un keystore fijo, guardado como secreto, antes de compilar, y al final muestra la huella SHA-256 del certificado.
+`debug.keystore` de una carpeta temporal un keystore fijo, guardado como secreto, y le indica a Gradle esa carpeta con `ANDROID_USER_HOME` (escribirlo
+solo en `~/.android` no bastó en el runner). Al final **falla si el certificado del APK no coincide con el del keystore**, y muestra ambas huellas SHA-256.
 
 Se genera una sola vez (la huella no es secreta; el archivo sí) y se guarda **fuera de Git** (`*.keystore` está en `.gitignore`):
 

@@ -44,10 +44,12 @@ jobs:
           fi
       - uses: actions/checkout@v4
       - name: Use the shared debug keystore
-        # El tipo `qa` se firma con la clave de depuración, que Gradle busca en ~/.android/debug.keystore.
+        # El tipo `qa` se firma con la clave de depuración, que Gradle busca en `$ANDROID_USER_HOME/debug.keystore`. Escribirla en ~/.android no
+        # bastó en el runner (las dos primeras pruebas siguieron saliendo con firmas distintas), así que se fija ANDROID_USER_HOME de forma explícita.
         run: |
-          mkdir -p "$HOME/.android"
-          printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          mkdir -p "$RUNNER_TEMP/android-user"
+          printf '%s' "$DEBUG_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-user/debug.keystore"
+          echo "ANDROID_USER_HOME=$RUNNER_TEMP/android-user" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -57,11 +59,18 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Build the qa APK
         run: ./gradlew assembleQa --warning-mode fail --stacktrace
-      - name: Show the signing certificate
-        # La huella SHA-256 del certificado no es secreta: sirve para comprobar que dos APK llevan la misma firma.
+      - name: Check the signing certificate
+        # La huella SHA-256 del certificado no es secreta. Falla si el APK no quedó firmado con el keystore compartido, para no entregar uno con otra firma.
         run: |
           BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
-          "$BUILD_TOOLS/apksigner" verify --print-certs app/build/outputs/apk/qa/app-qa.apk | grep "SHA-256"
+          APK_SHA=$("$BUILD_TOOLS/apksigner" verify --print-certs app/build/outputs/apk/qa/app-qa.apk | grep -m1 "SHA-256 digest" | sed 's/.*: //' | tr -d ':\r ' | tr 'A-F' 'a-f')
+          KEY_SHA=$(keytool -list -keystore "$ANDROID_USER_HOME/debug.keystore" -storepass android | grep "SHA-256" | sed 's/.*: //' | tr -d ':\r ' | tr 'A-F' 'a-f')
+          echo "Certificado del APK:       $APK_SHA"
+          echo "Certificado del keystore:  $KEY_SHA"
+          if [ -z "$APK_SHA" ] || [ "$APK_SHA" != "$KEY_SHA" ]; then
+            echo "::error::El APK no quedó firmado con el keystore compartido (ANDROID_DEBUG_KEYSTORE_BASE64). Tendría una firma distinta a la de otras compilaciones."
+            exit 1
+          fi
       - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:
