@@ -71,7 +71,7 @@ Casos más cercanos al umbral, que son los que podrían cambiar de decisión: `l
 ## Versiones y actualización del modelo (#35)
 
 **Qué se registra.** Cada análisis del historial guarda la versión del modelo (`model.version` del JSON) y la del preprocesamiento
-(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Acerca de la detección", las que están en uso ("Detección 1.0.0 · Preparación del texto 1.1.0": el
+(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Acerca de", las que están en uso ("Detección 1.0.0 · Preparación del texto 1.1.0": el
 texto evita las palabras técnicas porque `ExplanationWordingTest` revisa todas las cadenas de Ajustes).
 
 **Qué acepta la app.** Solo el modelo y el JSON empaquetados que cumplan todo esto:
@@ -84,7 +84,7 @@ texto evita las palabras técnicas porque `ExplanationWordingTest` revisa todas 
 
 Si algo no se cumple, la app **no se cierra**: el clasificador queda "no disponible" (`UnavailableMessageClassifier`), los mensajes se
 siguen recibiendo y mostrando sin analizar, no se ofrece "Analizar" y se registra solo el tipo de error. No hay aviso en pantalla y la
-sección "Acerca de la detección" de Ajustes no aparece.
+línea de la detección en "Acerca de" de Ajustes no aparece (la versión de la aplicación sí).
 
 **Cómo llega una versión nueva.** El `.tflite` y su JSON son `assets` de la app y no hay otra ruta de carga: la app no descarga ni
 lee modelos de otro lugar (la red solo se usa para el aporte opcional, #72). Por eso una versión nueva solo llega con una versión nueva

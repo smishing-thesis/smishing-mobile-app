@@ -56,7 +56,9 @@ fun SettingsScreen(
     onContacts: (granted: Boolean) -> Unit = {},
     /** "Borrar todo el historial" (#52): pedir confirmación. */
     onDeleteHistory: () -> Unit = {},
-    /** Las versiones del modelo y del preprocesamiento en uso (#35), o `null` si no hay modelo activo (no se muestra nada). */
+    /** La versión de la aplicación (`versionName`), para saber de un vistazo qué compilación es (#84); `null` no la muestra. */
+    appVersion: String? = null,
+    /** Las versiones del modelo y del preprocesamiento en uso (#35), o `null` si no hay modelo activo (no se muestra esa línea). */
     versions: ActiveVersions? = null,
     /** Al final de la pantalla: en depuración, las herramientas de demostración (#65); en `qa` y `release`, nada. */
     extra: @Composable () -> Unit = {},
@@ -142,14 +144,23 @@ fun SettingsScreen(
                     onCheckedChange = onContributionChange,
                 )
             }
-            if (versions != null) {
+            if (appVersion != null || versions != null) {
                 HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
-                SectionLabel(stringResource(R.string.settings_detection_title))
-                Text(
-                    stringResource(R.string.settings_detection_versions, versions.model, versions.preprocessing),
-                    style = SmishingTypography.Note,
-                    color = SmishingPalette.TextSecondary,
-                )
+                SectionLabel(stringResource(R.string.settings_about_title))
+                if (appVersion != null) {
+                    Text(
+                        stringResource(R.string.settings_app_version, appVersion),
+                        style = SmishingTypography.Note,
+                        color = SmishingPalette.TextSecondary,
+                    )
+                }
+                if (versions != null) {
+                    Text(
+                        stringResource(R.string.settings_detection_versions, versions.model, versions.preprocessing),
+                        style = SmishingTypography.Note,
+                        color = SmishingPalette.TextSecondary,
+                    )
+                }
             }
             extra()
         }
