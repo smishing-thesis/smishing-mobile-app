@@ -1,16 +1,22 @@
 package com.app.smishing.data.analysis
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.app.smishing.data.classification.ModelIntegrityException
 import com.app.smishing.data.classification.OnDeviceClassifier
 import com.app.smishing.data.mitigation.AndroidMitigation
 import com.app.smishing.data.signals.AndroidSignalDetectorFactory
 import com.app.smishing.data.sms.AndroidSmsPermissionRepository
 import com.app.smishing.data.sms.AndroidSmsRoleRepository
 import com.app.smishing.domain.classification.GatedMessageClassifier
+import com.app.smishing.domain.classification.UnavailableMessageClassifier
+import com.app.smishing.domain.classification.UnsupportedModelException
 import com.app.smishing.domain.mitigation.Mitigator
+import com.app.smishing.domain.preprocessing.UnsupportedPreprocessingException
 import com.app.smishing.domain.risk.RiskAssessor
 import com.app.smishing.domain.sms.RoleAndPermissionsGate
+import org.json.JSONException
 
 /**
  * El análisis de un SMS en el teléfono, armado una sola vez por proceso: el modelo (LiteRT) con la compuerta del rol y los
@@ -42,7 +48,23 @@ object AnalysisPipeline {
 
     private fun build(context: Context): RiskAssessor {
         val gate = RoleAndPermissionsGate(AndroidSmsRoleRepository(context), AndroidSmsPermissionRepository(context))
-        val classifier = GatedMessageClassifier(OnDeviceClassifier.create(context), gate)
+        val classifier = try {
+            GatedMessageClassifier(OnDeviceClassifier.create(context), gate)
+        } catch (e: Exception) {
+            // Un modelo que la app rechaza (#35) no debe cerrarla: los mensajes se siguen recibiendo y mostrando, sin analizar.
+            if (!isModelRejection(e)) throw e
+            // Solo el tipo de error: su mensaje no trae texto de SMS, pero se mantiene la regla de no registrar contenido.
+            Log.e(TAG, "Modelo no disponible: ${e.javaClass.simpleName}")
+            UnavailableMessageClassifier
+        }
         return RiskAssessor(classifier, AndroidSignalDetectorFactory.create(context))
     }
+
+    /** Las formas en que el modelo o su JSON empaquetados no son los que esta versión de la app sabe usar. */
+    private fun isModelRejection(e: Exception) = e is UnsupportedModelException ||
+        e is UnsupportedPreprocessingException ||
+        e is ModelIntegrityException ||
+        e is JSONException
+
+    private const val TAG = "AnalysisPipeline"
 }
