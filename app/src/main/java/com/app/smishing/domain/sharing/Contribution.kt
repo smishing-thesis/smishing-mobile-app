@@ -22,6 +22,12 @@ enum class ContributionRejection {
 
     /** Aun desidentificado, el texto trae algo que una regla reconoce: se rechaza, no se arregla. */
     NotAnonymized,
+
+    /**
+     * El texto ya desidentificado pasa del máximo que acepta el backend ([PrepareContribution.MAX_TEXT_LENGTH]). Si se enviara, el backend
+     * rechazaría el lote entero (422) y un solo mensaje largo bloquearía los envíos siguientes: se descarta (#76).
+     */
+    TooLong,
 }
 
 sealed interface ContributionResult {
@@ -49,6 +55,15 @@ class PrepareContribution(
         val anonymized = anonymizer.anonymize(body)
         if (anonymized.text.isBlank()) return ContributionResult.Rejected(ContributionRejection.Empty)
         if (!anonymizer.isAnonymized(anonymized.text)) return ContributionResult.Rejected(ContributionRejection.NotAnonymized)
+        // El backend cuenta caracteres Unicode, no unidades de UTF-16: un emoji cuenta como uno.
+        if (anonymized.text.codePointCount(0, anonymized.text.length) > MAX_TEXT_LENGTH) {
+            return ContributionResult.Rejected(ContributionRejection.TooLong)
+        }
         return ContributionResult.Ready(anonymized.text, anonymized.rulesVersion)
+    }
+
+    companion object {
+        /** El máximo de caracteres del `text` de un aporte, según el OpenAPI del backend (`ContributionInput.text.maxLength`, versión 1.1.0). */
+        const val MAX_TEXT_LENGTH = 2048
     }
 }

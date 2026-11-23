@@ -183,7 +183,7 @@
     <string name="settings_contribution_title">Compartir datos de forma anónima</string>
     <!-- Aviso al activar el aporte (#18): el texto es el del diseño. -->
     <string name="contribution_dialog_title">Compartir datos de forma anónima</string>
-    <string name="contribution_dialog_intro">Al detectar un mensaje peligroso, anonimizamos el contenido y lo utilizamos para mejorar la detección de la aplicación. Toda la información se hace anónima dentro de la aplicación antes de enviarse.</string>
+    <string name="contribution_dialog_intro">Al detectar un mensaje peligroso o sospechoso, anonimizamos el contenido y lo utilizamos para mejorar la detección de la aplicación. Toda la información se hace anónima dentro de la aplicación antes de enviarse.</string>
     <string name="contribution_dialog_never">Lo que nunca compartimos:</string>
     <string name="contribution_dialog_never_name">Su nombre</string>
     <string name="contribution_dialog_never_phone">Su número de teléfono</string>

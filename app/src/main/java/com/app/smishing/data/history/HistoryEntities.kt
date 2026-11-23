@@ -153,9 +153,9 @@ data class PendingContributionEntity(
 )
 
 /**
- * Lo que se lee de la cola: el registro, el texto del mensaje (que es de la persona y no se escribe en logs) y lo que decidió el modelo
- * local (si lo marcó y con qué versión), que el backend pide junto al texto.
+ * Lo que se lee de la cola: el registro, el texto del mensaje (que es de la persona y no se escribe en logs), su nivel de riesgo (`Medium` o
+ * `High`) y la versión del modelo local, que el backend pide junto al texto.
  */
-data class PendingRow(val analyzedMessageId: Long, val body: String, val modelFlagsIt: Boolean, val modelVersion: String) {
+data class PendingRow(val analyzedMessageId: Long, val body: String, val riskLevel: String, val modelVersion: String) {
     override fun toString() = "PendingRow(analyzedMessageId=$analyzedMessageId)"
 }

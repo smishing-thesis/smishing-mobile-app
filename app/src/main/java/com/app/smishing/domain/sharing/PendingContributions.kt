@@ -4,20 +4,27 @@ import com.app.smishing.domain.history.AnalysisHistory
 import com.app.smishing.domain.history.AnalysisRecord
 import com.app.smishing.domain.risk.RiskLevel
 
-/** La etiqueta que acompaña al aporte: lo que el modelo local decidió sobre el mensaje. [wire] es como la espera el backend. */
+/**
+ * La etiqueta que acompaña al aporte. [wire] es como la espera el backend, que solo acepta `safe` o `smishing`. Se decide por el **nivel de
+ * riesgo** del mensaje, no por la marca del modelo: un mensaje de nivel medio por señales (`risk.signals_only`) no lo marcó el modelo y aun
+ * así se comparte como `smishing` (#76). El backend siempre pasa por revisión humana antes de usarlo para reentrenar.
+ */
 enum class ContributionLabel(val wire: String) {
     Safe("safe"),
     Smishing("smishing"),
     ;
 
     companion object {
-        fun of(modelFlagsIt: Boolean) = if (modelFlagsIt) Smishing else Safe
+        /** Los niveles de riesgo que se comparten con el aporte activado: alto y medio (peligrosos y sospechosos). */
+        val SHARED_LEVELS: Set<RiskLevel> = setOf(RiskLevel.High, RiskLevel.Medium)
+
+        fun of(level: RiskLevel) = if (level in SHARED_LEVELS) Smishing else Safe
     }
 }
 
 /**
- * Un mensaje peligroso que espera su turno para compartirse, con la decisión del modelo local y su versión (el backend las pide junto al
- * texto). [body] es del mensaje: no debe escribirse en logs.
+ * Un mensaje peligroso o sospechoso que espera su turno para compartirse, con su etiqueta y la versión del modelo local (el backend las
+ * pide junto al texto). [body] es del mensaje: no debe escribirse en logs.
  */
 class PendingContribution(
     val analyzedMessageId: Long,
@@ -29,7 +36,7 @@ class PendingContribution(
 }
 
 /**
- * Los aportes pendientes de enviar (#71): los mensajes peligrosos que se detectaron con el aporte activado y todavía no se enviaron, sea
+ * Los aportes pendientes de enviar (#71): los mensajes peligrosos o sospechosos que se detectaron con el aporte activado y todavía no se enviaron, sea
  * por falta de internet o porque aún no hay destino. Solo guarda una referencia al registro del historial: el texto se desidentifica
  * justo antes de enviarlo, y borrar el mensaje del historial lo saca de la cola.
  */
@@ -178,7 +185,7 @@ class SendPendingContributions(
 }
 
 /**
- * El historial que, al guardar un análisis de nivel **alto** con el aporte activado, pone el mensaje en la cola de pendientes y avisa
+ * El historial que, al guardar un análisis de nivel **alto o medio** con el aporte activado, pone el mensaje en la cola de pendientes y avisa
  * ([onQueued]) para que se programe el envío. Todo lo demás lo hace [delegate]. Si no se puede encolar, el análisis ya guardado no se ve
  * afectado: un fallo del aporte no debe impedir la alerta ni la mitigación.
  */
@@ -192,7 +199,7 @@ class QueueingAnalysisHistory(
 
     override fun save(record: AnalysisRecord): Long {
         val id = delegate.save(record)
-        if (record.assessment.level == RiskLevel.High) {
+        if (record.assessment.level in ContributionLabel.SHARED_LEVELS) {
             try {
                 if (consent.isGranted()) {
                     queue.add(id, clock())

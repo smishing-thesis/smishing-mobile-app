@@ -28,10 +28,12 @@ class QueueingAnalysisHistoryTest {
 
     private val model = ClassificationResult.Classified(0.97f, true, 0.9034745693206787, "1.0.0", "1.1.0")
 
-    // Alto: el modelo lo marca y una señal lo respalda. Medio: el modelo lo marca sin respaldo.
+    private val notFlagged = ClassificationResult.Classified(0.05f, false, 0.9034745693206787, "1.0.0", "1.1.0")
+
+    // Alto: el modelo lo marca y una señal lo respalda. Medio: el modelo lo marca sin respaldo. Bajo: ni el modelo ni las señales.
     private fun record(level: RiskLevel): AnalysisRecord {
         val signals = if (level == RiskLevel.High) listOf(DetectedSignal(SignalType.Urgency, "urgency.test", "fragmento")) else emptyList()
-        val assessment = RiskPolicy.decide(model, SignalAnalysis("1.1.0", signals))
+        val assessment = RiskPolicy.decide(if (level == RiskLevel.Low) notFlagged else model, SignalAnalysis("1.1.0", signals))
         assertEquals(level, assessment.level)
         return AnalysisRecord(0, 7, "+10000000001", "Mensaje sintético", 1_000L, 1_050L, assessment)
     }
@@ -51,11 +53,27 @@ class QueueingAnalysisHistoryTest {
     }
 
     @Test
-    fun aSuspiciousMessageOrOneWithTheContributionOffIsNeverQueued() {
-        history(consent = true).save(record(RiskLevel.Medium))
+    fun aSuspiciousMessageWithTheContributionOnIsAlsoQueued() {
+        val id = history(consent = true).save(record(RiskLevel.Medium))
+        assertEquals(listOf(id), queue.rows.keys.toList())
+        assertEquals(1, queued)
+    }
+
+    @Test
+    fun aLowRiskMessageOrOneWithTheContributionOffIsNeverQueued() {
+        history(consent = true).save(record(RiskLevel.Low))
         history(consent = false).save(record(RiskLevel.High))
+        history(consent = false).save(record(RiskLevel.Medium))
         assertEquals(0, queue.count())
         assertEquals(0, queued)
+    }
+
+    @Test
+    fun dangerousAndSuspiciousAreSharedAsSmishingAndNothingElseIs() {
+        // Nivel medio por señales: el modelo no lo marcó, pero se comparte como smishing; el backend solo conoce safe y smishing.
+        assertEquals(ContributionLabel.Smishing, ContributionLabel.of(RiskLevel.High))
+        assertEquals(ContributionLabel.Smishing, ContributionLabel.of(RiskLevel.Medium))
+        assertEquals(ContributionLabel.Safe, ContributionLabel.of(RiskLevel.Low))
     }
 
     @Test
