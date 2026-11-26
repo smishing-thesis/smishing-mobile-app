@@ -125,8 +125,8 @@ fun SearchAction(description: String, onClick: () -> Unit, tint: Color = Smishin
     }
 }
 
-/** Una pestaña de la navegación inferior. */
-data class NavItem(val label: String, val icon: ImageVector)
+/** Una pestaña de la navegación inferior. [target] es la clave con que un coachmark puede señalarla (#88); sin ella no se señala. */
+data class NavItem(val label: String, val icon: ImageVector, val target: Any? = null)
 
 /** Navegación inferior: Inicio, Mensajes, Historial y Ajustes. */
 @Composable
@@ -148,6 +148,7 @@ fun SmishingBottomBar(
                 icon = { Icon(item.icon, contentDescription = null) },
                 label = { Text(item.label, style = SmishingTypography.LabelSmall) },
                 alwaysShowLabel = true,
+                modifier = Modifier.coachmarkTarget(item.target),
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = SmishingPalette.Primary,
                     selectedTextColor = SmishingPalette.Primary,

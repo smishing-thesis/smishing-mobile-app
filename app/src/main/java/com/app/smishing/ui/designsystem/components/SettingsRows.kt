@@ -109,6 +109,16 @@ fun SwitchRow(
     }
 }
 
+/** Una fila con título, explicación y un botón, para una acción que no cambia una preferencia (como "Ver recorrido"). */
+@Composable
+fun ActionRow(title: String, description: String, buttonLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
+        Text(title, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
+        Text(description, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
+        SecondaryButton(buttonLabel, onClick = onClick, modifier = Modifier.padding(top = Spacing.X2s))
+    }
+}
+
 /** Estado de un permiso: visto verde si está concedido, aviso si no. */
 @Composable
 fun PermissionRow(label: String, granted: Boolean, modifier: Modifier = Modifier) {

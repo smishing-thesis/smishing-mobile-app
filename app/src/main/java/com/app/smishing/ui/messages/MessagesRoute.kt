@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -38,7 +40,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import com.app.smishing.ui.designsystem.icons.SmishingIcons
 import com.app.smishing.ui.designsystem.components.SmishingBottomBar
+import com.app.smishing.ui.designsystem.components.LocalCoachmarkRegistry
 import com.app.smishing.ui.designsystem.components.NavItem
+import com.app.smishing.domain.tutorial.TutorialPhase
+import com.app.smishing.ui.tutorial.SampleAlertCard
+import com.app.smishing.ui.tutorial.TutorialController
+import com.app.smishing.ui.tutorial.TutorialOverlay
+import com.app.smishing.ui.tutorial.TutorialSample
+import com.app.smishing.ui.tutorial.TutorialTarget
+import com.app.smishing.ui.tutorial.rememberTutorialController
+import com.app.smishing.ui.tutorial.sampleDetailState
 import com.app.smishing.ui.history.HistoryScreen
 import com.app.smishing.domain.risk.RiskResult
 import com.app.smishing.domain.history.AnalysisRecord
@@ -124,6 +135,8 @@ fun MessagesRoute(
     onConversationOpened: () -> Unit = {},
     onboarding: OnboardingProgress = rememberOnboardingProgress(),
     contributionConsent: ContributionConsent = rememberContributionConsent(),
+    /** El recorrido guiado con Smishy (#88). */
+    tutorial: TutorialController = rememberTutorialController(),
 ) {
     val context = LocalContext.current
     val resolver = context.contentResolver
@@ -161,6 +174,7 @@ fun MessagesRoute(
     val requestContacts = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { contactsVersion++ }
     // Explicar para qué se piden los contactos, una sola vez, cuando ya están el rol y los permisos de SMS (#53).
     var askContacts by remember { mutableStateOf(false) }
+    var contactsChecked by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         val shouldAsk = withContext(Dispatchers.IO) {
             val granted = permissionStatuses.statuses().filter { it.granted }.map { it.permission }.toSet()
@@ -168,7 +182,10 @@ fun MessagesRoute(
                 !onboarding.contactsPromptSeen()
         }
         askContacts = shouldAsk
+        contactsChecked = true
     }
+    // El recorrido guiado (#88) se ofrece cuando ya no hay otro diálogo por delante: después del de los contactos.
+    LaunchedEffect(contactsChecked, askContacts) { if (contactsChecked && !askContacts) tutorial.offerIfPending() }
     // Se guardan solo el id y el remitente de la conversación abierta y lo escrito, para que sobrevivan a girar la pantalla.
     var openThreadId by rememberSaveable { mutableStateOf<Long?>(null) }
     var openAddress by rememberSaveable { mutableStateOf("") }
@@ -328,226 +345,257 @@ fun MessagesRoute(
     }
     LaunchedEffect(openThreadId) { selectingMessages = false; selectedMessages = emptySet() }
 
+    // Durante el recorrido (#88) cada paso lleva a su pestaña, y lo que estuviera abierto se cierra: el recorrido empieza en el primer nivel.
+    val tourStep = tutorial.step
+    LaunchedEffect(tutorial.active) {
+        if (tutorial.active) {
+            detailMessageId = null
+            historyRecordId = null
+            openThreadId = null
+            composing = false
+        }
+    }
+    // El cierre va sobre Ajustes, que es donde se vuelve a ver el recorrido.
+    LaunchedEffect(tourStep, tutorial.phase) {
+        if (tourStep != null) tab = tourStep.tab else if (tutorial.phase == TutorialPhase.Closing) tab = 3
+    }
+
     val threadId = openThreadId
     val detailId = detailMessageId
     val recordId = historyRecordId
     // La barra inferior solo está en las pantallas de primer nivel: no en un detalle, una conversación ni al redactar.
-    val showBar = detailId == null && recordId == null && !composing && threadId == null
-    Column(modifier = modifier.fillMaxSize()) {
-        Box(modifier = Modifier.weight(1f)) {
-            when {
-                detailId != null || recordId != null -> {
-                    // Un solo detalle para los dos caminos: el de una alerta (por el id del mensaje) y el del historial (por el id del
-                    // registro). Una vez encontrado el registro se sigue por su id, porque restaurar un mensaje le cambia el del buzón.
-                    var detail by remember(detailId, recordId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
-                    var current by remember(detailId, recordId) { mutableStateOf<AnalysisRecord?>(null) }
-                    var resolvedId by remember(detailId, recordId) { mutableStateOf(recordId) }
-                    var busy by remember(detailId, recordId) { mutableStateOf(false) }
-                    // Se muestra lo guardado al recibir el mensaje (#12): es lo que motivó la alerta. Si no hay registro (un mensaje
-                    // anterior al historial), se evalúa el mensaje, que da lo mismo porque la evaluación es determinista.
-                    LaunchedEffect(detailId, recordId, historyVersion) {
-                        val (state, record) = withContext(Dispatchers.IO) {
-                            loadDetail(detailId, resolvedId, history, repository, assessor, actionLog, mitigationSettings)
-                        }
-                        detail = state
-                        current = record
-                        if (record != null) resolvedId = record.id
-                    }
-                    fun act(work: (AnalysisRecord) -> Unit) {
-                        val record = current
-                        if (record == null || busy) return
-                        busy = true
-                        scope.launch {
-                            withContext(Dispatchers.IO) { work(record) }
-                            busy = false
-                            historyVersion++
-                        }
-                    }
-                    MessageDetailScreen(
-                        state = detail,
-                        onBack = {
-                            detailMessageId = null
-                            historyRecordId = null
-                        },
-                        modifier = Modifier,
-                        actions = DetailActions(
-                            onBlock = { act { mitigation.performManual(it, ActionType.BlockSender) } },
-                            onRemove = { act { mitigation.performManual(it, ActionType.RemoveMessage) } },
-                            onMarkSafe = { act { mitigation.markSafe(it) } },
-                            onOpenSettings = {
-                                detailMessageId = null
-                                historyRecordId = null
-                                tab = 3
-                            },
-                        ),
-                    )
-                }
-                composing -> NewMessageScreen(
-                    recipient = recipient,
-                    onRecipientChange = { recipient = it },
-                    contacts = contacts,
-                    body = body,
-                    onBodyChange = { body = it },
-                    onSend = {
-                        send(recipient, body) { sent ->
-                            openAddress = normalizeRecipient(recipient) ?: recipient
-                            openThreadId = sent.threadId
-                            composing = false
-                            recipient = ""
-                            body = ""
-                        }
-                    },
-                    onBack = {
-                        sendError = null
-                        composing = false
-                    },
-                    error = sendError,
-                    modifier = Modifier,
-                    onPickContact = {
-                        pickContact.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
-                    },
-                )
-                tab == 3 && threadId == null -> SettingsRoute(
-            history = history,
-            contributionConsent = contributionConsent,
-            settings = mitigationSettings,
-            permissions = permissionStatuses,
-            modifier = Modifier,
-        )
-        tab == 2 && threadId == null -> {
-                    var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
-                    LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
-                    var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
-                    LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
-                    HistoryScreen(
-                        records = records,
-                        onOpen = { historyRecordId = it.id },
-                        actions = actions,
-                        modifier = Modifier,
-                        selecting = selectingHistory,
-                        displayName = contacts::display,
-                        selected = selectedRecords,
-                        onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
-                        onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
-                        onSelectAll = { selectedRecords = records.orEmpty().map { it.id }.toSet() },
-                        onCancelSelection = { selectingHistory = false; selectedRecords = emptySet() },
-                        onDeleteSelected = { deleteRecords = records.orEmpty().filter { it.id in selectedRecords } to actions },
-                    )
-                }
-                tab == 0 && threadId == null -> HomeRoute(
-                    permissions = permissionStatuses,
-                    history = history,
-                    onActivate = onActivateProtection,
-                    modifier = Modifier,
-                )
-                threadId == null -> {
-                    LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
-                    ConversationListScreen(
-                        conversations = conversations,
-                        nowMillis = System.currentTimeMillis(),
-                        onOpen = {
-                            sendError = null
-                            openThreadId = it.threadId
-                            openAddress = it.address
-                        },
-                        onCompose = {
-                            sendError = null
-                            composing = true
-                        },
-                        modifier = Modifier,
-                        risks = risks,
-                        listState = conversationListState,
-                        displayName = contacts::display,
-                        photoOf = contacts::photoOf,
-                        selecting = selectingConversations,
-                        selected = selectedThreads,
-                        onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
-                        onStartSelecting = { first -> selectingConversations = true; selectedThreads = first?.let { setOf(it.threadId) }.orEmpty() },
-                        onSelectAll = { selectedThreads = conversations.orEmpty().map { it.threadId }.toSet() },
-                        onCancelSelection = { selectingConversations = false; selectedThreads = emptySet() },
-                        onDeleteSelected = {
-                            deleteTarget = DeleteTarget.Conversations(
-                                conversations.orEmpty().filter { it.threadId in selectedThreads }.map { it.threadId to it.address },
-                            )
-                        },
-                    )
-                }
-                else -> {
-                    var messages by remember(threadId) { mutableStateOf<List<ConversationMessage>?>(null) }
-                    LaunchedEffect(threadId, version) {
-                        messages = withContext(Dispatchers.IO) { repository.messages(threadId) }
-                        // Abrir la conversación es leerla (#50): se marcan como leídos los recibidos y se descartan sus avisos. También
-                        // los que llegan con la conversación abierta. Marcar cambia el buzón y vuelve a pasar por aquí, sin más que marcar.
-                        // Marcar y descartar van juntos dentro del mismo bloque: marcar cambia el buzón, eso reinicia este efecto y, si
-                        // el descarte estuviera afuera, el reinicio lo cancelaría antes de ejecutarse y el aviso quedaría ahí.
-                        withContext(Dispatchers.IO) {
-                            val read = repository.markRead(threadId)
-                            if (read.isNotEmpty()) AndroidMessageNotifier.dismiss(context, read)
-                        }
-                    }
-                    ConversationScreen(
-                        address = contacts.display(openAddress),
-                        messages = messages,
-                        onBack = {
-                            sendError = null
-                            openThreadId = null
-                        },
-                        draft = draft,
-                        onDraftChange = { draft = it },
-                        onSend = { send(openAddress, draft) { draft = "" } },
-                        error = sendError,
-                        modifier = Modifier,
-                        risks = risks,
-                        onSeeRisk = { historyRecordId = it },
-                        selecting = selectingMessages,
-                        selected = selectedMessages,
-                        onToggle = { selectedMessages = if (it.id in selectedMessages) selectedMessages - it.id else selectedMessages + it.id },
-                        onStartSelecting = { first -> selectingMessages = true; selectedMessages = first?.let { setOf(it.id) }.orEmpty() },
-                        onSelectAll = { selectedMessages = messages.orEmpty().map { it.id }.toSet() },
-                        onCancelSelection = { selectingMessages = false; selectedMessages = emptySet() },
-                        onDeleteSelected = { deleteTarget = DeleteTarget.Messages(messages.orEmpty().filter { it.id in selectedMessages }) },
-                        analysis = { m ->
-                            val attempt = attempts[m.id]
-                            when {
-                                loadedRisks == null -> StoredAnalysis.None
-                                attempt == StoredAnalysis.Analyzing -> StoredAnalysis.Analyzing
-                                isAnalyzed(risks, m.id, m.body) ->
-                                    // Analizado y sin señales: siempre lo dice. Uno marcado como seguro por la persona tuvo riesgo, así que no.
-                                    if (risks[m.id]?.level == RiskLevel.Low) StoredAnalysis.NoRisk else StoredAnalysis.None
-                                attempt == StoredAnalysis.Failed -> StoredAnalysis.Failed
-                                assessor.canAssess(m.body) -> StoredAnalysis.CanAnalyze
-                                else -> StoredAnalysis.None
-                            }
-                        },
-                        onAnalyze = { m ->
-                            attempts = attempts + (m.id to StoredAnalysis.Analyzing)
-                            scope.launch(Dispatchers.IO) {
-                                val recorded = try {
-                                    analyzer.analyze(m.id, openAddress, m.body, m.atMillis) == AnalysisOutcome.Recorded
-                                } catch (e: CancellationException) {
-                                    throw e
-                                } catch (_: Exception) {
-                                    false // sin registrar el motivo: el mensaje es privado y la excepción podría traerlo
+    val showBar = detailId == null && recordId == null && !composing && threadId == null && tutorial.sample != TutorialSample.Detail
+    // Con el recorrido en curso (#88) los elementos que señala dicen dónde están; sin él, marcarlos no cuesta nada.
+    CompositionLocalProvider(LocalCoachmarkRegistry provides if (tutorial.active) tutorial.registry else null) {
+        Box(modifier = modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f)) {
+                    when {
+                        // El detalle de ejemplo del recorrido (#88): la misma pantalla con un análisis inventado, sin acciones.
+                        tutorial.sample == TutorialSample.Detail -> MessageDetailScreen(
+                            state = sampleDetailState(),
+                            onBack = tutorial::pause,
+                            modifier = Modifier,
+                        )
+                        detailId != null || recordId != null -> {
+                            // Un solo detalle para los dos caminos: el de una alerta (por el id del mensaje) y el del historial (por el id del
+                            // registro). Una vez encontrado el registro se sigue por su id, porque restaurar un mensaje le cambia el del buzón.
+                            var detail by remember(detailId, recordId) { mutableStateOf<MessageDetailState>(MessageDetailState.Loading) }
+                            var current by remember(detailId, recordId) { mutableStateOf<AnalysisRecord?>(null) }
+                            var resolvedId by remember(detailId, recordId) { mutableStateOf(recordId) }
+                            var busy by remember(detailId, recordId) { mutableStateOf(false) }
+                            // Se muestra lo guardado al recibir el mensaje (#12): es lo que motivó la alerta. Si no hay registro (un mensaje
+                            // anterior al historial), se evalúa el mensaje, que da lo mismo porque la evaluación es determinista.
+                            LaunchedEffect(detailId, recordId, historyVersion) {
+                                val (state, record) = withContext(Dispatchers.IO) {
+                                    loadDetail(detailId, resolvedId, history, repository, assessor, actionLog, mitigationSettings)
                                 }
-                                attempts = if (recorded) attempts - m.id else attempts + (m.id to StoredAnalysis.Failed)
-                                if (recorded) historyVersion++
+                                detail = state
+                                current = record
+                                if (record != null) resolvedId = record.id
                             }
-                        },
+                            fun act(work: (AnalysisRecord) -> Unit) {
+                                val record = current
+                                if (record == null || busy) return
+                                busy = true
+                                scope.launch {
+                                    withContext(Dispatchers.IO) { work(record) }
+                                    busy = false
+                                    historyVersion++
+                                }
+                            }
+                            MessageDetailScreen(
+                                state = detail,
+                                onBack = {
+                                    detailMessageId = null
+                                    historyRecordId = null
+                                },
+                                modifier = Modifier,
+                                actions = DetailActions(
+                                    onBlock = { act { mitigation.performManual(it, ActionType.BlockSender) } },
+                                    onRemove = { act { mitigation.performManual(it, ActionType.RemoveMessage) } },
+                                    onMarkSafe = { act { mitigation.markSafe(it) } },
+                                    onOpenSettings = {
+                                        detailMessageId = null
+                                        historyRecordId = null
+                                        tab = 3
+                                    },
+                                ),
+                            )
+                        }
+                        composing -> NewMessageScreen(
+                            recipient = recipient,
+                            onRecipientChange = { recipient = it },
+                            contacts = contacts,
+                            body = body,
+                            onBodyChange = { body = it },
+                            onSend = {
+                                send(recipient, body) { sent ->
+                                    openAddress = normalizeRecipient(recipient) ?: recipient
+                                    openThreadId = sent.threadId
+                                    composing = false
+                                    recipient = ""
+                                    body = ""
+                                }
+                            },
+                            onBack = {
+                                sendError = null
+                                composing = false
+                            },
+                            error = sendError,
+                            modifier = Modifier,
+                            onPickContact = {
+                                pickContact.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
+                            },
+                        )
+                        tab == 3 && threadId == null -> SettingsRoute(
+                    history = history,
+                    contributionConsent = contributionConsent,
+                    settings = mitigationSettings,
+                    permissions = permissionStatuses,
+                    modifier = Modifier,
+                    tutorial = tutorial.saved,
+                    onShowTutorial = tutorial::restart,
+                )
+                tab == 2 && threadId == null -> {
+                            var records by remember { mutableStateOf<List<AnalysisRecord>?>(null) }
+                            LaunchedEffect(historyVersion) { records = withContext(Dispatchers.IO) { history.all() } }
+                            var actions by remember { mutableStateOf<Map<Long, List<MitigationAction>>>(emptyMap()) }
+                            LaunchedEffect(historyVersion) { actions = withContext(Dispatchers.IO) { actionLog.all() } }
+                            HistoryScreen(
+                                records = records,
+                                onOpen = { historyRecordId = it.id },
+                                actions = actions,
+                                modifier = Modifier,
+                                selecting = selectingHistory,
+                                displayName = contacts::display,
+                                selected = selectedRecords,
+                                onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
+                                onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
+                                onSelectAll = { selectedRecords = records.orEmpty().map { it.id }.toSet() },
+                                onCancelSelection = { selectingHistory = false; selectedRecords = emptySet() },
+                                onDeleteSelected = { deleteRecords = records.orEmpty().filter { it.id in selectedRecords } to actions },
+                            )
+                        }
+                        tab == 0 && threadId == null -> HomeRoute(
+                            permissions = permissionStatuses,
+                            history = history,
+                            onActivate = onActivateProtection,
+                            modifier = Modifier,
+                        )
+                        threadId == null -> {
+                            LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
+                            ConversationListScreen(
+                                conversations = conversations,
+                                nowMillis = System.currentTimeMillis(),
+                                onOpen = {
+                                    sendError = null
+                                    openThreadId = it.threadId
+                                    openAddress = it.address
+                                },
+                                onCompose = {
+                                    sendError = null
+                                    composing = true
+                                },
+                                modifier = Modifier,
+                                risks = risks,
+                                listState = conversationListState,
+                                displayName = contacts::display,
+                                photoOf = contacts::photoOf,
+                                selecting = selectingConversations,
+                                selected = selectedThreads,
+                                onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
+                                onStartSelecting = { first -> selectingConversations = true; selectedThreads = first?.let { setOf(it.threadId) }.orEmpty() },
+                                onSelectAll = { selectedThreads = conversations.orEmpty().map { it.threadId }.toSet() },
+                                onCancelSelection = { selectingConversations = false; selectedThreads = emptySet() },
+                                onDeleteSelected = {
+                                    deleteTarget = DeleteTarget.Conversations(
+                                        conversations.orEmpty().filter { it.threadId in selectedThreads }.map { it.threadId to it.address },
+                                    )
+                                },
+                            )
+                        }
+                        else -> {
+                            var messages by remember(threadId) { mutableStateOf<List<ConversationMessage>?>(null) }
+                            LaunchedEffect(threadId, version) {
+                                messages = withContext(Dispatchers.IO) { repository.messages(threadId) }
+                                // Abrir la conversación es leerla (#50): se marcan como leídos los recibidos y se descartan sus avisos. También
+                                // los que llegan con la conversación abierta. Marcar cambia el buzón y vuelve a pasar por aquí, sin más que marcar.
+                                // Marcar y descartar van juntos dentro del mismo bloque: marcar cambia el buzón, eso reinicia este efecto y, si
+                                // el descarte estuviera afuera, el reinicio lo cancelaría antes de ejecutarse y el aviso quedaría ahí.
+                                withContext(Dispatchers.IO) {
+                                    val read = repository.markRead(threadId)
+                                    if (read.isNotEmpty()) AndroidMessageNotifier.dismiss(context, read)
+                                }
+                            }
+                            ConversationScreen(
+                                address = contacts.display(openAddress),
+                                messages = messages,
+                                onBack = {
+                                    sendError = null
+                                    openThreadId = null
+                                },
+                                draft = draft,
+                                onDraftChange = { draft = it },
+                                onSend = { send(openAddress, draft) { draft = "" } },
+                                error = sendError,
+                                modifier = Modifier,
+                                risks = risks,
+                                onSeeRisk = { historyRecordId = it },
+                                selecting = selectingMessages,
+                                selected = selectedMessages,
+                                onToggle = { selectedMessages = if (it.id in selectedMessages) selectedMessages - it.id else selectedMessages + it.id },
+                                onStartSelecting = { first -> selectingMessages = true; selectedMessages = first?.let { setOf(it.id) }.orEmpty() },
+                                onSelectAll = { selectedMessages = messages.orEmpty().map { it.id }.toSet() },
+                                onCancelSelection = { selectingMessages = false; selectedMessages = emptySet() },
+                                onDeleteSelected = { deleteTarget = DeleteTarget.Messages(messages.orEmpty().filter { it.id in selectedMessages }) },
+                                analysis = { m ->
+                                    val attempt = attempts[m.id]
+                                    when {
+                                        loadedRisks == null -> StoredAnalysis.None
+                                        attempt == StoredAnalysis.Analyzing -> StoredAnalysis.Analyzing
+                                        isAnalyzed(risks, m.id, m.body) ->
+                                            // Analizado y sin señales: siempre lo dice. Uno marcado como seguro por la persona tuvo riesgo, así que no.
+                                            if (risks[m.id]?.level == RiskLevel.Low) StoredAnalysis.NoRisk else StoredAnalysis.None
+                                        attempt == StoredAnalysis.Failed -> StoredAnalysis.Failed
+                                        assessor.canAssess(m.body) -> StoredAnalysis.CanAnalyze
+                                        else -> StoredAnalysis.None
+                                    }
+                                },
+                                onAnalyze = { m ->
+                                    attempts = attempts + (m.id to StoredAnalysis.Analyzing)
+                                    scope.launch(Dispatchers.IO) {
+                                        val recorded = try {
+                                            analyzer.analyze(m.id, openAddress, m.body, m.atMillis) == AnalysisOutcome.Recorded
+                                        } catch (e: CancellationException) {
+                                            throw e
+                                        } catch (_: Exception) {
+                                            false // sin registrar el motivo: el mensaje es privado y la excepción podría traerlo
+                                        }
+                                        attempts = if (recorded) attempts - m.id else attempts + (m.id to StoredAnalysis.Failed)
+                                        if (recorded) historyVersion++
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    // El aviso de ejemplo del recorrido (#88), sobre Inicio.
+                    if (tutorial.sample == TutorialSample.Alert) SampleAlertCard(Modifier.align(Alignment.TopCenter))
+                }
+                if (showBar) {
+                    SmishingBottomBar(
+                        items = listOf(
+                            NavItem(stringResource(R.string.nav_home), Icons.Outlined.Home, TutorialTarget.TabHome),
+                            NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat, TutorialTarget.TabMessages),
+                            NavItem(stringResource(R.string.nav_history), SmishingIcons.History, TutorialTarget.TabHistory),
+                            NavItem(stringResource(R.string.nav_settings), Icons.Outlined.Settings, TutorialTarget.TabSettings),
+                        ),
+                        selectedIndex = tab,
+                        onSelect = { tab = it },
                     )
                 }
             }
-        }
-        if (showBar) {
-            SmishingBottomBar(
-                items = listOf(
-                    NavItem(stringResource(R.string.nav_home), Icons.Outlined.Home),
-                    NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat),
-                    NavItem(stringResource(R.string.nav_history), SmishingIcons.History),
-                    NavItem(stringResource(R.string.nav_settings), Icons.Outlined.Settings),
-                ),
-                selectedIndex = tab,
-                onSelect = { tab = it },
-            )
+            TutorialOverlay(tutorial)
         }
     }
     if (askContacts) {

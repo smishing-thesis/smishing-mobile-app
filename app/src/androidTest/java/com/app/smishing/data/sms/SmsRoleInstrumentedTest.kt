@@ -38,6 +38,8 @@ import com.app.smishing.data.analysis.AnalysisPipeline
 import com.app.smishing.data.messaging.TelephonyConversationRepository
 import com.app.smishing.data.settings.DataStoreMitigationSettings
 import com.app.smishing.data.settings.DataStoreOnboardingProgress
+import com.app.smishing.data.settings.DataStoreTutorialProgress
+import com.app.smishing.domain.tutorial.TutorialState
 import com.app.smishing.domain.mitigation.MitigationDecision
 import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.data.classification.OnDeviceClassifier
@@ -96,6 +98,8 @@ class SmsRoleInstrumentedTest {
      */
     @org.junit.Before
     fun allowNotificationsFromAndroid13() {
+        // El recorrido guiado (#88) pendiente abre una invitación que tapa la pantalla y no deja tocar nada: las pruebas parten de omitido.
+        DataStoreTutorialProgress(context).setState(TutorialState.Skipped)
         if (android.os.Build.VERSION.SDK_INT >= 33 && testName.methodName != NOTIFICATION_PERMISSION_TEST && testName.methodName != "roleFirstThenPermissionsThenAnalysis") {
             Shell.run("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
         }

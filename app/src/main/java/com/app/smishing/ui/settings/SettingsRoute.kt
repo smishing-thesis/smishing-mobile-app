@@ -39,6 +39,7 @@ import com.app.smishing.domain.mitigation.MitigationSettings
 import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
 import com.app.smishing.domain.settings.PermissionStatusReader
+import com.app.smishing.domain.tutorial.TutorialState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,6 +56,9 @@ fun SettingsRoute(
     settings: MitigationSettings,
     permissions: PermissionStatusReader,
     modifier: Modifier = Modifier,
+    /** El recorrido guiado (#88): lo que decidió la persona y qué hace "Ver recorrido". */
+    tutorial: TutorialState? = null,
+    onShowTutorial: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -128,6 +132,8 @@ fun SettingsRoute(
             }
         },
         onDeleteHistory = { confirmDeleteHistory = true },
+        tutorial = tutorial,
+        onShowTutorial = onShowTutorial,
         appVersion = BuildConfig.VERSION_NAME,
         versions = versions,
         extra = { DemoSection() },

@@ -12,6 +12,7 @@ Revisar el tablero antes de empezar: el estado y la prioridad reales están all�
 | Mitigación y reporte | #13 modo manual, automático o desactivado · #14 bloquear remitente · #15 retirar del buzón · #16 marcar como seguro y revertir · #26 modo de reporte · #27 reportar · #28 y #29 acciones en el historial · #31 pantalla de ajustes |
 | Aporte opcional | #18 activar o revocar el aporte · #19 desidentificar antes de compartir |
 | Evaluación | #22 flujo, permisos y reversión · #23 clasificación y comprensión de alertas |
+| Ayuda al usuario | #88 recorrido guiado con Smishy (ver `docs/recorrido-guiado.md`) |
 | Reemplazo de la app de mensajería (fase 1) | #48 recibir y guardar MMS · #49 avisar de cada SMS recibido · #50 leídos y no leídos · #51 borrar mensajes y conversaciones · #52 borrar el historial y su retención · #53 nombre del contacto |
 
 ## Orden sugerido
