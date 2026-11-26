@@ -47,7 +47,7 @@ jobs:
             echo "::error::Faltan la variable SMISHING_BACKEND_URL o el secreto SMISHING_BACKEND_API_KEY. Sin ellos la app no enviaría aportes."
             exit 1
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Work out the version
