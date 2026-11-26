@@ -107,7 +107,7 @@ jobs:
             exit 1
           fi
       - name: Upload the APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-qa-apk
           path: app/build/outputs/apk/qa/app-qa.apk
@@ -115,7 +115,7 @@ jobs:
           if-no-files-found: error
       - name: Upload the R8 mapping
         # El APK está minificado (#24): sin este archivo, los errores que traiga no se pueden traducir a los nombres reales del código. No lleva secretos.
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-qa-mapping
           path: app/build/outputs/mapping/qa/mapping.txt
