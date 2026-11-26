@@ -23,8 +23,9 @@ GitHub lo sube como el artefacto `app-qa-mapping`.
 ## Generar el APK en GitHub (#82)
 
 El workflow **APK de pruebas (qa)** compila el mismo APK en GitHub con la dirección y la clave del backend guardadas en el repositorio, para
-cambiarlas sin un pull request. Se lanza a mano: pestaña **Actions** > *APK de pruebas (qa)* > *Run workflow*. No corre en pull requests ni
-en cada push. El APK queda como artefacto `app-qa-apk` durante 7 días.
+cambiarlas sin un pull request. **Corre solo en cada merge a `quality`** (#90) y también se puede lanzar a mano (pestaña **Actions** > *APK de
+pruebas (qa)* > *Run workflow*). No corre en pull requests. Ver [Ramas, APK de pruebas y releases](#ramas-apk-de-pruebas-y-releases-90).
+El APK queda como artefacto `app-qa-apk` durante 7 días y, desde `quality`, también en el release `qa-latest`.
 
 Se crean una sola vez en **Settings > Secrets and variables > Actions**:
 
@@ -34,8 +35,8 @@ Se crean una sola vez en **Settings > Secrets and variables > Actions**:
 | Clave del backend | `SMISHING_BACKEND_API_KEY` | pestaña *Secrets* |
 | Keystore de depuración compartido, en base64 (#84) | `ANDROID_DEBUG_KEYSTORE_BASE64` | pestaña *Secrets* |
 
-La versión de la aplicación (`versionName`, por ejemplo `1.0-qa`) se ve al final de **Ajustes > Acerca de**, para saber de un vistazo qué
-compilación está instalada.
+La versión de la aplicación se ve al final de **Ajustes > Acerca de**, para saber de un vistazo qué compilación está instalada. Cada APK de
+GitHub trae la suya, `<último release>-qa.<número de ejecución>` (por ejemplo `1.0.0-qa.12`); una compilación local sin propiedades dice `1.0-qa`.
 
 Si falta alguna, el workflow falla con un mensaje claro y no genera APK (así no se entrega uno que no envía aportes ni uno con otra firma).
 
@@ -74,8 +75,56 @@ gh secret set ANDROID_DEBUG_KEYSTORE_BASE64 --repo smishing-thesis/smishing-mobi
   archivo a `~/.android/debug.keystore`. Cambia la clave de depuración de todas tus apps de Android Studio, que se reinstalarán una vez.
 - Es solo para pruebas internas: la clave de distribución es la de #24 y no tiene nada que ver con esta.
 
-**Quién ve la clave:** el APK la lleva dentro, así que quien descargue el artefacto puede extraerla; el repositorio es privado y el artefacto dura
-pocos días. En el computador, una variable de entorno `SMISHING_BACKEND_API_KEY` olvidada gana sobre `local.properties`.
+**Quién ve la clave:** el APK la lleva dentro, así que quien lo descargue puede extraerla. **El repositorio es público** (el plan gratuito no ofrece
+protección de ramas en repositorios privados) y se acepta así (#90): `qa-latest` y los releases se bajan sin iniciar sesión. En el computador, una variable de entorno `SMISHING_BACKEND_API_KEY` olvidada gana sobre `local.properties`.
+
+## Ramas, APK de pruebas y releases (#90)
+
+Dos ramas de larga vida. **`quality`** es la predeterminada: ahí van los PRs de cada issue y ahí se prueba. **`main`** es lo publicado. Las dos están
+protegidas por un ruleset (*Settings > Rules > Rulesets*): solo se entra por PR, con `android-verify` en verde, sin force push ni borrado, y
+solo con "Merge commit". Los tags `v*` tienen su propio ruleset: no se borran ni se mueven.
+
+| Quién | Qué pasa | Resultado |
+|---|---|---|
+| Tú fusionas un PR a `quality` | corre **APK de pruebas (qa)** (unos 5 minutos) | APK `qa` con versión `X.Y.Z-qa.N` en el release **`qa-latest`** |
+| Tú fusionas un PR de `quality` a `main` | corre **Release (main)** | tag `vX.Y.Z` y release con el App Bundle |
+
+### Bajar el último APK de pruebas
+
+Un solo clic, sin entrar a Actions ni descomprimir:
+
+```
+https://github.com/smishing-thesis/smishing-mobile-app/releases/download/qa-latest/smishy-qa.apk
+```
+
+`qa-latest` es **un solo release que se reemplaza en cada merge** (no se acumula uno por merge); sus notas dicen la versión y el commit. Hay que
+esperar a que termine el workflow antes de bajarlo; si no, se baja el APK del merge anterior. Como el APK `qa` siempre se firma con el mismo
+keystore, se instala encima del anterior sin desinstalar. La fecha que GitHub muestra en ese release puede ser vieja: la que vale es la versión.
+
+### Publicar un release
+
+No hace falta cambiar código ni poner tags a mano.
+
+1. Abre un PR de **`quality` a `main`** y ponle una etiqueta: **`major`**, **`minor`** o **`patch`** (gana la más fuerte; sin etiqueta cuenta como `patch`).
+2. Cuando `android-verify` esté en verde, fusiónalo con "Merge commit".
+3. El workflow calcula la versión desde el último tag (`v1.0.0` + `minor` = `1.1.0`), crea el tag, compila el App Bundle `release` (R8, sin demo),
+   y publica el release con las notas generadas a partir de los PRs.
+
+La versión sale del tag y de `-Psmishing.versionName`, `-Psmishing.versionCode` y `-Psmishing.qaBuild` (ver `app/build.gradle.kts`). El número de
+`versionCode` es el de ejecución del workflow, que siempre sube. El cálculo está en `tools/next-version.sh`.
+
+**Firma:** sin la clave de subida (#86) el bundle sale **sin firmar** y las notas del release lo dicen: no sirve para Google Play ni se instala. Para
+probar la app en un teléfono se usa el APK de `qa-latest`. Cuando exista la clave, se crean estos secretos y el siguiente release sale firmado:
+`ANDROID_UPLOAD_KEYSTORE_BASE64` (el `.jks` en base64, como en #84), `SMISHING_UPLOAD_STORE_PASSWORD`, `SMISHING_UPLOAD_KEY_ALIAS` y `SMISHING_UPLOAD_KEY_PASSWORD`.
+
+### Configuración que vive en GitHub (no en el código)
+
+- **Etiquetas** `major`, `minor` y `patch` del repositorio.
+- **Check `solo-desde-quality`** (workflow *Promotion check*): hace que a `main` solo entren PRs de `quality`. Es obligatorio en el ruleset de las ramas,
+  junto con `android-verify`.
+- **`quality` no se sincroniza sola con `main`.** GitHub no deja poner a *GitHub Actions* en la *Bypass list* de un ruleset, así que un workflow no puede
+  empujar a una rama protegida. Después de un release, GitHub dirá que `quality` está "N commits detrás de `main`": son solo los commits de fusión, sin
+  código, y no hace falta hacer nada. El siguiente PR de `quality` a `main` se fusiona igual.
 
 ## Instalar
 

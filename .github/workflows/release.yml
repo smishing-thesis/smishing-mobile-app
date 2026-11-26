@@ -1,0 +1,119 @@
+name: Release (main)
+
+# Cada merge a `main` publica un release de GitHub con su tag (#90). `main` solo recibe PRs de `quality`, así que un release es "promover lo probado".
+#
+# La versión no se escribe en el código: sale del último tag `vX.Y.Z` y de una etiqueta del PR que se fusionó, `major`, `minor` o `patch` (gana la
+# más fuerte; sin ninguna, `patch`). Ver `tools/next-version.sh`. Se compila el tipo `release` (R8, sin herramientas de demo) como App Bundle.
+#
+# Firma: con la clave de subida (#86) el bundle sale firmado. Sin ella sale SIN FIRMAR y las notas del release lo dicen: no sirve para
+# Google Play ni se instala. Los secretos de la clave son opcionales:
+#   - Secreto: ANDROID_UPLOAD_KEYSTORE_BASE64   (el .jks de la clave de subida en base64)
+#   - Secreto: SMISHING_UPLOAD_STORE_PASSWORD, SMISHING_UPLOAD_KEY_ALIAS, SMISHING_UPLOAD_KEY_PASSWORD
+# La dirección y la clave del backend son las mismas que usa el APK de pruebas (ver android-apk-qa.yml).
+#
+# `quality` no se sincroniza sola con `main`: GitHub no deja poner a "GitHub Actions" en la lista de bypass de un ruleset, así que un workflow no puede
+# empujar a una rama protegida. Después de un release `quality` queda "detrás" de `main` solo por el commit de fusión, que no trae código.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SMISHING_BACKEND_URL: ${{ vars.SMISHING_BACKEND_URL }}
+      SMISHING_BACKEND_API_KEY: ${{ secrets.SMISHING_BACKEND_API_KEY }}
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      SMISHING_UPLOAD_STORE_PASSWORD: ${{ secrets.SMISHING_UPLOAD_STORE_PASSWORD }}
+      SMISHING_UPLOAD_KEY_ALIAS: ${{ secrets.SMISHING_UPLOAD_KEY_ALIAS }}
+      SMISHING_UPLOAD_KEY_PASSWORD: ${{ secrets.SMISHING_UPLOAD_KEY_PASSWORD }}
+    steps:
+      - name: Check the backend values
+        run: |
+          if [ -z "$SMISHING_BACKEND_URL" ] || [ -z "$SMISHING_BACKEND_API_KEY" ]; then
+            echo "::error::Faltan la variable SMISHING_BACKEND_URL o el secreto SMISHING_BACKEND_API_KEY. Sin ellos la app no enviaría aportes."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work out the version
+        id: version
+        run: |
+          # Las etiquetas del PR que se fusionó a `main` (puede no haber: un push directo no tiene PR, pero `main` está protegida).
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[].labels[].name' || true)
+          last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          last="${last:-v1.0.0}"
+          version=$(bash tools/next-version.sh "$last" "$labels")
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "::error::El tag v$version ya existe."
+            exit 1
+          fi
+          echo "last=$last" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Último tag: $last. Etiquetas del PR: ${labels:-ninguna}. Versión nueva: $version"
+      - name: Prepare the upload key (optional)
+        run: |
+          if [ -n "$UPLOAD_KEYSTORE_BASE64" ]; then
+            printf '%s' "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-key.jks"
+            echo "SMISHING_UPLOAD_STORE_FILE=$RUNNER_TEMP/upload-key.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No hay clave de subida (#86): el bundle saldrá sin firmar."
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Build the release bundle
+        run: >
+          ./gradlew bundleRelease
+          -Psmishing.versionName=${{ steps.version.outputs.version }}
+          -Psmishing.versionCode=${{ github.run_number }}
+          --warning-mode fail --stacktrace
+      - name: Check the signature
+        id: signed
+        run: |
+          if jarsigner -verify app/build/outputs/bundle/release/app-release.aab 2>&1 | grep -q "jar verified"; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish the release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LAST: ${{ steps.version.outputs.last }}
+          SIGNED: ${{ steps.signed.outputs.signed }}
+        run: |
+          mkdir dist
+          cp app/build/outputs/bundle/release/app-release.aab "dist/smishy-$VERSION.aab"
+          cp app/build/outputs/mapping/release/mapping.txt "dist/mapping-$VERSION.txt"
+          {
+            echo "App Bundle de **Smishy $VERSION** (tipo \`release\`, con R8 y sin herramientas de demo), compilado desde \`main\` en el commit \`${GITHUB_SHA::7}\`."
+            echo
+            if [ "$SIGNED" = "true" ]; then
+              echo "Firmado con la clave de subida. \`mapping-$VERSION.txt\` sirve para leer los errores del release (R8)."
+            else
+              echo "> **Sin firmar.** Todavía no hay clave de subida (#86): este bundle no sirve para Google Play ni se puede instalar en un teléfono. Para probar la app en un teléfono, usa el APK del release \`qa-latest\`."
+              echo
+              echo "\`mapping-$VERSION.txt\` sirve para leer los errores del release (R8)."
+            fi
+          } > header.md
+          gh release create "v$VERSION" "dist/smishy-$VERSION.aab" "dist/mapping-$VERSION.txt" \
+            --target "$GITHUB_SHA" --title "Smishy $VERSION" \
+            --generate-notes --notes-start-tag "$LAST" --notes "$(cat header.md)"

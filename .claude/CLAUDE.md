@@ -35,7 +35,9 @@ en inglés y el campo Priority de la organización.
 ## Reglas de trabajo
 
 - Explicar antes de aplicar cambios. No hacer commit ni push salvo que se pida. No agregar a Claude como coautor.
-- Una rama y un PR por issue, nunca commits en `main`. Rama `<n>-<tema-corto>` y `Closes #<n>` en el PR.
+- Una rama y un PR por issue, nunca commits directos en `quality` ni en `main` (las dos están protegidas: solo se entra por PR y con `android-verify` en verde,
+  y solo se permite "Merge commit"). El PR va contra `quality`, la rama predeterminada; `main` es lo publicado y solo recibe PRs desde `quality`.
+  Rama `<n>-<tema-corto>` y `Closes #<n>` en el PR.
 - Ningún archivo versionado debe contener texto de mensajes reales, números ni nombres.
 - No registrar el contenido de los SMS en logs, ni siquiera en depuración.
 - Pedir solo los permisos que una historia justifique; cada permiso nuevo se documenta con su motivo.
