@@ -1,0 +1,14 @@
+# Dependabot: PRs semanales para actualizar las dependencias de Gradle y las acciones de GitHub (#90, #63).
+# Los PRs van a la rama predeterminada (`quality`) y pasan por el CI como cualquier otro.
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
