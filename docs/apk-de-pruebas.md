@@ -108,7 +108,7 @@ No hace falta cambiar código ni poner tags a mano.
 1. Abre un PR de **`quality` a `main`** y ponle una etiqueta: **`major`**, **`minor`** o **`patch`** (gana la más fuerte; sin etiqueta cuenta como `patch`).
 2. Cuando `android-verify` esté en verde, fusiónalo con "Merge commit".
 3. El workflow calcula la versión desde el último tag (`v1.0.0` + `minor` = `1.1.0`), crea el tag, compila el App Bundle `release` (R8, sin demo),
-   publica el release con las notas generadas a partir de los PRs, y deja `quality` al día con `main`.
+   y publica el release con las notas generadas a partir de los PRs.
 
 La versión sale del tag y de `-Psmishing.versionName`, `-Psmishing.versionCode` y `-Psmishing.qaBuild` (ver `app/build.gradle.kts`). El número de
 `versionCode` es el de ejecución del workflow, que siempre sube. El cálculo está en `tools/next-version.sh`.
@@ -120,10 +120,11 @@ probar la app en un teléfono se usa el APK de `qa-latest`. Cuando exista la cla
 ### Configuración que vive en GitHub (no en el código)
 
 - **Etiquetas** `major`, `minor` y `patch` del repositorio.
-- **Bypass list del ruleset de las ramas:** para dejar `quality` al día, el workflow de release empuja a una rama protegida, así que
-  *GitHub Actions* tiene que estar en la lista de bypass. Si no lo está, el release se publica igual y ese paso solo avisa.
-- **Check `solo-desde-quality`** (workflow *Promotion check*): hace que a `main` solo entren PRs de `quality`. Para que sea obligatorio, agrégalo a
-  *Require status checks* del ruleset.
+- **Check `solo-desde-quality`** (workflow *Promotion check*): hace que a `main` solo entren PRs de `quality`. Es obligatorio en el ruleset de las ramas,
+  junto con `android-verify`.
+- **`quality` no se sincroniza sola con `main`.** GitHub no deja poner a *GitHub Actions* en la *Bypass list* de un ruleset, así que un workflow no puede
+  empujar a una rama protegida. Después de un release, GitHub dirá que `quality` está "N commits detrás de `main`": son solo los commits de fusión, sin
+  código, y no hace falta hacer nada. El siguiente PR de `quality` a `main` se fusiona igual.
 
 ## Instalar
 

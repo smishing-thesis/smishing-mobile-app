@@ -11,8 +11,8 @@ name: Release (main)
 #   - Secreto: SMISHING_UPLOAD_STORE_PASSWORD, SMISHING_UPLOAD_KEY_ALIAS, SMISHING_UPLOAD_KEY_PASSWORD
 # La dirección y la clave del backend son las mismas que usa el APK de pruebas (ver android-apk-qa.yml).
 #
-# Al terminar, `quality` recibe el commit de fusión de `main` para que no queden desfasadas. Empujar a `quality` (protegida) necesita que
-# "GitHub Actions" esté en la lista de bypass del ruleset; si no lo está, el release igual se publica y este paso solo avisa.
+# `quality` no se sincroniza sola con `main`: GitHub no deja poner a "GitHub Actions" en la lista de bypass de un ruleset, así que un workflow no puede
+# empujar a una rama protegida. Después de un release `quality` queda "detrás" de `main` solo por el commit de fusión, que no trae código.
 on:
   push:
     branches: [main]
@@ -117,17 +117,3 @@ jobs:
           gh release create "v$VERSION" "dist/smishy-$VERSION.aab" "dist/mapping-$VERSION.txt" \
             --target "$GITHUB_SHA" --title "Smishy $VERSION" \
             --generate-notes --notes-start-tag "$LAST" --notes "$(cat header.md)"
-      - name: Bring quality up to date with main
-        # Si falla, el release ya está publicado: solo avisa.
-        continue-on-error: true
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin quality
-          git checkout -B quality origin/quality
-          git merge --no-edit -m "Merge main into quality after release v$VERSION" "$GITHUB_SHA"
-          if ! git push origin quality; then
-            echo "::warning::No se pudo actualizar quality. Agrega 'GitHub Actions' a la lista de bypass del ruleset de las ramas (ver docs/apk-de-pruebas.md)."
-          fi
