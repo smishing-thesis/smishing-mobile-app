@@ -22,6 +22,10 @@ import com.app.smishing.domain.mitigation.MitigationMode
 import com.app.smishing.domain.settings.AppPermission
 import com.app.smishing.domain.settings.PermissionStatus
 import com.app.smishing.domain.settings.ProtectionStatus
+import com.app.smishing.domain.tutorial.TutorialState
+import com.app.smishing.ui.designsystem.components.ActionRow
+import com.app.smishing.ui.designsystem.components.coachmarkTarget
+import com.app.smishing.ui.tutorial.TutorialTarget
 import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.PermissionRow
 import com.app.smishing.ui.designsystem.components.RadioOption
@@ -56,6 +60,9 @@ fun SettingsScreen(
     onContacts: (granted: Boolean) -> Unit = {},
     /** "Borrar todo el historial" (#52): pedir confirmación. */
     onDeleteHistory: () -> Unit = {},
+    /** Lo que decidió la persona del recorrido guiado (#88), o `null` mientras se lee (no se muestra la sección), y "Ver recorrido". */
+    tutorial: TutorialState? = null,
+    onShowTutorial: () -> Unit = {},
     /** La versión de la aplicación (`versionName`), para saber de un vistazo qué compilación es (#84); `null` no la muestra. */
     appVersion: String? = null,
     /** Las versiones del modelo y del preprocesamiento en uso (#35), o `null` si no hay modelo activo (no se muestra esa línea). */
@@ -76,6 +83,7 @@ fun SettingsScreen(
                     description = stringResource(descriptionOf(option)),
                     selected = mode == option,
                     onSelect = { onModeChange(option) },
+                    modifier = Modifier.coachmarkTarget(targetOf(option)),
                 )
             }
 
@@ -144,6 +152,16 @@ fun SettingsScreen(
                     onCheckedChange = onContributionChange,
                 )
             }
+            if (tutorial != null) {
+                HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
+                SectionLabel(stringResource(R.string.settings_help_title))
+                ActionRow(
+                    title = stringResource(R.string.settings_tutorial_title),
+                    description = stringResource(descriptionOf(tutorial)),
+                    buttonLabel = stringResource(R.string.settings_tutorial_button),
+                    onClick = onShowTutorial,
+                )
+            }
             if (appVersion != null || versions != null) {
                 HorizontalDivider(color = SmishingPalette.Border, modifier = Modifier.padding(vertical = Spacing.Xs))
                 SectionLabel(stringResource(R.string.settings_about_title))
@@ -175,6 +193,17 @@ private fun titleOf(mode: MitigationMode) = when (mode) {
 private fun descriptionOf(mode: MitigationMode) = when (mode) {
     MitigationMode.Automatic -> R.string.settings_mode_automatic_description
     MitigationMode.Ask -> R.string.settings_mode_ask_description
+}
+
+private fun targetOf(mode: MitigationMode) = when (mode) {
+    MitigationMode.Automatic -> TutorialTarget.ModeAutomatic
+    MitigationMode.Ask -> TutorialTarget.ModeAsk
+}
+
+private fun descriptionOf(state: TutorialState) = when (state) {
+    TutorialState.Pending -> R.string.settings_tutorial_pending
+    TutorialState.Done -> R.string.settings_tutorial_done
+    TutorialState.Skipped -> R.string.settings_tutorial_skipped
 }
 
 private fun labelOf(permission: AppPermission) = when (permission) {

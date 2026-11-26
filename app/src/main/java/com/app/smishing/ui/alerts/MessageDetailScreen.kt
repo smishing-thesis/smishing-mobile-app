@@ -44,6 +44,8 @@ import com.app.smishing.ui.designsystem.components.RiskReasonRow
 import com.app.smishing.ui.designsystem.components.SectionLabel
 import com.app.smishing.ui.designsystem.components.SmishingTopBar
 import com.app.smishing.ui.designsystem.components.StatusBanner
+import com.app.smishing.ui.designsystem.components.coachmarkTarget
+import com.app.smishing.ui.tutorial.TutorialTarget
 import com.app.smishing.ui.designsystem.components.TopBarStyle
 import com.app.smishing.ui.designsystem.icons.SmishingIcons
 import com.app.smishing.ui.designsystem.theme.SmishingPalette
@@ -137,10 +139,17 @@ private fun Loaded(state: MessageDetailState.Loaded, actions: DetailActions) {
         } else {
             val assessment = result.assessment
             var confirming by remember { mutableStateOf(false) }
-            StatusBanner(statusOf(assessment.level), stringResource(bannerText(assessment.level)))
+            StatusBanner(
+                statusOf(assessment.level),
+                stringResource(bannerText(assessment.level)),
+                modifier = Modifier.coachmarkTarget(TutorialTarget.DetailBanner),
+            )
             Original(state.body)
             SectionLabel(stringResource(R.string.detail_why_label))
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.Sm)) { Reasons(assessment) }
+            Column(
+                modifier = Modifier.coachmarkTarget(TutorialTarget.DetailReasons),
+                verticalArrangement = Arrangement.spacedBy(Spacing.Sm),
+            ) { Reasons(assessment) }
             Text(
                 stringResource(R.string.detail_disclaimer),
                 style = SmishingTypography.Note,
