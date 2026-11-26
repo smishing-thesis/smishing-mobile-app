@@ -38,6 +38,18 @@ fun uploadKeySetting(property: String, environmentVariable: String): String? =
     listOf(System.getenv(environmentVariable), keystoreProperties.getProperty(property))
         .firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) }
 
+// La versión (#90) no se cambia en el código para cada release: la ponen los workflows de GitHub con propiedades de Gradle.
+//   -Psmishing.versionName=1.2.0   el nombre de la versión (el del tag, sin la "v"); sin ella, "1.0"
+//   -Psmishing.versionCode=57      el número que Android compara para saber cuál es más nueva; sin ella, 1
+//   -Psmishing.qaBuild=57          solo para `qa`: agrega ".57" al sufijo, que queda "-qa.57" (por ejemplo, 1.2.0-qa.57)
+// Una compilación local sin propiedades sigue siendo "1.0" / "1.0-qa".
+fun versionSetting(property: String): String? =
+    (project.findProperty(property) as String?)?.trim()?.takeIf(String::isNotEmpty)
+
+val appVersionName = versionSetting("smishing.versionName") ?: "1.0"
+val appVersionCode = versionSetting("smishing.versionCode")?.toIntOrNull() ?: 1
+val qaBuildNumber = versionSetting("smishing.qaBuild")
+
 fun stringField(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
@@ -48,8 +60,8 @@ android {
         applicationId = "com.app.smishing"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -96,7 +108,7 @@ android {
         create("qa") {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
-            versionNameSuffix = "-qa"
+            versionNameSuffix = "-qa" + (qaBuildNumber?.let { ".$it" } ?: "")
             matchingFallbacks += "release"
         }
     }
