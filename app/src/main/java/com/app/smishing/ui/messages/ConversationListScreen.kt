@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.contacts.foldForSearch
 import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.isMarkedSafe
 import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.risk.RiskLevel
@@ -124,6 +125,7 @@ fun ConversationListScreen(
                 else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(shown, key = { it.threadId }) { conversation ->
                         val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
+                        val markedSafe = isMarkedSafe(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
                             sender = displayName(conversation.address),
                             time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
@@ -135,12 +137,18 @@ fun ConversationListScreen(
                             photoUri = photoOf(conversation.address),
                             selectionMode = selecting,
                             selected = conversation.threadId in selected,
-                            warning = when (notice) {
-                                RiskLevel.High -> stringResource(R.string.messages_warning_high)
-                                RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                            warning = when {
+                                notice == RiskLevel.High -> stringResource(R.string.messages_warning_high)
+                                notice == RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                                // Lo que dijo la persona, con su marca de manual (#102).
+                                markedSafe -> stringResource(R.string.messages_warning_safe)
                                 else -> null
                             },
-                            warningStatus = if (notice == RiskLevel.High) Status.Danger else Status.Suspicious,
+                            warningStatus = when {
+                                notice == RiskLevel.High -> Status.Danger
+                                markedSafe -> Status.Safe
+                                else -> Status.Suspicious
+                            },
                             unreadCount = conversation.unreadCount,
                             unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )

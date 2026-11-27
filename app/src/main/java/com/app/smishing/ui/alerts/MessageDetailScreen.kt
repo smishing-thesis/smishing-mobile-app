@@ -29,6 +29,7 @@ import com.app.smishing.domain.mitigation.ActionNote
 import com.app.smishing.domain.mitigation.ActionStatus
 import com.app.smishing.domain.mitigation.ActionType
 import com.app.smishing.domain.mitigation.MitigationAction
+import com.app.smishing.domain.mitigation.undoneOnMarkSafe
 import com.app.smishing.domain.risk.Recommendation
 import com.app.smishing.domain.risk.RiskAssessment
 import com.app.smishing.domain.risk.RiskLevel
@@ -170,10 +171,10 @@ private fun Loaded(state: MessageDetailState.Loaded, actions: DetailActions) {
                 )
             }
             if (confirming) {
-                // "¿Está seguro?": marcar como seguro desbloquea al número y devuelve el mensaje, así que se confirma antes.
+                // "¿Está seguro?": el aviso dice solo lo que se va a deshacer de verdad (#102), según las acciones que sí se tomaron.
                 ConfirmDialog(
                     title = stringResource(R.string.detail_confirm_title),
-                    message = stringResource(R.string.detail_confirm_text),
+                    message = stringResource(confirmText(state.protection?.actions.orEmpty())),
                     confirmLabel = stringResource(R.string.detail_confirm_yes),
                     onConfirm = {
                         confirming = false
@@ -210,6 +211,16 @@ private fun Reasons(assessment: RiskAssessment) {
             text = stringResource(reasonText(type)),
             detail = stringResource(R.string.detail_found_in_message, fragment),
         )
+    }
+}
+
+private fun confirmText(actions: Map<ActionType, MitigationAction>): Int {
+    val undone = undoneOnMarkSafe(actions)
+    return when {
+        ActionType.BlockSender in undone && ActionType.RemoveMessage in undone -> R.string.detail_confirm_text_both
+        ActionType.BlockSender in undone -> R.string.detail_confirm_text_block
+        ActionType.RemoveMessage in undone -> R.string.detail_confirm_text_remove
+        else -> R.string.detail_confirm_text_none
     }
 }
 

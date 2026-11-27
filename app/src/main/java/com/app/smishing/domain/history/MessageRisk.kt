@@ -30,3 +30,10 @@ fun riskNotice(risks: Map<Long, MessageRisk>, messageId: Long, body: String): Ri
 
 /** Si hay un análisis **de ese mensaje** (mismo id y mismo texto, por lo que se dijo arriba). Si no, el mensaje está sin analizar (#59). */
 fun isAnalyzed(risks: Map<Long, MessageRisk>, messageId: Long, body: String): Boolean = risks[messageId]?.body == body
+
+/**
+ * Si la persona marcó **ese mensaje** como seguro (#102): se muestra en la lista y en la conversación como lo que dijo la persona,
+ * no como algo que la app afirme. Misma regla de id y texto que [riskNotice]; un mensaje de riesgo bajo nunca se marca (no hay botón).
+ */
+fun isMarkedSafe(risks: Map<Long, MessageRisk>, messageId: Long, body: String): Boolean =
+    risks[messageId]?.let { it.body == body && it.markedSafe && it.level != RiskLevel.Low } == true

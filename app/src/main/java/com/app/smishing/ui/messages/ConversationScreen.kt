@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.app.smishing.R
 import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.isMarkedSafe
 import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.ConversationMessage
 import com.app.smishing.domain.risk.RiskLevel
@@ -151,6 +152,16 @@ fun ConversationScreen(
                             status = if (level == RiskLevel.High) Status.Danger else Status.Suspicious,
                             title = stringResource(if (level == RiskLevel.High) R.string.messages_notice_high else R.string.messages_notice_medium),
                             actionLabel = stringResource(R.string.messages_notice_action),
+                            onAction = { risks[message.id]?.let { onSeeRisk(it.recordId) } },
+                            modifier = Modifier.padding(bottom = Spacing.Xs),
+                        )
+                    }
+                    if (!outgoing && isMarkedSafe(risks, message.id, message.body)) {
+                        // El mismo aviso, en verde y con la marca de manual: es lo que dijo la persona, no un veredicto de la app (#102).
+                        RiskNotice(
+                            status = Status.Safe,
+                            title = stringResource(R.string.messages_notice_safe),
+                            actionLabel = stringResource(R.string.messages_notice_safe_action),
                             onAction = { risks[message.id]?.let { onSeeRisk(it.recordId) } },
                             modifier = Modifier.padding(bottom = Spacing.Xs),
                         )

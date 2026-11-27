@@ -41,6 +41,9 @@
     <string name="messages_notice_high">Parece una estafa</string>
     <string name="messages_notice_medium">Parece sospechoso</string>
     <string name="messages_notice_action">Ver riesgo</string>
+    <string name="messages_warning_safe">Sin señales (manual)</string>
+    <string name="messages_notice_safe">Sin señales (manual)</string>
+    <string name="messages_notice_safe_action">Ver detalle</string>
     <string name="messages_not_analyzed">No analizado</string>
     <string name="messages_analyze">Analizar</string>
     <string name="messages_analyzing">Analizando…</string>
@@ -156,7 +159,10 @@
     <string name="detail_reverted_block_already">El número ya estaba bloqueado antes y se dejó como estaba</string>
     <string name="detail_reverted_remove">Mensaje restaurado a su bandeja</string>
     <string name="detail_confirm_title">¿Está seguro?</string>
-    <string name="detail_confirm_text">Si marca este mensaje como seguro, desbloqueará al número y devolverá el mensaje a su buzón.</string>
+    <string name="detail_confirm_text_none">Este mensaje será marcado como seguro.</string>
+    <string name="detail_confirm_text_block">Si marca este mensaje como seguro, desbloqueará al número y dejaremos de avisarle sobre el mensaje.</string>
+    <string name="detail_confirm_text_remove">Si marca este mensaje como seguro, devolverá el mensaje a su buzón y dejaremos de avisarle sobre él.</string>
+    <string name="detail_confirm_text_both">Si marca este mensaje como seguro, desbloqueará al número y devolverá el mensaje a su buzón.</string>
     <string name="detail_confirm_cancel">Cancelar</string>
     <string name="detail_confirm_yes">Sí, es seguro</string>
     <string name="detail_decide_title">¿Prefiere decidir antes de actuar?</string>
@@ -206,6 +212,7 @@
     <string name="history_chip_high">Posible estafa</string>
     <string name="history_chip_medium">Sospechoso</string>
     <string name="history_chip_low">Sin señales</string>
+    <string name="history_chip_safe_manual">Sin señales (manual)</string>
     <string name="history_mark_blocked">Número bloqueado</string>
     <string name="history_mark_removed">Mensaje quitado</string>
     <string name="history_mark_failed">Acción fallida</string>
