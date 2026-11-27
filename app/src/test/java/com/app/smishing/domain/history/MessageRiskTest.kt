@@ -44,6 +44,23 @@ class MessageRiskTest {
         assertNull(notice(risk(RiskLevel.High, text = "Otro mensaje"), text = body))
     }
 
+    private fun markedSafe(vararg risks: MessageRisk, messageId: Long = 7, text: String = body) =
+        isMarkedSafe(risks.associateBy { it.messageId }, messageId, text)
+
+    @Test
+    fun aMessageThePersonMarkedAsSafeIsShownAsSuchAndOtherMessagesAreNot() {
+        assertEquals(true, markedSafe(risk(RiskLevel.Medium, markedSafe = true)))
+        assertEquals(true, markedSafe(risk(RiskLevel.High, markedSafe = true)))
+        assertEquals(false, markedSafe(risk(RiskLevel.Medium)))
+        assertEquals(false, markedSafe(risk(RiskLevel.Low)))
+        assertEquals(false, markedSafe(risk(RiskLevel.High, markedSafe = true), messageId = 99))
+    }
+
+    @Test
+    fun theSafeMarkOfAnotherMessageWithTheSameIdIsIgnored() {
+        assertEquals(false, markedSafe(risk(RiskLevel.High, markedSafe = true, text = "Otro mensaje"), text = body))
+    }
+
     @Test
     fun theStringFormNeverShowsTheText() {
         assertEquals(false, body in risk(RiskLevel.High).toString())

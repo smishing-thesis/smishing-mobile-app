@@ -157,7 +157,6 @@ fun SettingsScreen(
                 SectionLabel(stringResource(R.string.settings_help_title))
                 ActionRow(
                     title = stringResource(R.string.settings_tutorial_title),
-                    description = stringResource(descriptionOf(tutorial)),
                     buttonLabel = stringResource(R.string.settings_tutorial_button),
                     onClick = onShowTutorial,
                 )
@@ -198,12 +197,6 @@ private fun descriptionOf(mode: MitigationMode) = when (mode) {
 private fun targetOf(mode: MitigationMode) = when (mode) {
     MitigationMode.Automatic -> TutorialTarget.ModeAutomatic
     MitigationMode.Ask -> TutorialTarget.ModeAsk
-}
-
-private fun descriptionOf(state: TutorialState) = when (state) {
-    TutorialState.Pending -> R.string.settings_tutorial_pending
-    TutorialState.Done -> R.string.settings_tutorial_done
-    TutorialState.Skipped -> R.string.settings_tutorial_skipped
 }
 
 private fun labelOf(permission: AppPermission) = when (permission) {

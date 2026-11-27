@@ -1,0 +1,31 @@
+name: Promotion check
+
+# `main` solo recibe PRs que vienen de `quality` (#90): un release es promover lo que ya se probó. Un ruleset no puede decir "de qué rama viene el
+# PR", así que lo comprueba este workflow. En un PR a cualquier otra rama no hace nada y pasa. Para que sea obligatorio, hay que agregar el
+# check `solo-desde-quality` al ruleset de `main` (ver docs/apk-de-pruebas.md).
+on:
+  pull_request:
+    branches: [main, quality]
+
+permissions:
+  contents: read
+
+jobs:
+  from-quality:
+    name: solo-desde-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Only quality can go into main
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$BASE" = "main" ]; then
+            if [ "$HEAD" != "quality" ] || [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+              echo "::error::A main solo entran PRs de la rama quality de este repositorio. Este viene de $HEAD_REPO:$HEAD."
+              exit 1
+            fi
+          fi
+          echo "Sin problema: $HEAD_REPO:$HEAD -> $BASE"

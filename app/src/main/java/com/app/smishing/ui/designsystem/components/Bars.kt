@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -43,6 +45,8 @@ import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingShapes
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 enum class TopBarStyle {
     /** Barra azul oscura, con texto blanco: Nuevo mensaje, Historial, Detalle, Ajustes. */
@@ -125,8 +129,18 @@ fun SearchAction(description: String, onClick: () -> Unit, tint: Color = Smishin
     }
 }
 
-/** Una pestaña de la navegación inferior. [target] es la clave con que un coachmark puede señalarla (#88); sin ella no se señala. */
-data class NavItem(val label: String, val icon: ImageVector, val target: Any? = null)
+/**
+ * Una pestaña de la navegación inferior. [target] es la clave con que un coachmark puede señalarla (#88); sin ella no se señala.
+ * [badge] es la cantidad de elementos nuevos: con más de 0 el icono lleva un círculo con el número ("99+" desde 100), y
+ * [badgeDescription] es lo que dice el lector de pantalla de ese círculo.
+ */
+data class NavItem(
+    val label: String,
+    val icon: ImageVector,
+    val target: Any? = null,
+    val badge: Int = 0,
+    val badgeDescription: String? = null,
+)
 
 /** Navegación inferior: Inicio, Mensajes, Historial y Ajustes. */
 @Composable
@@ -145,7 +159,21 @@ fun SmishingBottomBar(
             NavigationBarItem(
                 selected = index == selectedIndex,
                 onClick = { onSelect(index) },
-                icon = { Icon(item.icon, contentDescription = null) },
+                icon = {
+                    if (item.badge > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    containerColor = SmishingPalette.Primary,
+                                    contentColor = Color.White,
+                                    modifier = item.badgeDescription?.let { d -> Modifier.semantics { contentDescription = d } } ?: Modifier,
+                                ) { Text(if (item.badge > 99) "99+" else item.badge.toString(), style = SmishingTypography.LabelSmall) }
+                            },
+                        ) { Icon(item.icon, contentDescription = null) }
+                    } else {
+                        Icon(item.icon, contentDescription = null)
+                    }
+                },
                 label = { Text(item.label, style = SmishingTypography.LabelSmall) },
                 alwaysShowLabel = true,
                 modifier = Modifier.coachmarkTarget(item.target),

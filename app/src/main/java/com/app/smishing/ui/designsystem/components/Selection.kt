@@ -25,11 +25,12 @@ fun RowScope.SelectAction(style: TopBarStyle, onClick: () -> Unit) {
 
 /**
  * La barra mientras se eligen elementos (#51, #52): "N seleccionados", la flecha para cancelar, "Todos" y "Borrar". "Borrar" no se puede
- * tocar mientras no haya ninguno elegido.
+ * tocar mientras no haya ninguno elegido. Con todos ya elegidos ([allSelected]), "Todos" pasa a "Ninguno" y quita la selección.
  */
 @Composable
 fun SelectionTopBar(
     count: Int,
+    allSelected: Boolean,
     style: TopBarStyle,
     onCancel: () -> Unit,
     onSelectAll: () -> Unit,
@@ -45,7 +46,10 @@ fun SelectionTopBar(
         actions = {
             val color = contentColor(style)
             TextButton(onClick = onSelectAll, colors = ButtonDefaults.textButtonColors(contentColor = color)) {
-                Text(stringResource(R.string.history_select_all), style = SmishingTypography.LabelMedium)
+                Text(
+                    stringResource(if (allSelected) R.string.history_select_none else R.string.history_select_all),
+                    style = SmishingTypography.LabelMedium,
+                )
             }
             TextButton(
                 onClick = onDelete,

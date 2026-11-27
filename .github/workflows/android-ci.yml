@@ -20,19 +20,19 @@ jobs:
     # Sin secretos: no hay local.properties, así que la app compila sin la dirección ni la clave del backend (#72) y los aportes
     # solo quedan en la cola. Las pruebas de dispositivo (emulador) no corren aquí.
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Accept Android SDK licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Unit tests and debug build
         run: ./gradlew testDebugUnitTest assembleDebug --warning-mode fail --stacktrace
       - name: Upload test reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-reports
           path: |

@@ -1,5 +1,6 @@
 package com.app.smishing.ui.messages
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import com.app.smishing.R
 import com.app.smishing.domain.contacts.foldForSearch
 import com.app.smishing.domain.history.MessageRisk
+import com.app.smishing.domain.history.isMarkedSafe
 import com.app.smishing.domain.history.riskNotice
 import com.app.smishing.domain.messaging.Conversation
 import com.app.smishing.domain.risk.RiskLevel
@@ -78,6 +81,8 @@ fun ConversationListScreen(
     photoOf: (String) -> String? = { null },
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
+    // La hora sigue el reloj del teléfono: 24 horas ("18:00") o 12 horas ("6:00 pm").
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
     var query by rememberSaveable { mutableStateOf("") }
     val shown = remember(conversations, query, displayName) {
         val q = foldForSearch(query.trim())
@@ -94,6 +99,7 @@ fun ConversationListScreen(
             if (selecting) {
                 SelectionTopBar(
                     count = selected.size,
+                    allSelected = !conversations.isNullOrEmpty() && selected.size >= conversations.size,
                     style = TopBarStyle.Primary,
                     onCancel = onCancelSelection,
                     onSelectAll = onSelectAll,
@@ -124,9 +130,10 @@ fun ConversationListScreen(
                 else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(shown, key = { it.threadId }) { conversation ->
                         val notice = riskNotice(risks, conversation.lastMessageId, conversation.snippet)
+                        val markedSafe = isMarkedSafe(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
                             sender = displayName(conversation.address),
-                            time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
+                            time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale, is24Hour),
                             snippet = conversation.snippet,
                             onClick = { if (selecting) onToggle(conversation) else onOpen(conversation) },
                             onLongClick = { if (!selecting) onStartSelecting(conversation) },
@@ -135,12 +142,18 @@ fun ConversationListScreen(
                             photoUri = photoOf(conversation.address),
                             selectionMode = selecting,
                             selected = conversation.threadId in selected,
-                            warning = when (notice) {
-                                RiskLevel.High -> stringResource(R.string.messages_warning_high)
-                                RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                            warning = when {
+                                notice == RiskLevel.High -> stringResource(R.string.messages_warning_high)
+                                notice == RiskLevel.Medium -> stringResource(R.string.messages_warning_medium)
+                                // Lo que dijo la persona, con su marca de manual (#102).
+                                markedSafe -> stringResource(R.string.messages_warning_safe)
                                 else -> null
                             },
-                            warningStatus = if (notice == RiskLevel.High) Status.Danger else Status.Suspicious,
+                            warningStatus = when {
+                                notice == RiskLevel.High -> Status.Danger
+                                markedSafe -> Status.Safe
+                                else -> Status.Suspicious
+                            },
                             unreadCount = conversation.unreadCount,
                             unreadDescription = stringResource(R.string.messages_unread_description, conversation.unreadCount),
                         )

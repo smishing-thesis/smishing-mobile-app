@@ -32,6 +32,7 @@
     <!-- Conversaciones (#5) -->
     <string name="messages_title">Mensajes</string>
     <string name="messages_yesterday">Ayer</string>
+    <string name="messages_today">Hoy</string>
     <string name="conversation_subtitle">SMS</string>
     <string name="conversation_back">Volver a mensajes</string>
     <string name="message_received">Recibido</string>
@@ -41,6 +42,9 @@
     <string name="messages_notice_high">Parece una estafa</string>
     <string name="messages_notice_medium">Parece sospechoso</string>
     <string name="messages_notice_action">Ver riesgo</string>
+    <string name="messages_warning_safe">Sin señales (manual)</string>
+    <string name="messages_notice_safe">Sin señales (manual)</string>
+    <string name="messages_notice_safe_action">Ver detalle</string>
     <string name="messages_not_analyzed">No analizado</string>
     <string name="messages_analyze">Analizar</string>
     <string name="messages_analyzing">Analizando…</string>
@@ -156,7 +160,10 @@
     <string name="detail_reverted_block_already">El número ya estaba bloqueado antes y se dejó como estaba</string>
     <string name="detail_reverted_remove">Mensaje restaurado a su bandeja</string>
     <string name="detail_confirm_title">¿Está seguro?</string>
-    <string name="detail_confirm_text">Si marca este mensaje como seguro, desbloqueará al número y devolverá el mensaje a su buzón.</string>
+    <string name="detail_confirm_text_none">Este mensaje será marcado como seguro.</string>
+    <string name="detail_confirm_text_block">Si marca este mensaje como seguro, desbloqueará al número y dejaremos de avisarle sobre el mensaje.</string>
+    <string name="detail_confirm_text_remove">Si marca este mensaje como seguro, devolverá el mensaje a su buzón y dejaremos de avisarle sobre él.</string>
+    <string name="detail_confirm_text_both">Si marca este mensaje como seguro, desbloqueará al número y devolverá el mensaje a su buzón.</string>
     <string name="detail_confirm_cancel">Cancelar</string>
     <string name="detail_confirm_yes">Sí, es seguro</string>
     <string name="detail_decide_title">¿Prefiere decidir antes de actuar?</string>
@@ -171,6 +178,7 @@
     </plurals>
     <string name="history_select">Seleccionar</string>
     <string name="history_select_all">Todos</string>
+    <string name="history_select_none">Ninguno</string>
     <string name="history_cancel_selection">Cancelar la selección</string>
     <plurals name="delete_records_title">
         <item quantity="one">¿Borrar este análisis?</item>
@@ -180,7 +188,7 @@
     <string name="delete_records_restorable">Si la aplicación retiró algún mensaje de su buzón, ya no podrá restaurarlo.</string>
     <string name="settings_about_title">Acerca de</string>
     <string name="settings_app_version">Versión de la aplicación %1$s</string>
-    <string name="settings_detection_versions">Detección %1$s · Preparación del texto %2$s</string>
+    <string name="settings_detection_versions">Modelo %1$s · Preprocesamiento %2$s</string>
     <string name="settings_privacy_title">Privacidad</string>
     <string name="settings_privacy_text">El historial guarda el texto de los mensajes en este teléfono hasta que usted lo borre.</string>
     <string name="settings_contribution_title">Compartir datos de forma anónima</string>
@@ -206,6 +214,7 @@
     <string name="history_chip_high">Posible estafa</string>
     <string name="history_chip_medium">Sospechoso</string>
     <string name="history_chip_low">Sin señales</string>
+    <string name="history_chip_safe_manual">Sin señales (manual)</string>
     <string name="history_mark_blocked">Número bloqueado</string>
     <string name="history_mark_removed">Mensaje quitado</string>
     <string name="history_mark_failed">Acción fallida</string>
@@ -292,8 +301,5 @@
     <string name="tutorial_sample_data">confirme sus datos</string>
     <string name="settings_help_title">Ayuda</string>
     <string name="settings_tutorial_title">Recorrido de la aplicación</string>
-    <string name="settings_tutorial_pending">Todavía no lo vio. Puede verlo cuando quiera.</string>
-    <string name="settings_tutorial_done">Ya lo vio. Puede verlo otra vez.</string>
-    <string name="settings_tutorial_skipped">Lo omitió. Puede verlo cuando quiera.</string>
     <string name="settings_tutorial_button">Ver recorrido</string>
 </resources>
