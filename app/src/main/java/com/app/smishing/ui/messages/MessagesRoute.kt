@@ -271,6 +271,9 @@ fun MessagesRoute(
     // pantalla y, si guardara su propio estado, al volver empezaría de nuevo arriba y vacía.
     var conversations by remember { mutableStateOf<List<Conversation>?>(null) }
     val conversationListState = rememberLazyListState()
+    // Se lee aquí, y no solo al ver la lista, porque el círculo de mensajes nuevos de la barra inferior se ve en cualquier pestaña.
+    LaunchedEffect(version, tab, openThreadId) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
+    val unread = conversations.orEmpty().sumOf { it.unreadCount }
     // `null` mientras se lee: así un mensaje no aparece "sin analizar" por un instante.
     var loadedRisks by remember { mutableStateOf<Map<Long, MessageRisk>?>(null) }
     LaunchedEffect(historyVersion) { loadedRisks = withContext(Dispatchers.IO) { history.risks() } }
@@ -487,7 +490,6 @@ fun MessagesRoute(
                             modifier = Modifier,
                         )
                         threadId == null -> {
-                            LaunchedEffect(version) { conversations = withContext(Dispatchers.IO) { repository.conversations() } }
                             ConversationListScreen(
                                 conversations = conversations,
                                 nowMillis = System.currentTimeMillis(),
@@ -595,7 +597,13 @@ fun MessagesRoute(
                     SmishingBottomBar(
                         items = listOf(
                             NavItem(stringResource(R.string.nav_home), Icons.Outlined.Home, TutorialTarget.TabHome),
-                            NavItem(stringResource(R.string.nav_messages), SmishingIcons.Chat, TutorialTarget.TabMessages),
+                            NavItem(
+                                stringResource(R.string.nav_messages),
+                                SmishingIcons.Chat,
+                                TutorialTarget.TabMessages,
+                                badge = unread,
+                                badgeDescription = if (unread > 0) stringResource(R.string.messages_unread_description, unread) else null,
+                            ),
                             NavItem(stringResource(R.string.nav_history), SmishingIcons.History, TutorialTarget.TabHistory),
                             NavItem(stringResource(R.string.nav_settings), Icons.Outlined.Settings, TutorialTarget.TabSettings),
                         ),
