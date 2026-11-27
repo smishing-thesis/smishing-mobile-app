@@ -1,5 +1,6 @@
 package com.app.smishing.ui.messages
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import com.app.smishing.R
 import com.app.smishing.domain.contacts.foldForSearch
 import com.app.smishing.domain.history.MessageRisk
@@ -79,6 +81,8 @@ fun ConversationListScreen(
     photoOf: (String) -> String? = { null },
 ) {
     val yesterday = stringResource(R.string.messages_yesterday)
+    // La hora sigue el reloj del teléfono: 24 horas ("18:00") o 12 horas ("6:00 pm").
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
     var query by rememberSaveable { mutableStateOf("") }
     val shown = remember(conversations, query, displayName) {
         val q = foldForSearch(query.trim())
@@ -129,7 +133,7 @@ fun ConversationListScreen(
                         val markedSafe = isMarkedSafe(risks, conversation.lastMessageId, conversation.snippet)
                         ConversationRow(
                             sender = displayName(conversation.address),
-                            time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale),
+                            time = formatConversationDate(conversation.lastMessageAtMillis, nowMillis, zone, yesterday, SpanishLocale, is24Hour),
                             snippet = conversation.snippet,
                             onClick = { if (selecting) onToggle(conversation) else onOpen(conversation) },
                             onLongClick = { if (!selecting) onStartSelecting(conversation) },

@@ -1,5 +1,6 @@
 package com.app.smishing.ui.messages
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +21,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import com.app.smishing.R
 import com.app.smishing.domain.history.MessageRisk
 import com.app.smishing.domain.history.isMarkedSafe
@@ -34,6 +38,7 @@ import com.app.smishing.ui.designsystem.components.SelectAction
 import com.app.smishing.ui.designsystem.components.SelectionTopBar
 import com.app.smishing.domain.messaging.MessageDirection
 import com.app.smishing.domain.messaging.SendOutcome
+import com.app.smishing.domain.messaging.formatMessageStamp
 import com.app.smishing.ui.designsystem.components.LinkButton
 import com.app.smishing.ui.designsystem.components.MessageBubble
 import com.app.smishing.ui.designsystem.components.MessageInputBar
@@ -43,6 +48,10 @@ import com.app.smishing.ui.designsystem.theme.SmishingPalette
 import com.app.smishing.ui.designsystem.theme.SmishingTypography
 import com.app.smishing.ui.designsystem.theme.Spacing
 import com.app.smishing.ui.designsystem.theme.Status
+import java.time.ZoneId
+import java.util.Locale
+
+private val SpanishLocale = Locale.forLanguageTag("es")
 
 /** Qué dice la fila de análisis de un mensaje recibido (#59). */
 enum class StoredAnalysis {
@@ -99,6 +108,13 @@ fun ConversationScreen(
     onDeleteSelected: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    val today = stringResource(R.string.messages_today)
+    val yesterday = stringResource(R.string.messages_yesterday)
+    val zone = remember { ZoneId.systemDefault() }
+    // La hora sigue el reloj del teléfono: 24 horas ("18:00") o 12 horas ("6:00 pm").
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    // "Hoy" y "Ayer" se deciden con la hora de cuando se lee la conversación; se vuelve a calcular si llega o cambia un mensaje.
+    val nowMillis = remember(messages) { System.currentTimeMillis() }
     val count = messages?.size ?: 0
     // Abre en el mensaje más reciente, y sigue ahí cuando llega uno nuevo.
     LaunchedEffect(count) { if (count > 0) listState.scrollToItem(count - 1) }
@@ -133,6 +149,15 @@ fun ConversationScreen(
         ) {
             items(messages.orEmpty(), key = { it.id }) { message ->
                 val outgoing = message.direction == MessageDirection.Outgoing
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.Xs)) {
+                // El día y la hora siempre van centrados sobre el mensaje, sea recibido o enviado.
+                Text(
+                    formatMessageStamp(message.atMillis, nowMillis, zone, today, yesterday, SpanishLocale, is24Hour),
+                    style = SmishingTypography.Note,
+                    color = SmishingPalette.TextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 // Al seleccionar, toda la fila (la casilla y el espacio de alrededor, no solo la burbuja) marca y desmarca el mensaje.
                 Row(
                     modifier = if (selecting) Modifier.fillMaxWidth().clickable { onToggle(message) } else Modifier,
@@ -222,6 +247,7 @@ fun ConversationScreen(
                             modifier = Modifier.padding(top = Spacing.X2s, end = Spacing.Xs),
                         )
                     }
+                }
                 }
                 }
             }

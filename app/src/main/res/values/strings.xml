@@ -32,6 +32,7 @@
     <!-- Conversaciones (#5) -->
     <string name="messages_title">Mensajes</string>
     <string name="messages_yesterday">Ayer</string>
+    <string name="messages_today">Hoy</string>
     <string name="conversation_subtitle">SMS</string>
     <string name="conversation_back">Volver a mensajes</string>
     <string name="message_received">Recibido</string>
