@@ -109,13 +109,12 @@ fun SwitchRow(
     }
 }
 
-/** Una fila con título, explicación y un botón, para una acción que no cambia una preferencia (como "Ver recorrido"). */
+/** Una fila con título y un botón del ancho de la pantalla, para una acción que no cambia una preferencia (como "Ver recorrido"). */
 @Composable
-fun ActionRow(title: String, description: String, buttonLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ActionRow(title: String, buttonLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.X2s)) {
         Text(title, style = SmishingTypography.BodyMediumBold, color = SmishingPalette.TextPrimary)
-        Text(description, style = SmishingTypography.Note, color = SmishingPalette.TextSecondary)
-        SecondaryButton(buttonLabel, onClick = onClick, modifier = Modifier.padding(top = Spacing.X2s))
+        SecondaryButton(buttonLabel, onClick = onClick, modifier = Modifier.fillMaxWidth().padding(top = Spacing.X2s))
     }
 }
 

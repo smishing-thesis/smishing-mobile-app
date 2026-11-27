@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlinx.coroutines.delay
 
 /** Un instante de la animación de Smishy investigando. */
 data class SmishyFrame(
@@ -170,6 +171,70 @@ fun SmishyLoadingDots(modifier: Modifier = Modifier, color: Color = Color.White)
     }
 }
 
+/**
+ * La línea de tiempo del Smishy de Inicio (6 s, que se repite tras [REST_MS] de descanso): mira al frente, echa un vistazo a la derecha
+ * y otro a la izquierda y parpadea dos veces. Sin lentes y siempre sonriendo, como el Smishy contento de la tarjeta. Es lo único que se mueve: no sube ni baja.
+ */
+object SmishyIdleTimeline {
+    const val DURATION_MS = 6000
+
+    /** Cuánto descansa, quieto, entre una vez y la siguiente. */
+    const val REST_MS = 15_000
+
+    private val gaze = listOf(
+        0f to 2f, 1500f to 2f, 1900f to 5f, 2600f to 5f, 3000f to 2f, 4000f to 2f, 4400f to -1f, 5000f to -1f, 5400f to 2f, 6000f to 2f,
+    )
+    private val blinkStarts = listOf(800f, 3500f)
+    private const val BLINK_MS = 260f
+
+    private fun smooth(x: Float) = x * x * (3f - 2f * x)
+
+    private fun gazeAt(t: Float): Float {
+        for (i in 1 until gaze.size) {
+            val (t1, v1) = gaze[i]
+            if (t <= t1) {
+                val (t0, v0) = gaze[i - 1]
+                return v0 + (v1 - v0) * smooth(((t - t0) / (t1 - t0)).coerceIn(0f, 1f))
+            }
+        }
+        return gaze.last().second
+    }
+
+    private fun eyeOpenAt(t: Float): Float {
+        val start = blinkStarts.firstOrNull { t >= it && t < it + BLINK_MS } ?: return 1f
+        val k = (t - start) / BLINK_MS
+        return 1f - 0.9f * (if (k < 0.5f) k * 2f else (1f - k) * 2f)
+    }
+
+    fun frameAt(timeMs: Float): SmishyFrame {
+        val t = timeMs.coerceIn(0f, DURATION_MS.toFloat())
+        return SmishyFrame(gazeX = gazeAt(t), eyeOpen = eyeOpenAt(t), accessories = 0f, smile = 1f)
+    }
+}
+
+/**
+ * El Smishy contento de la tarjeta de Inicio. Hace [SmishyIdleTimeline] al entrar a la pantalla y, después, descansa
+ * [SmishyIdleTimeline.REST_MS] sin hacer nada antes de repetirla, y así mientras la pantalla esté a la vista. Durante el descanso no dibuja
+ * nada nuevo, y al salir de la pantalla se detiene sola. Con las animaciones del sistema desactivadas queda quieto, igual que la imagen
+ * fija. Se dibuja con los colores de `smishy_active` (borde azul y sombra suave), no con los de la carga.
+ */
+@Composable
+fun SmishyIdle(modifier: Modifier = Modifier) {
+    val animate = rememberAnimationsEnabled()
+    val time = remember { Animatable(0f) }
+    LaunchedEffect(animate) {
+        if (!animate) return@LaunchedEffect
+        while (true) {
+            time.snapTo(0f)
+            time.animateTo(SmishyIdleTimeline.DURATION_MS.toFloat(), tween(SmishyIdleTimeline.DURATION_MS, easing = LinearEasing))
+            delay(SmishyIdleTimeline.REST_MS.toLong())
+        }
+    }
+    Canvas(modifier.aspectRatio(VIEW_WIDTH / VIEW_HEIGHT)) {
+        drawSmishy(SmishyIdleTimeline.frameAt(time.value), shadow = ActiveShadow, rimLeft = ActiveRimLeft, rimRight = ActiveRimRight)
+    }
+}
+
 private const val LOADING_WAVE_MS = 1200
 private const val LOADING_DOT = 12
 private const val LOADING_WAVE_RISE = 14
@@ -183,6 +248,11 @@ private val Ink = Color(0xFF202124)
 private val Floor = Color(0xFF1557B0)
 private val RimLeft = Color(0xFFB5D0F8)
 private val RimRight = Color(0xFFE8F0FE)
+
+// Los colores del Smishy contento de Inicio (`smishy_active.xml`): sobre la escena no lleva el borde claro ni el suelo azul de la carga.
+private val ActiveShadow = Color(0x4D000000)
+private val ActiveRimLeft = Color(0xFF1557B0)
+private val ActiveRimRight = Color(0xFF1A73E8)
 private val FaceLeft = Color(0xFF4F94EE)
 private val FaceRight = Color(0xFF8AB4F8)
 
@@ -195,12 +265,12 @@ private val rightHalf = Path().apply {
 
 private val lineStroke = Stroke(width = 3.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-private fun DrawScope.drawSmishy(frame: SmishyFrame) {
+private fun DrawScope.drawSmishy(frame: SmishyFrame, shadow: Color = Floor, rimLeft: Color = RimLeft, rimRight: Color = RimRight) {
     val unit = size.width / VIEW_WIDTH
     scale(unit, unit, pivot = Offset.Zero) {
-        drawOval(Floor, topLeft = Offset(26f, 136f), size = Size(68f, 8f))
-        drawPath(leftHalf, RimLeft)
-        drawPath(rightHalf, RimRight)
+        drawOval(shadow, topLeft = Offset(26f, 136f), size = Size(68f, 8f))
+        drawPath(leftHalf, rimLeft)
+        drawPath(rightHalf, rimRight)
         scale(0.84f, 0.84f, pivot = Offset(60f, 72f)) {
             drawPath(leftHalf, FaceLeft)
             drawPath(rightHalf, FaceRight)

@@ -62,6 +62,7 @@ fun HistoryScreen(
         if (selecting) {
             SelectionTopBar(
                 count = selected.size,
+                allSelected = !records.isNullOrEmpty() && selected.size >= records.size,
                 style = TopBarStyle.Primary,
                 onCancel = onCancelSelection,
                 onSelectAll = onSelectAll,
@@ -95,7 +96,11 @@ fun HistoryScreen(
                         onLongClick = { if (!selecting) onStartSelecting(record) },
                         onLongClickLabel = stringResource(R.string.history_select),
                         actions = marksText(historyMarks(record, actions[record.id].orEmpty())),
-                        chip = { StatusChip(statusOf(record.assessment.level), stringResource(chipText(record.assessment.level))) },
+                        chip = {
+                            // Marcado como seguro por la persona: el mismo chip verde, con la marca de manual (#102).
+                            if (record.markedSafeAtMillis != null) StatusChip(Status.Safe, stringResource(R.string.history_chip_safe_manual))
+                            else StatusChip(statusOf(record.assessment.level), stringResource(chipText(record.assessment.level)))
+                        },
                     )
                 }
             }

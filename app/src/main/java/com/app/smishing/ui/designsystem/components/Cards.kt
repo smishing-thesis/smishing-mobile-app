@@ -75,11 +75,16 @@ fun ProtectionCard(
                 modifier = Modifier.fillMaxWidth(),
                 contentScale = ContentScale.FillWidth,
             )
-            Image(
-                painter = painterResource(if (active) R.drawable.smishy_active else R.drawable.smishy_off),
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.27f).aspectRatio(120f / 146f),
-            )
+            if (active) {
+                // El Smishy contento se mueve un poco (parpadea y mira a los lados); el dormido de la protección apagada queda quieto.
+                SmishyIdle(Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.27f))
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.smishy_off),
+                    contentDescription = null,
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.27f).aspectRatio(120f / 146f),
+                )
+            }
         }
         Column(
             modifier = Modifier.fillMaxWidth().padding(Spacing.Md),
