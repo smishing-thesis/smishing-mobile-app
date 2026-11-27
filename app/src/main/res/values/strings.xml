@@ -299,8 +299,5 @@
     <string name="tutorial_sample_data">confirme sus datos</string>
     <string name="settings_help_title">Ayuda</string>
     <string name="settings_tutorial_title">Recorrido de la aplicación</string>
-    <string name="settings_tutorial_pending">Todavía no lo vio. Puede verlo cuando quiera.</string>
-    <string name="settings_tutorial_done">Ya lo vio. Puede verlo otra vez.</string>
-    <string name="settings_tutorial_skipped">Lo omitió. Puede verlo cuando quiera.</string>
     <string name="settings_tutorial_button">Ver recorrido</string>
 </resources>
