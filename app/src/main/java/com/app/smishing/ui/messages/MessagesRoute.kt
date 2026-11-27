@@ -472,7 +472,10 @@ fun MessagesRoute(
                                 selected = selectedRecords,
                                 onToggle = { selectedRecords = if (it.id in selectedRecords) selectedRecords - it.id else selectedRecords + it.id },
                                 onStartSelecting = { first -> selectingHistory = true; selectedRecords = first?.let { setOf(it.id) }.orEmpty() },
-                                onSelectAll = { selectedRecords = records.orEmpty().map { it.id }.toSet() },
+                                onSelectAll = {
+                                    val all = records.orEmpty().map { it.id }.toSet()
+                                    selectedRecords = if (selectedRecords.containsAll(all)) emptySet() else all
+                                },
                                 onCancelSelection = { selectingHistory = false; selectedRecords = emptySet() },
                                 onDeleteSelected = { deleteRecords = records.orEmpty().filter { it.id in selectedRecords } to actions },
                             )
@@ -506,7 +509,10 @@ fun MessagesRoute(
                                 selected = selectedThreads,
                                 onToggle = { selectedThreads = if (it.threadId in selectedThreads) selectedThreads - it.threadId else selectedThreads + it.threadId },
                                 onStartSelecting = { first -> selectingConversations = true; selectedThreads = first?.let { setOf(it.threadId) }.orEmpty() },
-                                onSelectAll = { selectedThreads = conversations.orEmpty().map { it.threadId }.toSet() },
+                                onSelectAll = {
+                                    val all = conversations.orEmpty().map { it.threadId }.toSet()
+                                    selectedThreads = if (selectedThreads.containsAll(all)) emptySet() else all
+                                },
                                 onCancelSelection = { selectingConversations = false; selectedThreads = emptySet() },
                                 onDeleteSelected = {
                                     deleteTarget = DeleteTarget.Conversations(
@@ -546,7 +552,10 @@ fun MessagesRoute(
                                 selected = selectedMessages,
                                 onToggle = { selectedMessages = if (it.id in selectedMessages) selectedMessages - it.id else selectedMessages + it.id },
                                 onStartSelecting = { first -> selectingMessages = true; selectedMessages = first?.let { setOf(it.id) }.orEmpty() },
-                                onSelectAll = { selectedMessages = messages.orEmpty().map { it.id }.toSet() },
+                                onSelectAll = {
+                                    val all = messages.orEmpty().map { it.id }.toSet()
+                                    selectedMessages = if (selectedMessages.containsAll(all)) emptySet() else all
+                                },
                                 onCancelSelection = { selectingMessages = false; selectedMessages = emptySet() },
                                 onDeleteSelected = { deleteTarget = DeleteTarget.Messages(messages.orEmpty().filter { it.id in selectedMessages }) },
                                 analysis = { m ->

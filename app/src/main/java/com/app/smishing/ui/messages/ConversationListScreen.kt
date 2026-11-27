@@ -95,6 +95,7 @@ fun ConversationListScreen(
             if (selecting) {
                 SelectionTopBar(
                     count = selected.size,
+                    allSelected = !conversations.isNullOrEmpty() && selected.size >= conversations.size,
                     style = TopBarStyle.Primary,
                     onCancel = onCancelSelection,
                     onSelectAll = onSelectAll,

@@ -177,6 +177,7 @@
     </plurals>
     <string name="history_select">Seleccionar</string>
     <string name="history_select_all">Todos</string>
+    <string name="history_select_none">Ninguno</string>
     <string name="history_cancel_selection">Cancelar la selección</string>
     <plurals name="delete_records_title">
         <item quantity="one">¿Borrar este análisis?</item>

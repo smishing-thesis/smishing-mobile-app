@@ -62,6 +62,7 @@ fun HistoryScreen(
         if (selecting) {
             SelectionTopBar(
                 count = selected.size,
+                allSelected = !records.isNullOrEmpty() && selected.size >= records.size,
                 style = TopBarStyle.Primary,
                 onCancel = onCancelSelection,
                 onSelectAll = onSelectAll,
