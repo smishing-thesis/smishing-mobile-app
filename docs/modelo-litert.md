@@ -71,8 +71,8 @@ Casos más cercanos al umbral, que son los que podrían cambiar de decisión: `l
 ## Versiones y actualización del modelo (#35)
 
 **Qué se registra.** Cada análisis del historial guarda la versión del modelo (`model.version` del JSON) y la del preprocesamiento
-(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Acerca de", las que están en uso ("Detección 1.0.0 · Preparación del texto 1.1.0": el
-texto evita las palabras técnicas porque `ExplanationWordingTest` revisa todas las cadenas de Ajustes).
+(`preprocessing.version`), para poder reproducirlo (RNF-07). Ajustes muestra al final, en "Acerca de", las que están en uso ("Modelo 1.0.0 · Preprocesamiento 1.1.0":
+es una etiqueta técnica a propósito, así que `ExplanationWordingTest`, que revisa las demás cadenas de Ajustes, la excluye de su regla de jerga).
 
 **Qué acepta la app.** Solo el modelo y el JSON empaquetados que cumplan todo esto:
 

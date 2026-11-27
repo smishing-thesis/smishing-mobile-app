@@ -29,7 +29,13 @@ class ExplanationWordingTest {
      */
     private val personsOwnWords = setOf("detail_button_mark_safe", "detail_confirm_yes")
 
-    private fun explanation() = strings.filterKeys { it !in personsOwnWords }.filterKeys { it.startsWith("detail_") || it.startsWith("alert_") || it.startsWith("history_") || it.startsWith("settings_") || it.startsWith("home_") || it.startsWith("welcome_") || it.startsWith("protection_") }
+    /**
+     * Las versiones de "Acerca de" ("Modelo 1.0.0 · Preprocesamiento 1.1.0") son una etiqueta técnica a propósito: sirven para saber con qué
+     * versión se analizó un mensaje, no para explicarle nada a la persona. Se excluyen de la regla de jerga.
+     */
+    private val technicalLabels = setOf("settings_detection_versions")
+
+    private fun explanation() = strings.filterKeys { it !in personsOwnWords && it !in technicalLabels }.filterKeys { it.startsWith("detail_") || it.startsWith("alert_") || it.startsWith("history_") || it.startsWith("settings_") || it.startsWith("home_") || it.startsWith("welcome_") || it.startsWith("protection_") }
 
     @Test
     fun theTextsToCheckAreTheOnesOfTheDetailAndTheAlert() {
